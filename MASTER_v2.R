@@ -39,8 +39,9 @@
   library(rnaturalearthdata)
   library(viridis)
   library(raster)
+  library(shiny)
 
-# 1-CONFIGURATION --------------------------------------------------------------
+# 1-CONFIGURATION ----------------------------------------------------------------------
 
   # Functions to inspect .nc files to help with updating configs
   inspect_nc_file <- function(file_path) {
@@ -269,7 +270,7 @@
     }
   }
 
-# 3-FLATTEN NETCDF FILES (Intermediate Product) -----------------------------------
+# 3-FLATTEN NETCDF FILES (Intermediate Product) ----------------------------------------------------------------------
 
   # Apply the import function to all configured model outputs
   gridded_tables.ls <- 
@@ -279,120 +280,81 @@
     rlang::set_names(names(configs.ls)) %>%
     purrr::compact()
 
-# 4-CREATE SIMPLIFIED DATASETS BY GEOGRAPHIC UNIT
+# 4-CREATE SIMPLIFIED DATASETS BY GEOGRAPHIC UNIT ----------------------------------------------------------------------
 
-setwd(source.tables.dir)
-mask_file <- "gadm0.mask.nc4"
+  data_subdirectory_name <- "3-uv"
 
-# Open the NetCDF file
-nc <- nc_open(mask_file)
+  # Set the directory containing user-provided datasets and masks
+  user_data_dir <- file.path(source.tables.dir, data_subdirectory_name)
 
-# Extract dimensions
-lon_vals <- ncvar_get(nc, "lon")  # Longitude values
-lat_vals <- ncvar_get(nc, "lat")  # Latitude values
-country_ids <- ncvar_get(nc, "gadm0")  # Country index values (integer IDs)
+  # Check for user-provided geographic masks
+  user_shapefile_dirs <- list.dirs(user_data_dir, recursive = FALSE)
 
-# Close NetCDF file
-nc_close(nc)
+  # Function to detect the latest received dataset (based on directory naming convention)
+  get_latest_user_shapefile <- function() {
+    if (length(user_shapefile_dirs) == 0) {
+      return(NULL)  # No user-provided datasets
+    }
+    
+    # Extract the latest directory (assuming YYYY-MM-Institution naming format)
+    latest_dir <- user_shapefile_dirs[which.max(file.info(user_shapefile_dirs)$mtime)]
+    
+    # Look for a shapefile in the latest directory
+    shapefile_path <- list.files(latest_dir, pattern = "\\.shp$", full.names = TRUE)
+    
+    if (length(shapefile_path) > 0) {
+      return(shapefile_path[1])  # Return the first found shapefile
+    } else {
+      return(NULL)  # No shapefile found in the directory
+    }
+  }
 
-# Create a raster from the extracted data
-r_country <- 
-  rasterFromXYZ(
-    expand.grid(lon = lon_vals, lat = lat_vals, KEEP.OUT.ATTRS = FALSE) %>%
-    mutate(country_id = as.vector(country_ids))
-  )
+  # Detect latest user-provided shapefile
+  user_shapefile <- get_latest_user_shapefile()
 
-# Ensure the CRS is set to WGS84 (standard geographic coordinate system)
-crs(r_country) <- "+proj=longlat +datum=WGS84"
+  # Load user-provided shapefile or default to Natural Earth countries
+  if (!is.null(user_shapefile)) {
+    message("Using user-provided geographic mask: ", user_shapefile)
+    geo_mask <- st_read(user_shapefile)
+    
+    # Identify the first non-geometry column to use as the region identifier
+    geo_id_col <- names(geo_mask)[1]  # First column assumed to be the unique region ID
 
+  } else {
+    message("No user-provided mask found. Using default Natural Earth country boundaries.")
+    geo_mask <- ne_countries(scale = "medium", returnclass = "sf")
+    geo_id_col <- "iso_a3"  # Standard ISO3 code for countries
+  }
 
-# Extract UV dataset
-uv_data <- gridded_tables.ls[["uv"]] %>%
-  mutate(lon = ifelse(lon > 180, lon - 360, lon))  # Normalize longitude
+  # Ensure the shapefile is in WGS84 projection
+  geo_mask <- st_transform(geo_mask, crs = 4326)
 
-# Convert UV data to spatial points
-uv_sp <- 
-  SpatialPointsDataFrame(
-    coords = uv_data[, c("lon", "lat")], 
-    data = uv_data, 
-    proj4string = CRS("+proj=longlat +datum=WGS84")
-  )
+  # Extract the UV dataset
+  uv_data <- gridded_tables.ls[["uv"]] %>%
+    mutate(lon = ifelse(lon > 180, lon - 360, lon))  # Normalize longitude
 
-# Use raster extraction to assign country ID to each UV grid point
-uv_data$country_id <- extract(r_country, uv_sp)
+  # Convert UV data to spatial points
+  uv_sf <- st_as_sf(uv_data, coords = c("lon", "lat"), crs = 4326)
 
-# Remove points with NA country_id (these are ocean grid cells)
-uv_data <- uv_data %>% filter(!is.na(country_id))
+  # Perform spatial join to assign each UV point to a geographic unit
+  uv_data <- st_join(uv_sf, geo_mask, left = FALSE)  # Drops unmatched points (e.g., ocean)
 
-# Print the first few rows to verify
-print(head(uv_data))
+  # Check that the geographic identifier column exists after the join
+  if (!geo_id_col %in% colnames(uv_data)) {
+    stop("Error: Geographic identifier column '", geo_id_col, "' not found in UV dataset after spatial join.")
+  }
 
-# Group by country_id and calculate mean values for each variable
-uv_simplified.tb <- uv_data %>%
-  group_by(country_id) %>%
-  summarize(across(where(is.numeric), mean, na.rm = TRUE), .groups = "drop")
+  # Group by geographic unit and calculate mean values for each variable
+  uv_simplified.tb <- uv_data %>%
+    group_by(!!sym(geo_id_col)) %>%
+    summarize(across(where(is.numeric), mean, na.rm = TRUE), .groups = "drop")
 
-# View the final country-level dataset
-print(uv_simplified.tb)
+  # View the final geographic-level dataset
+  print(uv_simplified.tb)
 
+# 5-VIZUALIZE DATA ----------------------------------------------------------------------
 
-
-
-################ TRYING TO CREATE VISUALIZATION OF COUNTRY-LEVEL DATA #########################################
-#NOTE: current issue seems to be that world_map$adm0_a3 is [like] the iso3 code country abbreviation ("ZWE, VNM") whereas uv_simplified_df only has numerical country indices from 1-253
-
-
-# Load world country shapes
-world_map <- rnaturalearth::ne_countries(scale = "medium", returnclass = "sf")
-
-# Merge simplified UV data with country geometries
-uv_simplified_sf <- world_map %>%
-  left_join(uv_simplified.tb, by = c("adm0_a3" = "country_id"))  # Adjust if country_id needs mapping
-
-# Generate the plot
-ggplot() +
-  # Base map layer: Country boundaries
-  geom_sf(data = world_map, fill = "white", color = "black", size = 0.3) +
-
-  # Overlay: Fill countries with UV Index values
-  geom_sf(data = uv_simplified_sf, aes(fill = TUV_UVINDEX), color = "grey30", size = 0.2) +
-
-  # Custom heatmap color scale
-  scale_fill_gradientn(
-    colors = c("#035653", "#efe400", "#ef0000"),  # Custom color scale (Low → Medium → High)
-    values = scales::rescale(c(min(uv_simplified.tb$TUV_UVINDEX, na.rm = TRUE),
-                                mean(uv_simplified.tb$TUV_UVINDEX, na.rm = TRUE),
-                                max(uv_simplified.tb$TUV_UVINDEX, na.rm = TRUE))),
-    na.value = "grey90",  # Grey for missing countries
-    name = "UV Index"
-  ) +
-
-  # Titles and theme settings
-  labs(title = "UV Index by Country",
-       subtitle = "Averaged from gridded data",
-       x = "Longitude", y = "Latitude") +
-  theme_minimal() +
-  theme(
-    legend.position = "right",
-    legend.key.height = unit(1, "cm"),
-    plot.title = element_text(size = 16, face = "bold", hjust = 0.5)
-  )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# Visualize Gridded Data (preliminary data check)
+# Visualize Gridded Data - Single Time Step (preliminary data check)
   # Define plot configuration
   plot_configs <- list(
     color_palette = c("#035653", "#efe400", "#ef0000"),  # Blue → Yellow → Red
@@ -401,73 +363,271 @@ ggplot() +
     world_map = rnaturalearth::ne_countries(scale = "medium", returnclass = "sf")  
   )
 
-  plot_gridded_data <- 
-    function(dataset_name, variable_name, time_index = 1, config = plot_configs) {
-      # Ensure dataset exists
-      if (!dataset_name %in% names(gridded_tables.ls)) {
-        stop("Dataset '", dataset_name, "' not found in gridded_tables.ls")
-      }
-      
-      # Extract dataset and check if variable exists
-      dataset <- gridded_tables.ls[[dataset_name]]
-      if (!variable_name %in% colnames(dataset)) {
-        stop("Variable '", variable_name, "' not found in dataset '", dataset_name, "'")
-      }
-
-      # Handle time selection (use the requested index, ensuring it's within range)
-      unique_times <- unique(dataset$time)
-      if (time_index < 1 || time_index > length(unique_times)) {
-        stop("Invalid time index: ", time_index, ". Available range: 1 - ", length(unique_times))
-      }
-      selected_time <- unique_times[time_index]
-
-      # Filter dataset for selected time and normalize longitude
-      data_filtered <- dataset %>%
-        filter(time == selected_time) %>%
-        select(lon, lat, all_of(variable_name)) %>%
-        mutate(lon = ifelse(lon > 180, lon - 360, lon))  # Normalize longitude
-
-      # Check if data is empty
-      if (nrow(data_filtered) == 0) {
-        warning("No data available for the selected time step.")
-        return(NULL)
-      }
-
-      # Dynamic color scale adjustment
-      min_val <- min(data_filtered[[variable_name]], na.rm = TRUE)
-      max_val <- max(data_filtered[[variable_name]], na.rm = TRUE)
-      mean_val <- mean(data_filtered[[variable_name]], na.rm = TRUE)
-
-      # Generate plot
-      ggplot() +
-        # Base map layer
-        geom_sf(data = config$world_map, fill = "white", color = "black", size = 0.3) +
-        
-        # Overlay: Grid squares with configurable transparency
-        geom_tile(
-          data = data_filtered, aes(x = lon, y = lat, fill = .data[[variable_name]]), 
-          alpha = config$data_overlay_opacity, 
-          color = config$default_grid_color, size = 0.1
-        ) +
-
-        # Custom Heatmap Scale
-        scale_fill_gradientn(
-          colors = config$color_palette,
-          values = scales::rescale(c(min_val, mean_val, max_val)), 
-          na.value = "transparent",
-          name = variable_name
-        ) +
-        
-        # Titles and theme adjustments
-        labs(title = paste(variable_name, "Heatmap (Time Index:", time_index, ")"), 
-            x = "Longitude", y = "Latitude") +
-        theme_minimal() +
-        theme(
-          legend.position = "right",
-          legend.key.height = unit(1, "cm"),
-          plot.title = element_text(size = 16, face = "bold", hjust = 0.5)
-        )
+  plot_gridded_data <- function(dataset_name, variable_name, time_index = 1, config = plot_configs) {
+    library(ggplot2)
+    library(dplyr)
+    
+    # Ensure dataset exists
+    if (!dataset_name %in% names(gridded_tables.ls)) {
+      stop("Dataset '", dataset_name, "' not found in gridded_tables.ls")
+    }
+    
+    # Extract dataset and check if variable exists
+    dataset <- gridded_tables.ls[[dataset_name]]
+    if (!variable_name %in% colnames(dataset)) {
+      stop("Variable '", variable_name, "' not found in dataset '", dataset_name, "'")
     }
 
-    plot_gridded_data(dataset_name = "temp_precip", variable_name = "PRECL", time_index = 100)
+    # Handle time selection
+    unique_times <- unique(dataset$time)
+    if (time_index < 1 || time_index > length(unique_times)) {
+      stop("Invalid time index: ", time_index, ". Available range: 1 - ", length(unique_times))
+    }
+    selected_time <- unique_times[time_index]
+
+    # Filter dataset for selected time and normalize longitude
+    data_filtered <- dataset %>%
+      filter(time == selected_time) %>%
+      dplyr::select(lon, lat, all_of(variable_name)) %>%
+      mutate(lon = ifelse(lon > 180, lon - 360, lon))  # Normalize longitude
+
+    # Check if data is empty
+    if (nrow(data_filtered) == 0) {
+      warning("No data available for the selected time step.")
+      return(NULL)
+    }
+
+    # Dynamic color scale adjustment
+    min_val <- min(data_filtered[[variable_name]], na.rm = TRUE)
+    max_val <- max(data_filtered[[variable_name]], na.rm = TRUE)
+    mean_val <- mean(data_filtered[[variable_name]], na.rm = TRUE)
+
+    # Compute aspect ratio based on longitude & latitude range
+    lon_range <- range(data_filtered$lon, na.rm = TRUE)
+    lat_range <- range(data_filtered$lat, na.rm = TRUE)
+    aspect_ratio <- diff(lat_range) / diff(lon_range)  # Height / Width ratio
+
+    # Define plot
+    p <- ggplot() +
+      # Base map layer
+      geom_sf(data = config$world_map, fill = "white", color = "black", linewidth = 0.3) +
+      
+      # Overlay: Grid squares with configurable transparency
+      geom_tile(
+        data = data_filtered, aes(x = lon, y = lat, fill = .data[[variable_name]]), 
+        alpha = config$data_overlay_opacity, 
+        color = config$default_grid_color, size = 0.1
+      ) +
+
+      # Custom Heatmap Scale
+      scale_fill_gradientn(
+        colors = config$color_palette,
+        values = scales::rescale(c(min_val, mean_val, max_val)), 
+        na.value = "transparent",
+        name = variable_name
+      ) +
+      
+      # Titles and theme adjustments
+      labs(title = paste(variable_name, "Heatmap (Time Index:", time_index, ")"), 
+          x = "Longitude", y = "Latitude") +
+      theme_minimal() +
+      theme(
+        legend.position = "right",
+        legend.key.height = unit(1, "cm"),
+        plot.title = element_text(size = 16, face = "bold", hjust = 0.5)
+      )
+
+    # Open a new plotting window (cross-platform support)
+    if (.Platform$OS.type == "windows") {
+      windows(width = 10, height = 10 * aspect_ratio)  # Adjusted for aspect ratio
+    } else {
+      x11(width = 10, height = 10 * aspect_ratio)  # For Linux/macOS (including WSL)
+    }
+
+    # Print the plot in the new window
+    print(p)
+
+    # Optionally save the plot with appropriate dimensions
+    ggsave("heatmap_plot.png", plot = p, width = 10, height = 10 * aspect_ratio, dpi = 300)
+  }
+
+  #plot_gridded_data(dataset_name = "uv", variable_name = "TUV_UVINDEX", time_index = 150)
+
+
+# Visualize Gridded Data - Timestep Slider (animated)
+  animate_heatmap <- function(dataset_name, config = plot_configs) {
+    
+    # Ensure dataset exists
+    if (!dataset_name %in% names(gridded_tables.ls)) {
+      stop("Dataset '", dataset_name, "' not found in gridded_tables.ls")
+    }
+    
+    dataset <- gridded_tables.ls[[dataset_name]]
+    
+    # Select only numeric variables (remove lon, lat, time, and non-numeric columns)
+    numeric_vars <- dataset %>%
+      dplyr::select(where(is.numeric)) %>%
+      dplyr::select(-c(lon, lat, time)) %>% 
+      colnames()
+    
+    if (length(numeric_vars) == 0) {
+      stop("No numeric variables available in dataset '", dataset_name, "' for heatmap visualization.")
+    }
+    
+    # Get unique time steps
+    unique_times <- unique(dataset$time)
+    
+    # Compute **global** min, max, and median for each numeric variable
+    global_stats <- 
+      dataset %>%
+      summarise(across(all_of(numeric_vars), list(
+        min = ~min(., na.rm = TRUE),
+        median = ~median(., na.rm = TRUE),
+        max = ~max(., na.rm = TRUE)
+      ))) %>%
+      pivot_longer(cols = everything(), names_to = "combined_name", values_to = "value") %>%
+      separate(combined_name, into = c("variable", "stat"), sep = "_(?=[^_]+$)") %>%  # Splits at last "_"
+      pivot_wider(names_from = "stat", values_from = "value")
+    
+    # Shiny UI
+    ui <- fluidPage(
+      
+      # Title
+      titlePanel(paste("Animated Heatmap of", dataset_name)),
+      
+      # Dropdown menu for variable selection
+      selectInput("variable_name", "Select Variable:", 
+                  choices = numeric_vars, selected = numeric_vars[1]),
+      
+      # Heatmap Output
+      plotOutput("heatmapPlot", height = "600px"),
+      
+      # Slider for Time Step (below heatmap)
+      sliderInput("time_index", "Time Step:", 
+                  min = 1, max = length(unique_times), value = 1, step = 1,
+                  animate = animationOptions(interval = 1000, loop = TRUE))
+    )
+    
+    # Shiny Server
+    server <- function(input, output, session) {
+      
+      # Reactive function to get global min/max/median for the selected variable
+      global_color_scale <- reactive({
+        global_stats %>% filter(variable == input$variable_name) %>%
+          dplyr::select(min, median, max)  # Ensure we only select the relevant columns
+      })
+      
+      # Reactive function to generate heatmap
+      plot_reactive <- reactive({
+        var_name <- input$variable_name  # Get selected variable
+        
+        # Extract dataset and filter for the selected time
+        data_filtered <- dataset %>%
+          filter(time == unique_times[input$time_index]) %>%
+          dplyr::select(lon, lat, all_of(var_name)) %>%
+          mutate(lon = ifelse(lon > 180, lon - 360, lon))  # Normalize longitude
+        
+        # Check if data is empty
+        if (nrow(data_filtered) == 0) {
+          return(NULL)
+        }
+        
+        # Get precomputed global color scale
+        color_scale <- global_color_scale()
+        
+        # Ensure min, median, max are correctly retrieved
+        min_val <- color_scale$min
+        median_val <- color_scale$median
+        max_val <- color_scale$max
+        
+        # Generate the plot
+        ggplot() +
+          # Base map layer
+          geom_sf(data = config$world_map, fill = "white", color = "black", linewidth = 0.3) +
+          
+          # Overlay: Grid squares with configurable transparency
+          geom_tile(
+            data = data_filtered, aes(x = lon, y = lat, fill = .data[[var_name]]), 
+            alpha = config$data_overlay_opacity, 
+            color = config$default_grid_color, linewidth = 0.1
+          ) +
+          
+          # **Static** Color Scale (consistent across time steps)
+          scale_fill_gradientn(
+            colors = config$color_palette,
+            values = scales::rescale(c(min_val, median_val, max_val)), 
+            na.value = "transparent",
+            limits = c(min_val, max_val),  # Fixes the legend!
+            name = var_name
+          ) +
+          
+          # Titles and theme adjustments
+          labs(title = paste(var_name, "Heatmap (Time Index:", input$time_index, ")"), 
+              x = "Longitude", y = "Latitude") +
+          theme_minimal() +
+          theme(
+            legend.position = "right",
+            legend.key.height = unit(1, "cm"),
+            plot.title = element_text(size = 16, face = "bold", hjust = 0.5)
+          )
+      })
+      
+      # Render Plot in UI (No extra windows)
+      output$heatmapPlot <- renderPlot({
+        plot_reactive()
+      })
+    }
+    
+    # Launch App in single window
+    shinyApp(ui = ui, server = server)
+  }
+
+  #animate_heatmap(dataset_name = "uv")
+
+
+
+  ############### TRYING TO CREATE VISUALIZATION OF COUNTRY-LEVEL DATA #########################################
+  #NOTE: current issue seems to be that world_map$adm0_a3 is [like] the iso3 code country abbreviation ("ZWE, VNM") whereas uv_simplified_df only has numerical country indices from 1-253
+
+
+  # Load world country shapes
+  world_map <- rnaturalearth::ne_countries(scale = "medium", returnclass = "sf")
+
+  # Merge simplified UV data with country geometries
+  uv_simplified_sf <- world_map %>%
+    left_join(uv_simplified.tb, by = c("adm0_a3" = "country_id"))  # Adjust if country_id needs mapping
+
+  # Generate the plot
+  ggplot() +
+    # Base map layer: Country boundaries
+    geom_sf(data = world_map, fill = "white", color = "black", size = 0.3) +
+
+    # Overlay: Fill countries with UV Index values
+    geom_sf(data = uv_simplified_sf, aes(fill = TUV_UVINDEX), color = "grey30", size = 0.2) +
+
+    # Custom heatmap color scale
+    scale_fill_gradientn(
+      colors = c("#035653", "#efe400", "#ef0000"),  # Custom color scale (Low → Medium → High)
+      values = scales::rescale(c(min(uv_simplified.tb$TUV_UVINDEX, na.rm = TRUE),
+                                  mean(uv_simplified.tb$TUV_UVINDEX, na.rm = TRUE),
+                                  max(uv_simplified.tb$TUV_UVINDEX, na.rm = TRUE))),
+      na.value = "grey90",  # Grey for missing countries
+      name = "UV Index"
+    ) +
+
+    # Titles and theme settings
+    labs(title = "UV Index by Country",
+        subtitle = "Averaged from gridded data",
+        x = "Longitude", y = "Latitude") +
+    theme_minimal() +
+    theme(
+      legend.position = "right",
+      legend.key.height = unit(1, "cm"),
+      plot.title = element_text(size = 16, face = "bold", hjust = 0.5)
+    )
+
+
+
+
+
 
