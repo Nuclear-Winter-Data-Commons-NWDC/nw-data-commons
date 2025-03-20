@@ -38,6 +38,7 @@
   library(rnaturalearth)
   library(rnaturalearthdata)
   library(viridis)
+  library(raster)
 
 # 1-CONFIGURATION --------------------------------------------------------------
 
@@ -100,15 +101,15 @@
 
   # Define the structure of your model outputs. Each entry now points to a directory.
   configs.ls <- list(
-    "temp_precip" = list(
-      directory = file.path(source.tables.dir, "1-2-temp-precip"),
-      file_pattern = ".*\\.nc$", # Matches any file ending with .nc
-      variables = c("TS", "TSMN", "TSMX", "PRECC", "PRECL"),
-      time_var = "time",
-      lat_var = "lat",
-      lon_var = "lon",
-      time_bnds_var = "time_bnds"  # <-- Add this if your .nc files have time boundaries
-    ),
+    #"temp_precip" = list(
+    #  directory = file.path(source.tables.dir, "1-2-temp-precip"),
+    #  file_pattern = ".*\\.nc$", # Matches any file ending with .nc
+    #  variables = c("TS", "TSMN", "TSMX", "PRECC", "PRECL"),
+    #  time_var = "time",
+    #  lat_var = "lat",
+    #  lon_var = "lon",
+    #  time_bnds_var = "time_bnds"  # <-- Add this if your .nc files have time boundaries
+    #),
     "uv" = list(
       directory = file.path(source.tables.dir, "3-uv"),
       file_pattern = ".*\\.nc$",
@@ -268,7 +269,7 @@
     }
   }
 
-# 3-PROCESS & REFORMAT (Intermediate Product) -----------------------------------
+# 3-FLATTEN NETCDF FILES (Intermediate Product) -----------------------------------
 
   # Apply the import function to all configured model outputs
   gridded_tables.ls <- 
@@ -277,6 +278,117 @@
     }) %>%
     rlang::set_names(names(configs.ls)) %>%
     purrr::compact()
+
+# 4-CREATE SIMPLIFIED DATASETS BY GEOGRAPHIC UNIT
+
+setwd(source.tables.dir)
+mask_file <- "gadm0.mask.nc4"
+
+# Open the NetCDF file
+nc <- nc_open(mask_file)
+
+# Extract dimensions
+lon_vals <- ncvar_get(nc, "lon")  # Longitude values
+lat_vals <- ncvar_get(nc, "lat")  # Latitude values
+country_ids <- ncvar_get(nc, "gadm0")  # Country index values (integer IDs)
+
+# Close NetCDF file
+nc_close(nc)
+
+# Create a raster from the extracted data
+r_country <- 
+  rasterFromXYZ(
+    expand.grid(lon = lon_vals, lat = lat_vals, KEEP.OUT.ATTRS = FALSE) %>%
+    mutate(country_id = as.vector(country_ids))
+  )
+
+# Ensure the CRS is set to WGS84 (standard geographic coordinate system)
+crs(r_country) <- "+proj=longlat +datum=WGS84"
+
+
+# Extract UV dataset
+uv_data <- gridded_tables.ls[["uv"]] %>%
+  mutate(lon = ifelse(lon > 180, lon - 360, lon))  # Normalize longitude
+
+# Convert UV data to spatial points
+uv_sp <- 
+  SpatialPointsDataFrame(
+    coords = uv_data[, c("lon", "lat")], 
+    data = uv_data, 
+    proj4string = CRS("+proj=longlat +datum=WGS84")
+  )
+
+# Use raster extraction to assign country ID to each UV grid point
+uv_data$country_id <- extract(r_country, uv_sp)
+
+# Remove points with NA country_id (these are ocean grid cells)
+uv_data <- uv_data %>% filter(!is.na(country_id))
+
+# Print the first few rows to verify
+print(head(uv_data))
+
+# Group by country_id and calculate mean values for each variable
+uv_simplified.tb <- uv_data %>%
+  group_by(country_id) %>%
+  summarize(across(where(is.numeric), mean, na.rm = TRUE), .groups = "drop")
+
+# View the final country-level dataset
+print(uv_simplified.tb)
+
+
+
+
+################ TRYING TO CREATE VISUALIZATION OF COUNTRY-LEVEL DATA #########################################
+#NOTE: current issue seems to be that world_map$adm0_a3 is [like] the iso3 code country abbreviation ("ZWE, VNM") whereas uv_simplified_df only has numerical country indices from 1-253
+
+
+# Load world country shapes
+world_map <- rnaturalearth::ne_countries(scale = "medium", returnclass = "sf")
+
+# Merge simplified UV data with country geometries
+uv_simplified_sf <- world_map %>%
+  left_join(uv_simplified.tb, by = c("adm0_a3" = "country_id"))  # Adjust if country_id needs mapping
+
+# Generate the plot
+ggplot() +
+  # Base map layer: Country boundaries
+  geom_sf(data = world_map, fill = "white", color = "black", size = 0.3) +
+
+  # Overlay: Fill countries with UV Index values
+  geom_sf(data = uv_simplified_sf, aes(fill = TUV_UVINDEX), color = "grey30", size = 0.2) +
+
+  # Custom heatmap color scale
+  scale_fill_gradientn(
+    colors = c("#035653", "#efe400", "#ef0000"),  # Custom color scale (Low → Medium → High)
+    values = scales::rescale(c(min(uv_simplified.tb$TUV_UVINDEX, na.rm = TRUE),
+                                mean(uv_simplified.tb$TUV_UVINDEX, na.rm = TRUE),
+                                max(uv_simplified.tb$TUV_UVINDEX, na.rm = TRUE))),
+    na.value = "grey90",  # Grey for missing countries
+    name = "UV Index"
+  ) +
+
+  # Titles and theme settings
+  labs(title = "UV Index by Country",
+       subtitle = "Averaged from gridded data",
+       x = "Longitude", y = "Latitude") +
+  theme_minimal() +
+  theme(
+    legend.position = "right",
+    legend.key.height = unit(1, "cm"),
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5)
+  )
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -357,5 +469,5 @@
         )
     }
 
-    plot_gridded_data(dataset_name = "temp_precip", variable_name = "TSMN", time_index = 100)
+    plot_gridded_data(dataset_name = "temp_precip", variable_name = "PRECL", time_index = 100)
 
