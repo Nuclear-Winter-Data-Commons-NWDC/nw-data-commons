@@ -100,15 +100,15 @@
 
   # Define the structure of your model outputs. Each entry now points to a directory.
   configs.ls <- list(
-    #"temp_precip" = list(
-    #  directory = file.path(source.tables.dir, "1-2-temp-precip"),
-    #  file_pattern = ".*\\.nc$", # Matches any file ending with .nc
-    #  variables = c("TS", "TSMN", "TSMX", "PRECC", "PRECL"),
-    #  time_var = "time",
-    #  lat_var = "lat",
-    #  lon_var = "lon",
-    #  time_bnds_var = "time_bnds"  # <-- Add this if your .nc files have time boundaries
-    #),
+    "temp_precip" = list(
+      directory = file.path(source.tables.dir, "1-2-temp-precip"),
+      file_pattern = ".*\\.nc$", # Matches any file ending with .nc
+      variables = c("TS", "TSMN", "TSMX", "PRECC", "PRECL"),
+      time_var = "time",
+      lat_var = "lat",
+      lon_var = "lon",
+      time_bnds_var = "time_bnds"  # <-- Add this if your .nc files have time boundaries
+    ),
     "uv" = list(
       directory = file.path(source.tables.dir, "3-uv"),
       file_pattern = ".*\\.nc$",
@@ -281,47 +281,81 @@
 
 
 # Visualize Gridded Data (preliminary data check)
-  # Step 1: Extract the first time unit for 'TUV_UVINDEX' in the 'uv' dataset
-  uv_data <- gridded_tables.ls[["uv"]] %>%
-    filter(time == unique(time)[length(unique(time))/5]) %>%  # Select first time unit
-    select(lon, lat, TUV_UVINDEX) %>% # Keep only relevant columns
-    mutate(lon = ifelse(lon > 180, lon - 360, lon))
+  # Define plot configuration
+  plot_configs <- list(
+    color_palette = c("#035653", "#efe400", "#ef0000"),  # Blue → Yellow → Red
+    data_overlay_opacity = 0.3,  # Transparency level for grid overlay
+    default_grid_color = "grey80",  # Grid line color
+    world_map = rnaturalearth::ne_countries(scale = "medium", returnclass = "sf")  
+  )
 
-  # Step 2: Convert the data into an sf object (spatial points)
-  uv_sf <- st_as_sf(uv_data, coords = c("lon", "lat"), crs = 4326)
+  plot_gridded_data <- 
+    function(dataset_name, variable_name, time_index = 1, config = plot_configs) {
+      # Ensure dataset exists
+      if (!dataset_name %in% names(gridded_tables.ls)) {
+        stop("Dataset '", dataset_name, "' not found in gridded_tables.ls")
+      }
+      
+      # Extract dataset and check if variable exists
+      dataset <- gridded_tables.ls[[dataset_name]]
+      if (!variable_name %in% colnames(dataset)) {
+        stop("Variable '", variable_name, "' not found in dataset '", dataset_name, "'")
+      }
 
-  # Step 3: Create the base map
-  world_map <- rnaturalearth::ne_countries(scale = "medium", returnclass = "sf")  
+      # Handle time selection (use the requested index, ensuring it's within range)
+      unique_times <- unique(dataset$time)
+      if (time_index < 1 || time_index > length(unique_times)) {
+        stop("Invalid time index: ", time_index, ". Available range: 1 - ", length(unique_times))
+      }
+      selected_time <- unique_times[time_index]
 
-  # Step 4: Create the heatmap visualization
-  gridded.plot <- 
-    ggplot() +
+      # Filter dataset for selected time and normalize longitude
+      data_filtered <- dataset %>%
+        filter(time == selected_time) %>%
+        select(lon, lat, all_of(variable_name)) %>%
+        mutate(lon = ifelse(lon > 180, lon - 360, lon))  # Normalize longitude
 
-    # Base map layer (countries & coastlines)
-    geom_sf(data = world_map, fill = "white", color = "black", size = 0.3) +
-    
-    # Overlay: Grid squares (thin, semi-transparent grey)
-    geom_tile(data = uv_data, aes(x = lon, y = lat, fill = TUV_UVINDEX), alpha = 0.3, color = "grey80", size = 0.1) +
-    
-    # Custom Heatmap Scale
-    scale_fill_gradientn(
-      colors = c("#024dbb", "#efe400", "#ef0000"),  # Custom colors (blue → yellow → red)
-      values = scales::rescale(c(min(uv_data$TUV_UVINDEX, na.rm = TRUE), 
-                                mean(uv_data$TUV_UVINDEX, na.rm = TRUE), 
-                                max(uv_data$TUV_UVINDEX, na.rm = TRUE))), 
-      na.value = "transparent", 
-      name = "UV Index"
-    ) +
-    
-    # Titles and theme adjustments
-    labs(title = "UV Index Heatmap", x = "Longitude", y = "Latitude") +
-    theme_minimal() +
-    theme(
-      legend.position = "right",
-      legend.key.height = unit(1, "cm"),
-      plot.title = element_text(size = 16, face = "bold", hjust = 0.5)
-    )
+      # Check if data is empty
+      if (nrow(data_filtered) == 0) {
+        warning("No data available for the selected time step.")
+        return(NULL)
+      }
 
-    gridded.plot
+      # Dynamic color scale adjustment
+      min_val <- min(data_filtered[[variable_name]], na.rm = TRUE)
+      max_val <- max(data_filtered[[variable_name]], na.rm = TRUE)
+      mean_val <- mean(data_filtered[[variable_name]], na.rm = TRUE)
 
+      # Generate plot
+      ggplot() +
+        # Base map layer
+        geom_sf(data = config$world_map, fill = "white", color = "black", size = 0.3) +
+        
+        # Overlay: Grid squares with configurable transparency
+        geom_tile(
+          data = data_filtered, aes(x = lon, y = lat, fill = .data[[variable_name]]), 
+          alpha = config$data_overlay_opacity, 
+          color = config$default_grid_color, size = 0.1
+        ) +
+
+        # Custom Heatmap Scale
+        scale_fill_gradientn(
+          colors = config$color_palette,
+          values = scales::rescale(c(min_val, mean_val, max_val)), 
+          na.value = "transparent",
+          name = variable_name
+        ) +
+        
+        # Titles and theme adjustments
+        labs(title = paste(variable_name, "Heatmap (Time Index:", time_index, ")"), 
+            x = "Longitude", y = "Latitude") +
+        theme_minimal() +
+        theme(
+          legend.position = "right",
+          legend.key.height = unit(1, "cm"),
+          plot.title = element_text(size = 16, face = "bold", hjust = 0.5)
+        )
+    }
+
+    plot_gridded_data(dataset_name = "temp_precip", variable_name = "TSMN", time_index = 100)
 
