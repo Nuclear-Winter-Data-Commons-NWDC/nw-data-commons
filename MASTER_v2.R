@@ -10,7 +10,7 @@
   options(java.parameters = "- Xmx8g") #helps R not to fail when importing large xlsx files
 
   # ESTABLISH BASE DIRECTORIES
-  wd <- "/home/wnf/code/2024-11-NW-Data-for-Social-Sciences"
+  wd <- "/home/wnf/code/nw-data-commons"
   setwd(wd) # Set working directory
 
   source.tables.dir <- file.path(wd, "1-source-data") # Use file.path for platform independence
@@ -35,6 +35,9 @@
   library(dplyr)  # Load dplyr for data manipulation
   library(tidyr)  # Load tidyr for reshaping data
   library(sf)     # Load sf for geospatial operations (you'll need this later)
+  library(rnaturalearth)
+  library(rnaturalearthdata)
+  library(viridis)
 
 # 1-CONFIGURATION --------------------------------------------------------------
 
@@ -97,15 +100,15 @@
 
   # Define the structure of your model outputs. Each entry now points to a directory.
   configs.ls <- list(
-    "temp_precip" = list(
-      directory = file.path(source.tables.dir, "1-2-temp-precip"),
-      file_pattern = ".*\\.nc$", # Matches any file ending with .nc
-      variables = c("TS", "TSMN", "TSMX", "PRECC", "PRECL"),
-      time_var = "time",
-      lat_var = "lat",
-      lon_var = "lon",
-      time_bnds_var = "time_bnds"  # <-- Add this if your .nc files have time boundaries
-    ),
+    #"temp_precip" = list(
+    #  directory = file.path(source.tables.dir, "1-2-temp-precip"),
+    #  file_pattern = ".*\\.nc$", # Matches any file ending with .nc
+    #  variables = c("TS", "TSMN", "TSMX", "PRECC", "PRECL"),
+    #  time_var = "time",
+    #  lat_var = "lat",
+    #  lon_var = "lon",
+    #  time_bnds_var = "time_bnds"  # <-- Add this if your .nc files have time boundaries
+    #),
     "uv" = list(
       directory = file.path(source.tables.dir, "3-uv"),
       file_pattern = ".*\\.nc$",
@@ -276,98 +279,49 @@
     purrr::compact()
 
 
-  # Combine all intermediate products into a single large table (optional, but often useful)
-    #if (length(gridded_tables.ls) > 0) {
-    #  intermediate_product_combined <- bind_rows(gridded_tables.ls)
-    #  print("Combined intermediate product created.")
-    #} else {
-    #  print("No intermediate products were created.")
-    #}
 
-# 4-SIMPLIFIED PRODUCT (Aggregation by Geographic Units) -----------------------
+# Visualize Gridded Data (preliminary data check)
+  # Step 1: Extract the first time unit for 'TUV_UVINDEX' in the 'uv' dataset
+  uv_data <- gridded_tables.ls[["uv"]] %>%
+    filter(time == unique(time)[length(unique(time))/5]) %>%  # Select first time unit
+    select(lon, lat, TUV_UVINDEX) %>% # Keep only relevant columns
+    mutate(lon = ifelse(lon > 180, lon - 360, lon))
 
- # Function to perform geospatial merging and aggregation
- create_simplified_product <- function(intermediate_data, country_shapefile_path) {
-   if (is.null(intermediate_data) || nrow(intermediate_data) == 0) {
-     warning("No intermediate data provided for simplification.")
-     return(NULL)
-   }
-   if (!file.exists(country_shapefile_path)) {
-     stop(paste("Country shapefile not found at:", country_shapefile_path))
-   }
+  # Step 2: Convert the data into an sf object (spatial points)
+  uv_sf <- st_as_sf(uv_data, coords = c("lon", "lat"), crs = 4326)
 
-   # Convert the intermediate data to spatial points
-   spatial_data <- intermediate_data %>%
-     st_as_sf(coords = c("lon", "lat"), crs = 4326) # Assuming lat/lon are in WGS84 (EPSG:4326)
+  # Step 3: Create the base map
+  world_map <- rnaturalearth::ne_countries(scale = "medium", returnclass = "sf")  
 
-   # Load country shapefile
-   countries <- st_read(country_shapefile_path)
+  # Step 4: Create the heatmap visualization
+  gridded.plot <- 
+    ggplot() +
 
-   # Perform spatial join to assign each grid point to a country
-   data_with_countries <- spatial_data %>%
-     st_join(countries, join = st_intersects)
+    # Base map layer (countries & coastlines)
+    geom_sf(data = world_map, fill = "white", color = "black", size = 0.3) +
+    
+    # Overlay: Grid squares (thin, semi-transparent grey)
+    geom_tile(data = uv_data, aes(x = lon, y = lat, fill = TUV_UVINDEX), alpha = 0.3, color = "grey80", size = 0.1) +
+    
+    # Custom Heatmap Scale
+    scale_fill_gradientn(
+      colors = c("#024dbb", "#efe400", "#ef0000"),  # Custom colors (blue → yellow → red)
+      values = scales::rescale(c(min(uv_data$TUV_UVINDEX, na.rm = TRUE), 
+                                mean(uv_data$TUV_UVINDEX, na.rm = TRUE), 
+                                max(uv_data$TUV_UVINDEX, na.rm = TRUE))), 
+      na.value = "transparent", 
+      name = "UV Index"
+    ) +
+    
+    # Titles and theme adjustments
+    labs(title = "UV Index Heatmap", x = "Longitude", y = "Latitude") +
+    theme_minimal() +
+    theme(
+      legend.position = "right",
+      legend.key.height = unit(1, "cm"),
+      plot.title = element_text(size = 16, face = "bold", hjust = 0.5)
+    )
 
-   # Calculate average of indicators by country
-   simplified_data <- data_with_countries %>%
-     group_by(model_output, NAME_LONG) %>% # Using the updated column name
-     summarise(
-       across(where(is.numeric) & !c(lat, lon, time), mean, na.rm = TRUE), # Average all other numeric columns
-       .groups = "drop"
-     ) %>%
-     st_drop_geometry() # Remove geometry to get a flat table
+    gridded.plot
 
-   return(simplified_data)
- }
 
- # --- YOU NEED TO PROVIDE THE PATH TO YOUR COUNTRY SHAPEFILE ---
- country_shapefile <- file.path(source.tables.dir, "path_to_your_country_shapefile.shp")
-
- # Create simplified products for each model output (or the combined intermediate product)
- simplified_products <- map(gridded_tables.ls, create_simplified_product, country_shapefile_path = country_shapefile) %>%
-   compact()
-
- # Combine all simplified products (optional)
- if (length(simplified_products) > 0) {
-   simplified_product_combined <- bind_rows(simplified_products)
-   print("Combined simplified product created.")
- } else {
-   print("No simplified products were created.")
- }
-
-# 5-CLEANING & FURTHER PROCESSING (Example) -----------------------------------
-
- # You can add more cleaning steps here, like:
- # - Converting units
- # - Filtering data by time period
- # - Adding new derived variables (e.g., combining PRECC and PRECL)
- # - Handling missing values
-
- # Example: Combining precipitation components in the intermediate product
- if (exists("intermediate_product_combined")) {
-   intermediate_product_cleaned <- intermediate_product_combined %>%
-     mutate(total_precipitation = ifelse(exists("precc") & exists("precl"), precc + precl, NA)) %>%
-     select(-precc, -precl) # Remove original components
-   print("Precipitation components combined in the intermediate product.")
- }
-
- # Example: Converting temperature units (assuming Kelvin in the raw data)
- if (exists("intermediate_product_cleaned")) {
-   intermediate_product_cleaned <- intermediate_product_combined %>%
-     mutate(across(starts_with("ts"), ~ . - 273.15, .names = "{.col}_celsius")) # Convert temperature variables to Celsius
-   print("Temperature units converted to Celsius.")
- }
-
-# 6-OUTPUT (Example) -----------------------------------------------------------
-
- # You can add code here to save your intermediate and simplified products
- # For example, saving as CSV files:
-
- # if (exists("intermediate_product_cleaned")) {
- #   write_csv(intermediate_product_cleaned, file.path(wd, "output", "intermediate_product.csv"))
- #   print("Intermediate product saved to output directory.")
- # }
- #
- # if (exists("simplified_product_combined")) {
- #   write_csv(simplified_product_combined, file.path(wd, "output", "simplified_product.csv"))
- #   print("Simplified product saved to output directory.")
- # }
