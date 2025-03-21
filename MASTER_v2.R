@@ -282,6 +282,79 @@
 
 # 4-CREATE SIMPLIFIED DATASETS BY GEOGRAPHIC UNIT ----------------------------------------------------------------------
 
+  uv_data <- gridded_tables.ls[["uv"]] %>%
+    mutate(lon = ifelse(lon > 180, lon - 360, lon))  # Normalize longitude
+  
+  # Load world country polygons
+  world_map <- ne_countries(scale = "medium", returnclass = "sf")
+
+  # Ensure CRS is WGS84
+  world_map <- st_transform(world_map, crs = 4326)
+
+  # Create a numeric index for each country (since rasters don't support character values)
+  world_map$country_id <- as.numeric(as.factor(world_map$iso_a3))  # Assigns unique numeric IDs
+
+  # Store the mapping for later reference (to convert back to ISO3)
+  iso3_lookup <- world_map %>% dplyr::select(country_id, iso_a3)
+
+  # Define raster resolution (0.1° → ~111km per grid cell)
+  raster_res <- 0.1  
+
+  # Create an empty raster covering the world
+  world_raster <- raster(ext = extent(world_map), res = raster_res, crs = "+proj=longlat +datum=WGS84")
+
+  # Rasterize world polygons using numeric country ID
+  world_raster <- rasterize(world_map, world_raster, field = "country_id")
+
+  # Convert UV data into spatial points
+  uv_sp <- SpatialPointsDataFrame(
+    coords = uv_data[, c("lon", "lat")], 
+    data = uv_data, 
+    proj4string = CRS("+proj=longlat +datum=WGS84")
+  )
+
+  # Assign each UV point a country ID from the raster
+  uv_data$country_id <- extract(world_raster, uv_sp)
+
+  # Remove points with no country ID (ocean points)
+  uv_data <- uv_data %>% filter(!is.na(country_id))
+
+  # Convert country_id back to ISO3 using lookup table
+  uv_data <- uv_data %>%
+    left_join(iso3_lookup, by = "country_id") %>% ############################### FIGURE OUT WHY THIS IS HANGING
+    select(-country_id)  # Keep only ISO3 code
+
+  # View the updated dataset
+  print(head(uv_data))
+
+
+ # Drop geometry and select relevant numeric columns dynamically
+  numeric_vars <- uv_data %>%
+    st_drop_geometry() %>%
+    select(where(is.numeric)) %>%
+    select(-c(lon, lat, file_name)) %>%  # Exclude unwanted columns
+    colnames()
+
+  # Ensure time and model_output are retained
+  numeric_vars <- setdiff(numeric_vars, "time")  # Prevent duplicate summarization
+  grouping_vars <- c(geo_id_col, "time")  # Group by both geography and time
+
+  # Aggregate data by geography and time
+  uv_simplified.tb <- uv_data %>%
+    st_drop_geometry() %>%
+    select(all_of(grouping_vars), model_output, all_of(numeric_vars)) %>%
+    group_by(across(all_of(grouping_vars))) %>%
+    summarize(across(all_of(numeric_vars), mean, na.rm = TRUE), .groups = "drop")
+
+  # View final dataset
+  print(uv_simplified.tb)
+
+
+###################################### NEXT STEPS:
+  #UPDATE NAMES SO NOT ALL ABOUT UV
+
+
+
   data_subdirectory_name <- "3-uv"
 
   # Set the directory containing user-provided datasets and masks
@@ -326,8 +399,8 @@
     geo_id_col <- "iso_a3"  # Standard ISO3 code for countries
   }
 
-  # Ensure the shapefile is in WGS84 projection
-  geo_mask <- st_transform(geo_mask, crs = 4326)
+  geo_mask <- st_transform(geo_mask, crs = 4326) # Ensure the shapefile is in WGS84 projection
+  geo_mask <- st_make_valid(geo_mask) # Ensure valid geometries
 
   # Extract the UV dataset
   uv_data <- gridded_tables.ls[["uv"]] %>%
@@ -337,20 +410,14 @@
   uv_sf <- st_as_sf(uv_data, coords = c("lon", "lat"), crs = 4326)
 
   # Perform spatial join to assign each UV point to a geographic unit
-  uv_data <- st_join(uv_sf, geo_mask, left = FALSE)  # Drops unmatched points (e.g., ocean)
+  uv_data <- st_join(uv_sf, geo_mask, left = FALSE, largest = TRUE) # Drops unmatched points (e.g., ocean)
 
   # Check that the geographic identifier column exists after the join
   if (!geo_id_col %in% colnames(uv_data)) {
     stop("Error: Geographic identifier column '", geo_id_col, "' not found in UV dataset after spatial join.")
   }
 
-  # Group by geographic unit and calculate mean values for each variable
-  uv_simplified.tb <- uv_data %>%
-    group_by(!!sym(geo_id_col)) %>%
-    summarize(across(where(is.numeric), mean, na.rm = TRUE), .groups = "drop")
-
-  # View the final geographic-level dataset
-  print(uv_simplified.tb)
+ 
 
 # 5-VIZUALIZE DATA ----------------------------------------------------------------------
 
@@ -582,7 +649,7 @@
     shinyApp(ui = ui, server = server)
   }
 
-  #animate_heatmap(dataset_name = "uv")
+  animate_heatmap(dataset_name = "uv")
 
 
 
