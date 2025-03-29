@@ -183,12 +183,12 @@
     
   ImportSourceData_GoogleSheets("1-2. Temp Precip")
 
-  #source_table_list <- temperature_and_precipitation.ls
-  #source_table_names <- temperature_and_precipitation.ls %>% names
+  #source_table_list <- temperature_and_precipitation.ls[[1]]
+  #source_table_names <- temperature_and_precipitation.ls %>% names %>% .[1] %>% list(.)
   CleanReshape_TempPrecip <- 
     function(source_table_list, source_table_names){
       
-      theme <- "1-2.temp_precip"
+      #theme <- "1-2.temp_precip"
       
       scenario <- 
         source_table_names %>%
@@ -211,30 +211,25 @@
         melt(., id = c("country.id")) %>% #reshape to long
         mutate(
           soot.injection.scenario = scenario,  #add scenario variable
-          variable = variable %>% as.character, #convert variable made from column names of wide table from factor to character
+          variable = variable %>% as.character, #convert variable made from column names of wide table from #factor to character
           years.elapsed = str_extract(variable, "^[^ ]+") %>% as.numeric,  #create year variable
           month = str_extract(variable, "(?<= - ).*") %>% as.numeric,  #create month variable
-          indicator = indicator, #create indicator variable that tells us which indicator of UV we are looking at (e.g. UVA, UVB, UV Index, etc.)
-          theme = theme
+          indicator = indicator #create indicator variable that tells us which indicator we are looking at
+          #theme = theme
         ) %>%
-        left_join( #add country metadata from configs table
-          ., 
-          countries.tb,
-          by = "country.id"
+        
+        mutate(
+          months.elapsed = years.elapsed*12+month
         ) %>%
-        left_join( #add months metadata (seasons in n & s hemisphere)
-          ., 
-          months.tb,
-          by = "month"
-        ) %>%
-        dplyr::select( #select & order final variables
-          country.id, country.name, country.iso3,	country.hemisphere,	
-          country.region,	country.sub.region,	country.intermediate.region, country.nuclear.weapons,
-          soot.injection.scenario, 
-          years.elapsed, month, season.n.hemisphere, season.s.hemisphere,
-          indicator, value
+        mutate(
+          start.date = case_when(
+            soot.injection.scenario == 0 ~ as.Date("01/31/2018", format = "%m/%d/%Y"),
+            soot.injection.scenario == 5 ~ as.Date("01/31/2020", format = "%m/%d/%Y"),
+            soot.injection.scenario == 16 ~ as.Date("01/31/2020", format = "%m/%d/%Y"),
+            soot.injection.scenario == 150 ~ as.Date("01/31/2020", format = "%m/%d/%Y"),
+            TRUE ~ NA_Date_  # Handle unexpected values safely
+          )
         ) %>% 
-        ReplaceNames(., "value", "indicator.value") %>%
         as_tibble  #ensure final result is a tibble
       
       print(source_table_names)
@@ -249,7 +244,38 @@
         names(temperature_and_precipitation.ls)
     ) %>%
     do.call(rbind, .) %>%
+    pivot_wider(
+      names_from = indicator,
+      values_from = value
+    ) %>%
+    # #mutate( #converting units from m/s to mm/month and kelvin to celsius
+        # #  precip.rate.convective = precip.rate.convective * 1000 * 86400 * 30.4375,
+        # #  #precip.rate.stable = precip.rate.stable * 1000 * 86400 * 30.4375,
+        # #  surface.temp = surface.temp - 273.15,
+        # #  #surface.temp.min = surface.temp.min - 273.15,
+        # #  #surface.temp.max = surface.temp.max - 273.15
+        # #) %>%
+        # left_join( #add months metadata (seasons in n & s hemisphere)
+        #   ., 
+        #   months.tb,
+        #   by = "month"
+        # ) %>%
+        # left_join( #add country metadata from configs table
+        #   ., 
+        #   countries.tb,
+        #   by = "country.id"
+        # ) %>%
+          # #dplyr::select( #select & order final variables
+        # #  country.id, country.name, country.iso3,	country.hemisphere,	
+        # #  country.region,	country.sub.region,	country.intermediate.region, country.nuclear.weapons, nato.member.2024,
+        # #  soot.injection.scenario, 
+        # #  years.elapsed, month, season.n.hemisphere, season.s.hemisphere,
+        # #  indicator, value
+        #) %>% 
+        #ReplaceNames(., "value", "indicator.value") %>%
     as_tibble()
+
+temp.precip.clean.tb
   
   #temp.precip.clean.tb %>%
   #  dplyr::select(-value) %>%

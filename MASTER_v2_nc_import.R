@@ -102,24 +102,24 @@
 
   # Define the structure of your model outputs. Each entry now points to a directory.
   configs.ls <- list(
-    "temp_precip" = list(
-      directory = file.path(source.tables.dir, "1-2-temp-precip"),
-      file_pattern = ".*\\.nc$", # Matches any file ending with .nc
-      variables = c("TS", "TSMN", "TSMX", "PRECC", "PRECL"),
-      time_var = "time",
-      lat_var = "lat",
-      lon_var = "lon",
-      time_bnds_var = "time_bnds"  # <-- Add this if your .nc files have time boundaries
-    )#,
-    #"uv" = list(
-    #  directory = file.path(source.tables.dir, "3-uv"),
-    #  file_pattern = ".*\\.nc$",
-    #  variables = c("TUV_UVA", "TUV_UVB", "TUV_UVC", "TUV_UVINDEX", "TUV_UVINDEXMX"),
+    #"temp_precip" = list(
+    #  directory = file.path(source.tables.dir, "1-2-temp-precip"),
+    #  file_pattern = ".*\\.nc$", # Matches any file ending with .nc
+    #  variables = c("TS", "TSMN", "TSMX", "PRECC", "PRECL"),
     #  time_var = "time",
     #  lat_var = "lat",
-    #  lon_var = "lon"
-    #  # no time_bnds_var here because UV files might not have it
-    #)
+    #  lon_var = "lon",
+    #  time_bnds_var = "time_bnds"  # <-- Add this if your .nc files have time boundaries
+    #),
+    "uv" = list(
+      directory = file.path(source.tables.dir, "3-uv"),
+      file_pattern = ".*\\.nc$",
+      variables = c("TUV_UVA", "TUV_UVB", "TUV_UVC", "TUV_UVINDEX", "TUV_UVINDEXMX"),
+      time_var = "time",
+      lat_var = "lat",
+      lon_var = "lon"
+      # no time_bnds_var here because UV files might not have it
+    )
   )
 
 # 2-IMPORT ----------------------------------------------------------------------

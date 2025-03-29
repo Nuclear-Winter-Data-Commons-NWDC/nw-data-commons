@@ -2,14 +2,14 @@
   --Rename var climate.forcing.scenario to soot.injection.scenario
   --Get script workign in VS Code. 
   Ensure all soot.injection.scenario variables are numeric
-  
-
-0.1 COUNTRY-LEVEL DATA 
-  Add country metadata: NATO member (2024), population, land area in sq. km
   Add code to produce country-level datasets & summaries
 
+
+0.1 COUNTRY-LEVEL DATA 
+    -- Add country metadata: NATO member (2024), population, land area in sq. km
+  
 0.2 MONTHLY DATA
-  For monthly data, ensure 'season' added to all tables but with number in front so it orders correctly
+    -- For monthly data, ensure 'season' added to all tables but with number in front so it orders correctly
 
 1 & 2. TEMP & PRECIP
     --Make var climate.forcing.scenario numeric so it will order correctly
