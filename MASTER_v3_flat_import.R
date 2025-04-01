@@ -212,7 +212,6 @@
           years.elapsed = str_extract(variable, "^[^ ]+") %>% as.numeric,  #create year variable
           month = str_extract(variable, "(?<= - ).*") %>% as.numeric,  #create month variable
           indicator = indicator #create indicator variable that tells us which indicator we are looking at
-          #theme = theme
         ) %>%
         
         mutate(
@@ -283,8 +282,6 @@
     CleanReshape_UV <- 
       function(source_table_list, source_table_names){
         
-        theme <- "3.uv"
-        
         scenario <- 
           source_table_names %>%
           strsplit(., "_") %>% 
@@ -316,7 +313,6 @@
             years.elapsed = str_extract(variable, "^[^ ]+") %>% as.numeric,  #create year variable
             month = str_extract(variable, "(?<= - ).*") %>% as.numeric,  #create month variable
             indicator = indicator, #create indicator variable that tells us which indicator of UV we are looking at (e.g. UVA, UVB, UV Index, etc.)
-            theme = theme
           ) %>%
           left_join( #add country metadata from configs table
             ., 
@@ -360,68 +356,60 @@
     
     ImportSourceData_GoogleSheets("4a. Agriculture CLM")
     
-    CleanReshape_AgricultureCLM <- 
-      function(source_table_list, source_table_names){
-        
-        theme  <- "4a.agriculture"
-        
-        crop <- 
-          source_table_names %>%
-          strsplit(., "-") %>% 
-          unlist %>%
-          .[1]
-        
-        years.elapsed <- 
-          source_table_names %>%
-          strsplit(., "-") %>% 
-          unlist %>%
-          .[2]
-        
-        result <- 
-          source_table_list %>% 
-          ReplaceNames(., names(.),tolower(names(.))) %>% #lower-case all table names
-          ReplaceNames(., c("nation-id", "nation-name"), c("country.id","country.name")) %>%  #standardize geographic variable names
-          select(-id, -country.name) %>%
-          melt(., id = "country.id") %>% #reshape to long
-          mutate( #add/rename variables
-            soot.injection.scenario = recode(
-              variable, 
-              "5tg" = 5,
-              "16tg" = 16,
-              "27tg" = 27,
-              "37tg" = 37,
-              "47tg" = 47,
-              "150tg" = 150
-            ),
-            crop = crop,
-            years.elapsed = years.elapsed,
-            pct.change.harvest.yield = na_if(value, 9.96920996838686e+36),
-            theme = theme 
-          ) %>%
-          left_join( #add country metadata from configs table
-            ., 
-            countries.tb,
-            by = "country.id"
-          ) %>%
-          #left_join( #add associated publications metadata from configs table
-          #  ., 
-          #  associated.publications.tb,
-          #  by = c("theme","soot.injection.scenario")
-          #) %>%
-          select( #select & order final variables
-            country.id, country.name, country.iso3,	country.hemisphere,	
-            country.region,	country.sub.region,	country.intermediate.region, country.nuclear.weapons, 
-            soot.injection.scenario, 
-            years.elapsed,
-            crop, 
-            pct.change.harvest.yield
-          ) %>% 
-          as_tibble #ensure final result is a tibble
-        
-        print(source_table_names)
-        
-        return(result)
-      }
+    CleanReshape_AgricultureCLM <- function(source_table_list, source_table_names){
+      
+      crop <- 
+        source_table_names %>%
+        strsplit(., "-") %>% 
+        unlist %>%
+        .[1]
+      
+      years.elapsed <- 
+        source_table_names %>%
+        strsplit(., "-") %>% 
+        unlist %>%
+        .[2]
+      
+      result <- 
+        source_table_list %>% 
+        ReplaceNames(., names(.),tolower(names(.))) %>% #lower-case all table names
+        ReplaceNames(., c("nation-id", "nation-name"), c("country.id","country.name")) %>%  #standardize geographic variable names
+        select(-id, -country.name) %>%
+        melt(., id = "country.id") %>% #reshape to long
+        mutate( #add/rename variables
+          soot.injection.scenario = recode(
+            variable, 
+            "5tg" = 5,
+            "16tg" = 16,
+            "27tg" = 27,
+            "37tg" = 37,
+            "47tg" = 47,
+            "150tg" = 150
+          ),
+          crop = crop,
+          years.elapsed = years.elapsed,
+          pct.change.harvest.yield = na_if(value, 9.96920996838686e+36)
+        ) %>%
+        left_join( #add country metadata from configs table
+          ., 
+          countries.tb,
+          by = "country.id"
+        ) %>%
+        select( #select & order final variables
+          country.id, country.name, country.iso3,	country.hemisphere,	
+          country.region,	country.sub.region,	country.intermediate.region, country.nuclear.weapons, 
+          soot.injection.scenario, 
+          years.elapsed,
+          crop, 
+          pct.change.harvest.yield
+        ) %>% 
+        as_tibble #ensure final result is a tibble
+      
+      print(source_table_names)
+      
+      return(result)
+
+    }
     
     agriculture.clm.clean.tb <- #create final cleaned & compiled data table
       Map(
@@ -505,59 +493,58 @@
     
     ImportSourceData_GoogleSheets("5. Fish Catch")
     
-    CleanReshape_FishCatch <- 
-      function(source_table_list, source_table_names){
-        
-        scenario <- 
-          source_table_names
-        
-        result <- 
-          source_table_list %>% 
-          select(names(.)[!str_detect(names(.), "ctrl")]) %>%
-          ReplaceNames(., names(.),tolower(names(.))) %>% #lower-case all table names
-          ReplaceNames(., c("eez_no", "eez_area"), c("eez.num", "eez.area")) %>%
-          mutate(across(where(is.list), ~ suppressWarnings(as.numeric(unlist(.))))) %>% #convert all list variables into character
-          melt(., id = c("eez","eez.num", "eez.area")) %>% #reshape to long
-          mutate( #add/rename variables
-            soot.injection.scenario = recode(
-              scenario, 
-              "cntrl" = 0,
-              "control" = 0,
-              "5Tg" = 5,
-              "16Tg" = 16,
-              "27Tg" = 27,
-              "37Tg" = 37,
-              "47Tg" = 47,
-              "150Tg" = 150
-            ),
-            years.elapsed = variable %>% str_extract(., "(?<=_)[^_]+$") %>% str_remove(., "yr") %>% as.numeric,
-            indicator.raw = 
-              variable %>% 
-              str_extract(., "(?<=_).*?(?=_[^_]*$)"),
-            value = value %>% divide_by(10^9),
-          ) %>%
-          mutate(
-            indicator = 
-              IndexMatchToVectorFromTibble(
-                indicator.raw, 
-                fish.catch.indicators.tb,
-                "extracted.indicator.name.raw",
-                "indicator.name.clean",
-                mult.replacements.per.cell = FALSE
-              )
-          ) %>%
-          dcast(
-            ., 
-            soot.injection.scenario + eez + eez.num + eez.area + years.elapsed ~ indicator,
-            value.var = "value"
-          ) %>%
-          as_tibble #ensure final result is a tibble
-        
-        print(source_table_names)
-        
-        return(result)
-        
-      }
+    CleanReshape_FishCatch <- function(source_table_list, source_table_names){
+
+      scenario <- 
+        source_table_names
+      
+      result <- 
+        source_table_list %>% 
+        select(names(.)[!str_detect(names(.), "ctrl")]) %>%
+        ReplaceNames(., names(.),tolower(names(.))) %>% #lower-case all table names
+        ReplaceNames(., c("eez_no"), c("eez.num")) %>%
+        mutate(across(where(is.list), ~ suppressWarnings(as.numeric(unlist(.))))) %>% #convert all list variables into character
+        melt(., id = "eez.num") %>% #reshape to long
+        mutate( #add/rename variables
+          soot.injection.scenario = recode(
+            scenario, 
+            "cntrl" = 0,
+            "control" = 0,
+            "5Tg" = 5,
+            "16Tg" = 16,
+            "27Tg" = 27,
+            "37Tg" = 37,
+            "47Tg" = 47,
+            "150Tg" = 150
+          ),
+          years.elapsed = variable %>% str_extract(., "(?<=_)[^_]+$") %>% str_remove(., "yr") %>% as.numeric,
+          indicator.raw = 
+            variable %>% 
+            str_extract(., "(?<=_).*?(?=_[^_]*$)"),
+          value = value %>% divide_by(10^9),
+        ) %>%
+        mutate(
+          indicator = 
+            IndexMatchToVectorFromTibble(
+              indicator.raw, 
+              fish.catch.indicators.tb,
+              "extracted.indicator.name.raw",
+              "indicator.name.clean",
+              mult.replacements.per.cell = FALSE
+            )
+        ) %>%
+        dcast(
+          ., 
+          soot.injection.scenario + eez.num + years.elapsed ~ indicator,
+          value.var = "value"
+        ) %>%
+        as_tibble #ensure final result is a tibble
+      
+      print(source_table_names)
+      
+      return(result)
+      
+    }
     
     fish.catch.clean.tb <- #create final cleaned & compiled data table
       Map(
@@ -566,17 +553,23 @@
         names(fish.catch.ls)
       ) %>%
       bind_rows(.) %>%
+      left_join( #add eez metadata from configs table
+        ., 
+        fish.catch.eez.tb,
+        by = "eez.num"
+      ) %>%
       mutate(
         mean.pct.catch.change = mean.pct.catch.change * 10^9, #initial CleanReshape function divided all values by 10^9 to get 1000s of metric tons of wet biomass, but these % variables have to be re-rescaled
         std.dev.pct.catch.change = std.dev.pct.catch.change * 10^9,
-        eez = eez %>% gsub("Exclusive Economic Zone", "EEZ", .),
-        mean.catch.per.sq.km = mean.catch/eez.area
+        eez.name = eez.name %>% gsub("Exclusive Economic Zone", "EEZ", .),
+        mean.catch.per.1000.sq.km = mean.catch/(eez.area/1000)
       ) %>%
       select( #select & order final variables
-        eez, eez.num, eez.area, 
+        eez.name, eez.num, eez.area, 
         soot.injection.scenario,
         years.elapsed, 
         mean.catch,  
+        mean.catch.per.1000.sq.km,
         mean.catch.change, 
         mean.pct.catch.change, 
         std.dev.catch,
@@ -586,7 +579,7 @@
     
     #fish.catch.clean.tb %>%
     #  select(
-    #    eez, eez.num, eez.area, 
+    #    eez, eez.num, 
     #    soot.injection.scenario, 
     #    years.elapsed
     #  ) %>%
@@ -596,52 +589,53 @@
     
     ImportSourceData_GoogleSheets("6. Sea Ice")
     
-    CleanReshape_SeaIce <- 
-      function(source_table){
-        
-        scenario <- names(source_table)[1] %>% str_extract(., "(?<=NW-).*")
-        
-        theme  <- "6.sea.ice"
-        
-        result <-
-          source_table %>%
-          .[-1,] %>%
-          ReplaceNames(., names(source_table)[1], "port") %>%
-          melt(
-            .,
-            id = "port"
-          ) %>%
-          ReplaceNames(., c("variable","value"), c("month","sea.ice.thickness.meters")) %>%
-          mutate(
-            months.elapsed = as.character(month) %>% gsub("\\.", "", .) %>% as.numeric %>% subtract(1),  # Clean and convert month strings
-            month = (months.elapsed - 1) %% 12 + 1,  # Calculate the month (1-12)
-            years.elapsed = (months.elapsed - 1) %/% 12 # Calculate the year (0, 1, 2, ...)
-          ) %>%
-          mutate(
-            soot.injection.scenario =
-              recode(scenario, 
-                "37Tg" = 37,
-                "46.8Tg" = 47,
-                "150Tg" = 150
-              ),
-            theme = theme,
-          ) %>%
-          left_join( #add months metadata (seasons in n & s hemisphere)
-            ., 
-            months.tb,
-            by = "month"
-          ) %>%
-          select(
-            port,
-            soot.injection.scenario, 
-            month, months.elapsed, years.elapsed, 
-            indicator, 
-            sea.ice.thickness.meters
-          ) %>%
-          as_tibble
-        
-        return(result)
-      }
+    CleanReshape_SeaIce <- function(source_table){
+    
+      scenario <- names(source_table)[1] %>% str_extract(., "(?<=NW-).*")
+      
+      result <-
+        source_table %>%
+        .[-1,] %>%
+        ReplaceNames(., names(source_table)[1], "port") %>%
+        melt(
+          .,
+          id = "port"
+        ) %>%
+        ReplaceNames(., c("variable","value"), c("month","sea.ice.thickness.meters")) %>%
+        mutate(
+          months.elapsed = as.character(month) %>% gsub("\\.", "", .) %>% as.numeric %>% subtract(1),  # Clean and convert month strings
+          month = (months.elapsed - 1) %% 12 + 1,  # Calculate the month (1-12)
+          years.elapsed = (months.elapsed - 1) %/% 12 # Calculate the year (0, 1, 2, ...)
+        ) %>%
+        mutate(
+          soot.injection.scenario =
+            recode(scenario, 
+              "37Tg" = 37,
+              "46.8Tg" = 47,
+              "150Tg" = 150
+            )
+        ) %>%
+        left_join( #add months metadata (seasons in n & s hemisphere)
+          ., 
+          months.tb,
+          by = "month"
+        ) %>%
+        left_join( #add port metadata
+          ., 
+          ports.tb,
+          by = "port"
+        ) %>%
+        select(
+          port, country, container.traffic, lattitude, longitude,
+          soot.injection.scenario, 
+          months.elapsed, years.elapsed, month, season.n.hemisphere, season.s.hemisphere, 
+          sea.ice.thickness.meters
+        ) %>%
+        as_tibble
+      
+      return(result)
+    
+    }
     
     sea.ice.clean.tb <-
       lapply(
@@ -661,8 +655,7 @@
     
     clean_object_names <- 
       c(
-        "temperature.clean.tb",
-        "precipitation.clean.tb",
+        "temp.precip.clean.tb",
         "uv.clean.tb",
         "agriculture.clm.clean.tb",
         "agriculture.agmip.clean.tb",
@@ -672,8 +665,7 @@
     
     clean_table_names <- 
       c(
-        "1.temperature",
-        "2.precipitation",
+        "1-2.temperature & precipitation",
         "3.uv",
         "4a.agriculture.clm",
         "4b.agriculture.agmip",

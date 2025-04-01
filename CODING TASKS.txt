@@ -1,6 +1,6 @@
 0. OVERARCHING
-  --Rename var climate.forcing.scenario to soot.injection.scenario
-  --Get script workign in VS Code. 
+    --Rename var climate.forcing.scenario to soot.injection.scenario
+    --Get script workign in VS Code. 
   Ensure all soot.injection.scenario variables are numeric
   Add code to produce country-level datasets & summaries
 
@@ -19,7 +19,6 @@
       --PRECL: m/s to mm/month
       --TS, TSMN, TSMX: kelvin to celsius
     --Finalize & merge cleaning code
-  Produce 2 versions: (1) by-country, averages; (2) courser grid, working with Victoria
 
 3. UV
     --Make var climate.forcing.scenario numeric so it will order correctly
@@ -49,7 +48,7 @@
     --Finalize selection of unit for each var - Thousands of metric tons
     --Make sure indicator names/definitions clear within data table (see config table 'fisheries.indicators')
     --Remove associated.publications metadata
-  Add indicator: mean catch per km2
+    --Add indicator: mean catch per 1000 km sq
   
 6. SEA ICE
     --Make var climate.forcing.scenario numeric so it will order correctly
