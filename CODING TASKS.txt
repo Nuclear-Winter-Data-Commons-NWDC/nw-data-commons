@@ -18,7 +18,7 @@
       --PRECC: m/s to mm/month
       --PRECL: m/s to mm/month
       --TS, TSMN, TSMX: kelvin to celsius
-  Finalize & merge cleaning code
+    --Finalize & merge cleaning code
   Produce 2 versions: (1) by-country, averages; (2) courser grid, working with Victoria
 
 3. UV

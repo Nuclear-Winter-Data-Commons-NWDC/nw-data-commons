@@ -181,15 +181,12 @@
 
   #1. TEMPERATURE & PRECIPITATION ----
     
-  ImportSourceData_GoogleSheets("1-2. Temp Precip")
+    ImportSourceData_GoogleSheets("1-2. Temp Precip")
 
-  #source_table_list <- temperature_and_precipitation.ls[[1]]
-  #source_table_names <- temperature_and_precipitation.ls %>% names %>% .[1] %>% list(.)
-  CleanReshape_TempPrecip <- 
-    function(source_table_list, source_table_names){
-      
-      #theme <- "1-2.temp_precip"
-      
+    #source_table_list <- temperature_and_precipitation.ls[[1]]
+    #source_table_names <- temperature_and_precipitation.ls %>% names %>% .[1] %>% list(.)
+    CleanReshape_TempPrecip <- function(source_table_list, source_table_names){
+
       scenario <- 
         source_table_names %>%
         strsplit(., "_") %>% 
@@ -230,105 +227,54 @@
             TRUE ~ NA_Date_  # Handle unexpected values safely
           )
         ) %>% 
+        mutate(date = start.date %m+% months(months.elapsed)) %>%
         as_tibble  #ensure final result is a tibble
       
       print(source_table_names)
       
       return(result)
+    
     }
-  
-  temp.precip.clean.tb <-
-    Map(
-        CleanReshape_TempPrecip,
-        temperature_and_precipitation.ls,
-        names(temperature_and_precipitation.ls)
-    ) %>%
-    do.call(rbind, .) %>%
-    pivot_wider(
-      names_from = indicator,
-      values_from = value
-    ) %>%
-    # #mutate( #converting units from m/s to mm/month and kelvin to celsius
-        # #  precip.rate.convective = precip.rate.convective * 1000 * 86400 * 30.4375,
-        # #  #precip.rate.stable = precip.rate.stable * 1000 * 86400 * 30.4375,
-        # #  surface.temp = surface.temp - 273.15,
-        # #  #surface.temp.min = surface.temp.min - 273.15,
-        # #  #surface.temp.max = surface.temp.max - 273.15
-        # #) %>%
-        # left_join( #add months metadata (seasons in n & s hemisphere)
-        #   ., 
-        #   months.tb,
-        #   by = "month"
-        # ) %>%
-        # left_join( #add country metadata from configs table
-        #   ., 
-        #   countries.tb,
-        #   by = "country.id"
-        # ) %>%
-          # #dplyr::select( #select & order final variables
-        # #  country.id, country.name, country.iso3,	country.hemisphere,	
-        # #  country.region,	country.sub.region,	country.intermediate.region, country.nuclear.weapons, nato.member.2024,
-        # #  soot.injection.scenario, 
-        # #  years.elapsed, month, season.n.hemisphere, season.s.hemisphere,
-        # #  indicator, value
-        #) %>% 
-        #ReplaceNames(., "value", "indicator.value") %>%
-    as_tibble()
-
-temp.precip.clean.tb
-  
-  #temp.precip.clean.tb %>%
-  #  dplyr::select(-value) %>%
-  #  apply(., 2, TableWithNA)
-
-    # Create Intermediate Product: clean & reshape
-
-      temp.precip.clean.tb <-
-        temp.precip.compiled.tb %>%
-        #.[sample(nrow(.), 50000), ] %>%
-        ReplaceNames(
+    
+    temp.precip.clean.tb <-
+      Map(
+          CleanReshape_TempPrecip,
+          temperature_and_precipitation.ls,
+          names(temperature_and_precipitation.ls)
+      ) %>%
+      do.call(rbind, .) %>%
+      pivot_wider(
+        names_from = indicator,
+        values_from = value
+      ) %>%
+      mutate( #converting units from m/s to mm/month and kelvin to celsius
+        precip.rate.convective = precip.rate.convective * 1000 * 86400 * 30.4375,
+        #precip.rate.stable = precip.rate.stable * 1000 * 86400 * 30.4375,
+        surface.temp = surface.temp - 273.15,
+        #surface.temp.min = surface.temp.min - 273.15,
+        #surface.temp.max = surface.temp.max - 273.15
+        ) %>%
+        left_join( #add months metadata (seasons in n & s hemisphere)
           ., 
-          current.names = c("lat","lon","days_elapsed", "file_name", "precc", "precl", "ts", "tsmn", "tsmx"),
-          new.names = c("latitude", "longitude", "days.elapsed","file.name","precip.rate.convective","precip.rate.stable","surface.temp","surface.temp.min","surface.temp.max")
+          months.tb,
+          by = "month"
         ) %>%
-        mutate(
-          soot.injection.scenario = recode(
-            soot.injection.scenario, 
-            cntrl_03 = 0,
-            targets_04 = 16,
-            targets_05 = 5,
-            ur_150 = 150
-          )
+        left_join( #add country metadata from configs table
+          ., 
+          countries.tb,
+          by = "country.id"
         ) %>%
-        mutate(
-          start.date = case_when(
-            soot.injection.scenario == 0 ~ as.Date("01/31/2018", format = "%m/%d/%Y"),
-            soot.injection.scenario == 5 ~ as.Date("01/31/2020", format = "%m/%d/%Y"),
-            soot.injection.scenario == 16 ~ as.Date("01/31/2020", format = "%m/%d/%Y"),
-            soot.injection.scenario == 150 ~ as.Date("01/31/2020", format = "%m/%d/%Y"),
-            TRUE ~ NA_Date_  # Handle unexpected values safely
-          )
+        dplyr::select( #select & order final variables
+          country.id, country.name, country.iso3,	country.hemisphere,	
+          country.region,	country.sub.region,	country.intermediate.region, country.nuclear.weapons, country.nato.member.2024,
+          soot.injection.scenario, 
+          years.elapsed, months.elapsed, date, month, season.n.hemisphere, season.s.hemisphere,
+          surface.temp, precip.rate.convective
         ) %>%
-        mutate(
-          date = start.date + days.elapsed,
-          month = month(date),
-          years.elapsed = round(days.elapsed / 365, digits = 0),  
-          months.elapsed = years.elapsed*12+month
-        ) %>%
-        mutate( #converting units from m/s to mm/month and kelvin to celsius
-          precip.rate.convective = precip.rate.convective * 1000 * 86400 * 30.4375,
-          precip.rate.stable = precip.rate.stable * 1000 * 86400 * 30.4375,
-          surface.temp = surface.temp - 273.15,
-          surface.temp.min = surface.temp.min - 273.15,
-          surface.temp.max = surface.temp.max - 273.15
-        ) %>%
-        dplyr::select(
-          soot.injection.scenario, latitude, longitude, years.elapsed, months.elapsed, month, 
-          precip.rate.convective, precip.rate.stable, surface.temp, surface.temp.min, surface.temp.max
-        ) 
+      as_tibble()
 
-   
-      
+    #temp.precip.clean.tb
+
 
   #3. UV ----
     
