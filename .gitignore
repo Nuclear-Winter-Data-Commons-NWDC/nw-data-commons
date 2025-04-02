@@ -1,5 +1,7 @@
 *.nc
 *.nc4
 *.csv
+*.xlsx
 
 1-source-data/*
+2-outputs/*

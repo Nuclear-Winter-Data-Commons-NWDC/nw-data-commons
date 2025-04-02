@@ -1,5 +1,5 @@
 #00000000000000000000000000000000000000000000000000000000000#
-#0000       2024-11 NW Data for Social Sciences         0000#
+#0000       2024-11 NW Data Commons                     0000#
 #00000000000000000000000000000000000000000000000000000000000#
 
 # 0-SETUP --------------------------------------------------------------------------------
@@ -18,7 +18,7 @@
     
     # Set Working Directory and R Project Directory
 
-      wd <- "/home/wnf/code/2024-11-NW-Data-for-Social-Sciences"
+      wd <- "/home/wnf/code/nw-data-commons"
 
     #Set Source Tables Directory (raw data, configs, etc.)
       source.tables.dir <- paste0(wd, "/1-source-data")
@@ -81,111 +81,44 @@
       mutate(mimeType = map_chr(drive_resource, "mimeType")) %>%
       filter(mimeType == "application/vnd.google-apps.spreadsheet") 
       
-    ImportSourceData_GoogleSheets <- 
-      function(name_of_file_to_be_imported){
+    ImportSourceData_GoogleSheets <- function(name_of_file_to_be_imported){
         
-        file.id <- 
-          import.files.tb %>% 
-          filter(name == name_of_file_to_be_imported) %>% 
-          dplyr::select(id) %>%
-          unlist %>% as.vector() %>%
-          as_sheets_id(.)
-        
-        sheet.names <- sheet_names(file.id)
-        
-        configs <- source.table.configs.tb %>% filter(file.name == name_of_file_to_be_imported)
-        
-        import.tables.ls <- 
-          lapply(
-            sheet.names, 
-            function(x){
-              read_sheet(file.id, sheet = x)
-            }
-          )
-        
-        names(import.tables.ls) <- sheet.names #assign sheet names as list element names
-        
-        list.name <- configs$table.name %>% paste0(., ".ls", collapse = "")
-        assign(list.name, import.tables.ls, envir = .GlobalEnv) #create a list of the imported tables in the global environment
-        print(list.name)
-        
-      } # End of function definition for ImportSourceData_GoogleSheets
-    
-    # ImportSourceData_NC <- function(directory, num_files = NULL) {
+      file.id <- 
+        import.files.tb %>% 
+        filter(name == name_of_file_to_be_imported) %>% 
+        dplyr::select(id) %>%
+        unlist %>% as.vector() %>%
+        as_sheets_id(.)
       
-    #   nc.dir <- directory
-    #   nc.files.all <- list.files(nc.dir, pattern = "\\.nc$", full.names = TRUE)
+      sheet.names <- sheet_names(file.id)
       
-    #   # Set num_files to the total number of files if not specified
-    #   if (is.null(num_files)) {
-    #     num_files <- length(nc.files.all)
-    #   }
+      configs <- source.table.configs.tb %>% filter(file.name == name_of_file_to_be_imported)
       
-    #   # Select random subset of files if num_files is less than the total
-    #   nc.files <- nc.files.all[sample(1:length(nc.files.all), min(num_files, length(nc.files.all)), replace = FALSE)]
+      import.tables.ls <- 
+        lapply(
+          sheet.names, 
+          function(x){
+            read_sheet(file.id, sheet = x)
+          }
+        )
       
-    #   data.ls <- list()
+      names(import.tables.ls) <- sheet.names #assign sheet names as list element names
       
-    #   for (file in nc.files) {
-    #     print(paste("Processing file:", file))
-    #     nc <- nc_open(file)
-        
-    #     # Extract dimensions
-    #     lat <- ncvar_get(nc, "lat")
-    #     lon <- ncvar_get(nc, "lon")
-    #     days_elapsed <- ncvar_get(nc, "time")
-        
-    #     # Check if dimensions are valid
-    #     if (is.null(lat) || is.null(lon) || is.null(time)) {
-    #       warning(paste("Skipping file due to missing dimensions:", file))
-    #       nc_close(nc)
-    #       next
-    #     }
-        
-    #     # Create a data frame for this file
-    #     file.data <- expand.grid(lat = lat, lon = lon, days_elapsed = days_elapsed, file.name = basename(file)) %>% as_tibble()
-        
-    #     for (var.name in names(nc$var)) {
-    #       var.data <- ncvar_get(nc, var.name)
-    #       var.dims <- dim(var.data)
-          
-    #       print(paste("Variable:", var.name, "Dimensions:", paste(var.dims, collapse = " x ")))
-          
-    #       # Handle variables with 3D structure
-    #       expected.dims <- c(length(lon), length(lat), max(1, length(time)))
-          
-    #       if (!is.null(var.data) && !is.null(var.dims)) {
-    #         if (length(var.dims) == 3 && all(var.dims == expected.dims)) {
-    #           # 3D variable: lon x lat x time
-    #           file.data[[var.name]] <- as.vector(var.data)
-    #         } else if (length(var.dims) == 2 && all(var.dims == c(length(lon), length(lat)))) {
-    #           # 2D variable (e.g., no time dimension): replicate across time
-    #           var.data <- array(var.data, dim = c(length(lon), length(lat), length(time)))
-    #           file.data[[var.name]] <- as.vector(var.data)
-    #         } else {
-    #           warning(paste("Variable", var.name, "has unexpected dimensions. Skipping."))
-    #         }
-    #       } else {
-    #         warning(paste("Variable", var.name, "is NULL or invalid. Skipping."))
-    #       }
-    #     }
-        
-    #     nc_close(nc)
-    #     data.ls[[file]] <- file.data
-    #   }
+      list.name <- configs$object.name %>% paste0(., ".ls", collapse = "")
+      assign(list.name, import.tables.ls, envir = .GlobalEnv) #create a list of the imported tables in the global environment
+      print(list.name)
       
-    #   return(data.ls)
-    # } # End of function definition for ImportSourceData_NC
+    }
     
 # 2-CLEANING & RESHAPING --------------------------------------------------------------------------------
 
-  #1. TEMPERATURE & PRECIPITATION ----
+  #1. TEMPERATURE ----
     
-    ImportSourceData_GoogleSheets("1-2. Temp Precip")
+    ImportSourceData_GoogleSheets("1.temperature")
 
-    #source_table_list <- temperature_and_precipitation.ls[[1]]
-    #source_table_names <- temperature_and_precipitation.ls %>% names %>% .[1] %>% list(.)
-    CleanReshape_TempPrecip <- function(source_table_list, source_table_names){
+    #source_table_list <- temp.ls[[1]]
+    #source_table_names <- temp.ls %>% names %>% .[1] %>% list(.)
+    CleanReshape_Temp <- function(source_table_list, source_table_names){
 
       scenario <- 
         source_table_names %>%
@@ -235,20 +168,18 @@
     
     }
     
-    temp.precip.clean.tb <-
+    temp.clean.tb <-
       Map(
-          CleanReshape_TempPrecip,
-          temperature_and_precipitation.ls,
-          names(temperature_and_precipitation.ls)
+          CleanReshape_Temp,
+          temp.ls,
+          names(temp.ls)
       ) %>%
       do.call(rbind, .) %>%
       pivot_wider(
         names_from = indicator,
         values_from = value
       ) %>%
-      mutate( #converting units from m/s to mm/month and kelvin to celsius
-        precip.rate.convective = precip.rate.convective * 1000 * 86400 * 30.4375,
-        #precip.rate.stable = precip.rate.stable * 1000 * 86400 * 30.4375,
+      mutate( #converting units from kelvin to celsius
         surface.temp = surface.temp - 273.15,
         #surface.temp.min = surface.temp.min - 273.15,
         #surface.temp.max = surface.temp.max - 273.15
@@ -268,76 +199,166 @@
           country.region,	country.sub.region,	country.intermediate.region, country.nuclear.weapons, country.nato.member.2024,
           soot.injection.scenario, 
           years.elapsed, months.elapsed, date, month, season.n.hemisphere, season.s.hemisphere,
-          surface.temp, precip.rate.convective
+          surface.temp
         ) %>%
       as_tibble()
 
-    #temp.precip.clean.tb
+    temp.clean.tb
 
+  #2. PRECIPITATION ----
+    
+    ImportSourceData_GoogleSheets("2.precipitation")
+
+    #source_table_list <- precip.ls[[1]]
+    #source_table_names <- precip.ls %>% names %>% .[1] %>% list(.)
+    CleanReshape_Precip <- function(source_table_list, source_table_names){
+
+      scenario <- 
+        source_table_names %>%
+        strsplit(., "_") %>% 
+        lapply(., function(x){x[1]}) %>%
+        unlist %>% as.numeric
+
+      indicator <- 
+        source_table_names %>%
+        strsplit(., "_") %>% 
+        lapply(., function(x){x[2]}) %>%
+        unlist 
+      
+      result <- 
+        source_table_list %>% 
+        ReplaceNames(., names(.),tolower(names(.))) %>% #lower-case all table names
+        ReplaceNames(., c("id", "nation"), c("country.id","country.name")) %>%  #standardize geographic variable names
+        mutate(across(where(is.list), ~ suppressWarnings(as.numeric(unlist(.))))) %>% #convert all list variables into numeric
+        dplyr::select(-country.name) %>%
+        melt(., id = c("country.id")) %>% #reshape to long
+        mutate(
+          soot.injection.scenario = scenario,  #add scenario variable
+          variable = variable %>% as.character, #convert variable made from column names of wide table from #factor to character
+          years.elapsed = str_extract(variable, "^[^ ]+") %>% as.numeric,  #create year variable
+          month = str_extract(variable, "(?<= - ).*") %>% as.numeric,  #create month variable
+          indicator = indicator #create indicator variable that tells us which indicator we are looking at
+        ) %>%
+        mutate(
+          months.elapsed = years.elapsed*12+month
+        ) %>%
+        mutate(
+          start.date = case_when(
+            soot.injection.scenario == 0 ~ as.Date("01/31/2018", format = "%m/%d/%Y"),
+            soot.injection.scenario == 5 ~ as.Date("01/31/2020", format = "%m/%d/%Y"),
+            soot.injection.scenario == 16 ~ as.Date("01/31/2020", format = "%m/%d/%Y"),
+            soot.injection.scenario == 150 ~ as.Date("01/31/2020", format = "%m/%d/%Y"),
+            TRUE ~ NA_Date_  # Handle unexpected values safely
+          )
+        ) %>% 
+        mutate(date = start.date %m+% months(months.elapsed)) %>%
+        as_tibble  #ensure final result is a tibble
+      
+      print(source_table_names)
+      
+      return(result)
+    
+    }
+    
+    precip.clean.tb <-
+      Map(
+          CleanReshape_Precip,
+          precip.ls,
+          names(precip.ls)
+      ) %>%
+      do.call(rbind, .) %>%
+      pivot_wider(
+        names_from = indicator,
+        values_from = value
+      ) %>%
+      mutate( #converting units from m/s to mm/month
+        precip.rate.convective = precip.rate.convective * 1000 * 86400 * 30.4375,
+        #precip.rate.stable = precip.rate.stable * 1000 * 86400 * 30.4375,
+        ) %>%
+        left_join( #add months metadata (seasons in n & s hemisphere)
+          ., 
+          months.tb,
+          by = "month"
+        ) %>%
+        left_join( #add country metadata from configs table
+          ., 
+          countries.tb,
+          by = "country.id"
+        ) %>%
+        dplyr::select( #select & order final variables
+          country.id, country.name, country.iso3,	country.hemisphere,	
+          country.region,	country.sub.region,	country.intermediate.region, country.nuclear.weapons, country.nato.member.2024,
+          soot.injection.scenario, 
+          years.elapsed, months.elapsed, date, month, season.n.hemisphere, season.s.hemisphere,
+          precip.rate.convective
+        ) %>%
+      as_tibble()
+
+    #precip.clean.tb
 
   #3. UV ----
     
-    ImportSourceData_GoogleSheets("3. UV")
+    ImportSourceData_GoogleSheets("3.uv")
     
-    CleanReshape_UV <- 
-      function(source_table_list, source_table_names){
+    CleanReshape_UV <- function(source_table_list, source_table_names){
         
-        scenario <- 
-          source_table_names %>%
-          strsplit(., "_") %>% 
-          unlist %>%
-          .[1] %>%
-          ifelse(. != "control", paste(., "Tg", sep=""), .)
-        
-        indicator <- 
-          source_table_names %>%
-          strsplit(., "_") %>% 
-          unlist %>%
-          .[2]
-        
-        result <- 
-          source_table_list %>% 
-          ReplaceNames(., names(.),tolower(names(.))) %>% #lower-case all table names
-          ReplaceNames(., c("id", "nation"), c("country.id","country.name")) %>%  #standardize geographic variable names
-          mutate(across(where(is.list), ~ suppressWarnings(as.numeric(unlist(.))))) %>% #convert all list variables into numeric
-          select(-country.name) %>%
-          melt(., id = c("country.id")) %>% #reshape to long
-          mutate(
-            #soot.injection.scenario = scenario,  #add scenario variable
-            soot.injection.scenario = recode( #add scenario variable
-              scenario, 
-              "control" = 0,
-              "150Tg" = 150
-            ),
-            variable = variable %>% as.character, #convert variable made from column names of wide table from factor to character
-            years.elapsed = str_extract(variable, "^[^ ]+") %>% as.numeric,  #create year variable
-            month = str_extract(variable, "(?<= - ).*") %>% as.numeric,  #create month variable
-            indicator = indicator, #create indicator variable that tells us which indicator of UV we are looking at (e.g. UVA, UVB, UV Index, etc.)
-          ) %>%
-          left_join( #add country metadata from configs table
-            ., 
-            countries.tb,
-            by = "country.id"
-          ) %>%
-          left_join( #add months metadata (seasons in n & s hemisphere)
-            ., 
-            months.tb,
-            by = "month"
-          ) %>%
-          select( #select & order final variables
-            country.id, country.name, country.iso3,	country.hemisphere,	
-            country.region,	country.sub.region,	country.intermediate.region, country.nuclear.weapons,
-            soot.injection.scenario, 
-            years.elapsed, month, season.n.hemisphere, season.s.hemisphere,
-            indicator, value
-          ) %>% 
-          ReplaceNames(., "value", "indicator.value") %>%
-          as_tibble  #ensure final result is a tibble
-        
-        print(source_table_names)
-        
-        return(result)
-      }
+      scenario <- 
+        source_table_names %>%
+        strsplit(., "_") %>% 
+        unlist %>%
+        .[1] %>%
+        ifelse(. != "control", paste(., "Tg", sep=""), .)
+      
+      indicator <- 
+        source_table_names %>%
+        strsplit(., "_") %>% 
+        unlist %>%
+        .[2]
+      
+      result <- 
+        source_table_list %>% 
+        ReplaceNames(., names(.),tolower(names(.))) %>% #lower-case all table names
+        ReplaceNames(., c("id", "nation"), c("country.id","country.name")) %>%  #standardize geographic variable names
+        mutate(across(where(is.list), ~ suppressWarnings(as.numeric(unlist(.))))) %>% #convert all list variables into numeric
+        select(-country.name) %>%
+        melt(., id = c("country.id")) %>% #reshape to long
+        mutate(
+          #soot.injection.scenario = scenario,  #add scenario variable
+          soot.injection.scenario = recode( #add scenario variable
+            scenario, 
+            "control" = 0,
+            "150Tg" = 150
+          ),
+          variable = variable %>% as.character, #convert variable made from column names of wide table from factor to character
+          years.elapsed = str_extract(variable, "^[^ ]+") %>% as.numeric,  #create year variable
+          month = str_extract(variable, "(?<= - ).*") %>% as.numeric,  #create month variable
+          indicator = indicator, #create indicator variable that tells us which indicator of UV we are looking at (e.g. UVA, UVB, UV Index, etc.)
+        ) %>%
+        left_join( #add country metadata from configs table
+          ., 
+          countries.tb,
+          by = "country.id"
+        ) %>%
+        left_join( #add months metadata (seasons in n & s hemisphere)
+          ., 
+          months.tb,
+          by = "month"
+        ) %>%
+        select( #select & order final variables
+          country.id, country.name, country.iso3,	country.hemisphere,	
+          country.region,	country.sub.region,	country.intermediate.region, country.nuclear.weapons,
+          soot.injection.scenario, 
+          years.elapsed, month, season.n.hemisphere, season.s.hemisphere,
+          indicator, value
+        ) %>% 
+        ReplaceNames(., "value", "indicator.value") %>%
+        as_tibble  #ensure final result is a tibble
+      
+      print(source_table_names)
+      
+      return(result)
+
+    }
     
     uv.clean.tb <-
       Map(
@@ -354,7 +375,7 @@
     
   #4a. AGRICULTURE CLM (Community Land Model) ----
     
-    ImportSourceData_GoogleSheets("4a. Agriculture CLM")
+    ImportSourceData_GoogleSheets("4a.agriculture.clm")
     
     CleanReshape_AgricultureCLM <- function(source_table_list, source_table_names){
       
@@ -426,7 +447,7 @@
     
   #4b. AGRICULTURE AGMIP (Multi-Model Aggregates, Jonas) ----
     
-    ImportSourceData_GoogleSheets("4b. Agriculture AGMIP")
+    ImportSourceData_GoogleSheets("4b.agriculture.agmip")
     
     CleanReshape_AgricultureAGMIP <- 
       function(source_table_list, source_table_names){
@@ -491,7 +512,7 @@
     
   #5. FISH CATCH ----
     
-    ImportSourceData_GoogleSheets("5. Fish Catch")
+    ImportSourceData_GoogleSheets("5.fish.catch")
     
     CleanReshape_FishCatch <- function(source_table_list, source_table_names){
 
@@ -566,8 +587,8 @@
       ) %>%
       select( #select & order final variables
         eez.name, eez.num, eez.area, 
-        soot.injection.scenario,
         years.elapsed, 
+        soot.injection.scenario,
         mean.catch,  
         mean.catch.per.1000.sq.km,
         mean.catch.change, 
@@ -587,7 +608,7 @@
     
   #6. SEA ICE ----
     
-    ImportSourceData_GoogleSheets("6. Sea Ice")
+    ImportSourceData_GoogleSheets("6.sea.ice")
     
     CleanReshape_SeaIce <- function(source_table){
     
@@ -649,31 +670,22 @@
     #  select(-sea.ice.thickness.meters) %>%
     #  apply(., 2, TableWithNA)
   
-# 4-EXPORT --------------------------------------------------------------------------------
-  
-  # CREATE FINAL LIST OF CLEANED & REFORMATTED TABLES FOR EXPORT
-    
+  #CONSOLIDATE TABLES INTRO LIST
+
     clean_object_names <- 
-      c(
-        "temp.precip.clean.tb",
-        "uv.clean.tb",
-        "agriculture.clm.clean.tb",
-        "agriculture.agmip.clean.tb",
-        "fish.catch.clean.tb",
-        "sea.ice.clean.tb"
-      )
+      source.table.configs.tb$object.name %>%
+      sapply(., function(x){paste(x, ".clean.tb", sep="")}) %>%
+      as.vector
     
     clean_table_names <- 
-      c(
-        "1-2.temperature & precipitation",
-        "3.uv",
-        "4a.agriculture.clm",
-        "4b.agriculture.agmip",
-        "5.fishcatch",
-        "6.sea.ice"
-      )
+      source.table.configs.tb$file.name %>%
+      sapply(function(x) {
+        x_clean <- gsub("^.*?\\.", "", x)  # Remove everything before the first period
+        paste0(x_clean, ".tb")             # Append ".tb"
+      }) %>%
+      as.vector()
     
-    export.ls <- 
+    clean.tables.ls <- 
       lapply(
         clean_object_names, 
         function(x) {
@@ -682,11 +694,31 @@
       ) %>%
       purrr::compact() # Remove NULL entries for non-existent tibbles
     
-    names(export.ls) <- clean_table_names[clean_object_names %in% ls()]
+    names(clean.tables.ls) <- clean_table_names[clean_object_names %in% ls()]
+
+  #CONSOLIDATE TABLES WITH SAME UNIT OF ANALYSIS
+
+    country.level.table.names <-
+      source.table.configs.tb %>% 
+      filter(unit.of.analysis == "country") %>%
+      select(file.name) %>% as.vector %>%
+      sapply(function(x) {
+          x_clean <- gsub("^.*?\\.", "", x)  # Remove everything before the first period
+          paste0(x_clean, ".tb")             # Append ".tb"
+        }) %>%
+        as.vector()
+
+    #country.level.data.tb <- reduce(
+    #  clean.tables.ls[names(clean.tables.ls) %in% country.level.table.names],
+    #  full_join,
+    #  by = "country.id"
+    #)
+
+
+
+# 4-EXPORT --------------------------------------------------------------------------------
   
   # DEFINE & CREATE OUTPUT DIRECTORY
-    
-    #setwd(paste(wd, "\\2. Reformatted Source Data", sep=""))
     
     output.base.name <- 
       Sys.time() %>% 
@@ -695,9 +727,9 @@
     output.dir <-
       paste(
         wd,
-        "\\2. Reformatted Source Data\\",
+        "/2-outputs/",
         output.base.name,
-        "\\",
+        "/",
         sep = ""
       )
     
@@ -716,8 +748,8 @@
     setwd(output.dir)
     Map(
       ExportCsvs,
-      export.ls,
-      names(export.ls)
+      clean.tables.ls,
+      names(clean.tables.ls)
     )
     
   # WRITE TABLES INTO SINGLE EXCEL FILE IN OUTPUT DIRECTORY
@@ -728,14 +760,14 @@
       
     wb <- createWorkbook()
     
-    for (i in seq_along(export.ls)) {
-      sheet_name <- names(export.ls)[i]  # Get the name of the list element (if named)
+    for (i in seq_along(clean.tables.ls)) {
+      sheet_name <- names(clean.tables.ls)[i]  # Get the name of the list element (if named)
       if (is.null(sheet_name) || sheet_name == "") {
         sheet_name <- paste0("Sheet", i)  # Assign default sheet names if missing
       }
       
       addWorksheet(wb, sheet_name)  # Create a new sheet
-      writeData(wb, sheet = sheet_name, export.ls[[i]])  # Write data
+      writeData(wb, sheet = sheet_name, clean.tables.ls[[i]])  # Write data
     }
     
     saveWorkbook(wb, output.file.path, overwrite = TRUE)
