@@ -1,8 +1,13 @@
 0. OVERARCHING
+
+  Filter all tables to remove rows where indicator blank
+  Add code to produce country-level datasets & summaries
+  
+    --Remove country.id - possibly from entire code and inputs? Only use iso3??
+    --Ensure all soot.injection.scenario variables are numeric
     --Rename var climate.forcing.scenario to soot.injection.scenario
     --Get script workign in VS Code. 
-  Ensure all soot.injection.scenario variables are numeric
-  Add code to produce country-level datasets & summaries
+  
 
 
 0.1 COUNTRY-LEVEL DATA 
@@ -11,7 +16,12 @@
 0.2 MONTHLY DATA
     -- For monthly data, ensure 'season' added to all tables but with number in front so it orders correctly
 
-1 & 2. TEMP & PRECIP
+1. TEMP
+  Correct years.elapsed var so does not depend on start date
+  Correct months.elapsed var so that starts at 1, not 13
+  Correct date var so starts on start date (1/31/2018), rather than 2019
+  Create 'month' var (or ensure is preserved in output)
+
     --Make var climate.forcing.scenario numeric so it will order correctly
     --Figure out time unit
     --Convert units: 
@@ -20,15 +30,23 @@
       --TS, TSMN, TSMX: kelvin to celsius
     --Finalize & merge cleaning code
 
+2. PRECIP
+  Why does 150tg scenario have a decade+ more data?
+  Create precip.pct.change variable
+
 3. UV
+  Add months_elapsed variable
+  Ensure years.elapsed is numeric
+  Verify duplicate numbers in .nc files
+
     --Make var climate.forcing.scenario numeric so it will order correctly
     --Remove associated.publications metadata
-  Add months_elapsed variable
     --Change vavr name from years to years.elapsed
-  Verify duplicate numbers in .nc files (Josh has to upload to OSF).
+  
 
 4A. AGRICULTURE CLM
   Produce new version and send to Lili for checking
+
     --Make var soot.injection.scenario numeric so it will order correctly
     --Remove associated publications & indicator description from data table
     --Rename measure var - % change in yield
@@ -43,6 +61,8 @@
     --Remove 'indicator' var
 
 5. FISH CATCH
+  Create a way to eliminate outliers & check with Cheryl
+
     --Make var climate.forcing.scenario numeric so it will order correctly
     --Change 'fisheries' to 'fish catch'
     --Finalize selection of unit for each var - Thousands of metric tons

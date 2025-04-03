@@ -146,7 +146,6 @@
           month = str_extract(variable, "(?<= - ).*") %>% as.numeric,  #create month variable
           indicator = indicator #create indicator variable that tells us which indicator we are looking at
         ) %>%
-        
         mutate(
           months.elapsed = years.elapsed*12+month
         ) %>%
@@ -195,7 +194,7 @@
           by = "country.id"
         ) %>%
         dplyr::select( #select & order final variables
-          country.id, country.name, country.iso3,	country.hemisphere,	
+          country.name, country.iso3,	country.hemisphere,	
           country.region,	country.sub.region,	country.intermediate.region, country.nuclear.weapons, country.nato.member.2024,
           soot.injection.scenario, 
           years.elapsed, months.elapsed, date, month, season.n.hemisphere, season.s.hemisphere,
@@ -286,7 +285,7 @@
           by = "country.id"
         ) %>%
         dplyr::select( #select & order final variables
-          country.id, country.name, country.iso3,	country.hemisphere,	
+          country.name, country.iso3,	country.hemisphere,	
           country.region,	country.sub.region,	country.intermediate.region, country.nuclear.weapons, country.nato.member.2024,
           soot.injection.scenario, 
           years.elapsed, months.elapsed, date, month, season.n.hemisphere, season.s.hemisphere,
@@ -300,14 +299,14 @@
     
     ImportSourceData_GoogleSheets("3.uv")
     
-    CleanReshape_UV <- function(source_table_list, source_table_names){
-        
+    CleanReshape_UV <- function(source_table_list, source_table_names) {
+      
       scenario <- 
         source_table_names %>%
         strsplit(., "_") %>% 
         unlist %>%
         .[1] %>%
-        ifelse(. != "control", paste(., "Tg", sep=""), .)
+        ifelse(. != "control", paste0(., "Tg"), .)
       
       indicator <- 
         source_table_names %>%
@@ -317,56 +316,50 @@
       
       result <- 
         source_table_list %>% 
-        ReplaceNames(., names(.),tolower(names(.))) %>% #lower-case all table names
-        ReplaceNames(., c("id", "nation"), c("country.id","country.name")) %>%  #standardize geographic variable names
-        mutate(across(where(is.list), ~ suppressWarnings(as.numeric(unlist(.))))) %>% #convert all list variables into numeric
+        ReplaceNames(., names(.), tolower(names(.))) %>% # lowercase
+        ReplaceNames(., c("id", "nation"), c("country.id","country.name")) %>%  # standardize
+        mutate(across(where(is.list), ~ suppressWarnings(as.numeric(unlist(.))))) %>% 
         select(-country.name) %>%
-        melt(., id = c("country.id")) %>% #reshape to long
+        melt(., id = c("country.id")) %>% 
         mutate(
-          #soot.injection.scenario = scenario,  #add scenario variable
-          soot.injection.scenario = recode( #add scenario variable
+          soot.injection.scenario = recode(  # handle naming
             scenario, 
             "control" = 0,
             "150Tg" = 150
           ),
-          variable = variable %>% as.character, #convert variable made from column names of wide table from factor to character
-          years.elapsed = str_extract(variable, "^[^ ]+") %>% as.numeric,  #create year variable
-          month = str_extract(variable, "(?<= - ).*") %>% as.numeric,  #create month variable
-          indicator = indicator, #create indicator variable that tells us which indicator of UV we are looking at (e.g. UVA, UVB, UV Index, etc.)
+          variable = variable %>% as.character,
+          years.elapsed = str_extract(variable, "^[^ ]+") %>% as.numeric,
+          month = str_extract(variable, "(?<= - ).*") %>% as.numeric,
+          indicator = indicator
         ) %>%
-        left_join( #add country metadata from configs table
-          ., 
-          countries.tb,
-          by = "country.id"
-        ) %>%
-        left_join( #add months metadata (seasons in n & s hemisphere)
-          ., 
-          months.tb,
-          by = "month"
-        ) %>%
-        select( #select & order final variables
-          country.id, country.name, country.iso3,	country.hemisphere,	
-          country.region,	country.sub.region,	country.intermediate.region, country.nuclear.weapons,
-          soot.injection.scenario, 
-          years.elapsed, month, season.n.hemisphere, season.s.hemisphere,
+        mutate(value = as.numeric(value)) %>%
+        left_join(countries.tb, by = "country.id") %>%
+        left_join(months.tb, by = "month") %>%
+        select(
+          country.name, country.iso3, country.hemisphere,
+          country.region, country.sub.region, country.intermediate.region, country.nuclear.weapons,
+          soot.injection.scenario, years.elapsed, month, season.n.hemisphere, season.s.hemisphere,
           indicator, value
-        ) %>% 
-        ReplaceNames(., "value", "indicator.value") %>%
-        as_tibble  #ensure final result is a tibble
+        ) %>%
+        as_tibble()
       
       print(source_table_names)
       
       return(result)
-
     }
     
     uv.clean.tb <-
       Map(
-          CleanReshape_UV,
-          uv.ls,
-          names(uv.ls)
+        CleanReshape_UV,
+        uv.ls,
+        names(uv.ls)
       ) %>%
-      do.call(rbind, .) %>%
+      bind_rows() %>%
+      pivot_wider(
+        names_from = indicator,
+        values_from = value
+      ) %>%
+      ReplaceNames(., names(.), tolower(names(.))) %>%
       as_tibble()
     
     #uv.clean.tb %>%
@@ -417,7 +410,7 @@
           by = "country.id"
         ) %>%
         select( #select & order final variables
-          country.id, country.name, country.iso3,	country.hemisphere,	
+          country.name, country.iso3,	country.hemisphere,	
           country.region,	country.sub.region,	country.intermediate.region, country.nuclear.weapons, 
           soot.injection.scenario, 
           years.elapsed,
@@ -449,53 +442,52 @@
     
     ImportSourceData_GoogleSheets("4b.agriculture.agmip")
     
-    CleanReshape_AgricultureAGMIP <- 
-      function(source_table_list, source_table_names){
+    CleanReshape_AgricultureAGMIP <- function(source_table_list, source_table_names){
         
-        scenario <- 
-          source_table_names %>%
-          strsplit(., "_") %>% 
-          unlist %>%
-          .[2]
-        
-        crop <- 
-          source_table_names %>%
-          strsplit(., "_") %>% 
-          unlist %>%
-          .[3]
-        
-        result <- 
-          source_table_list %>% 
-          ReplaceNames(., names(.),tolower(names(.))) %>% #lower-case all table names
-          select(-country_name, -`...1`) %>%
-          ReplaceNames(., "country_iso3", "country.iso3") %>%  #standardize geographic variable names
-          mutate(across(where(is.list), ~ suppressWarnings(as.character(unlist(.))))) %>% #convert all list variables into character
-          melt(., id = "country.iso3") %>% #reshape to long
-          mutate( #add/rename variables
-            soot.injection.scenario = 5,
-            crop = crop,
-            years.elapsed = variable %>% str_extract(., "(?<=_)[^_]*$") %>% as.numeric,
-            pct.change.harvest.yield = value %>% as.numeric %>% suppressWarnings()
-          ) %>%
-          left_join( #add country metadata from configs table
-            ., 
-            countries.tb,
-            by = "country.iso3"
-          ) %>%
-          select( #select & order final variables
-            country.id, country.name, country.iso3,	country.hemisphere,	
-            country.region,	country.sub.region,	country.intermediate.region, country.nuclear.weapons, 
-            soot.injection.scenario, #associated.publication_earth.system.simulation.reference, associated.publication_analysis.and.discussion,
-            years.elapsed, 
-            crop, pct.change.harvest.yield
-          ) %>% 
-          as_tibble #ensure final result is a tibble
-        
-        print(source_table_names)
-        
-        return(result)
-        
-      }
+      scenario <- 
+        source_table_names %>%
+        strsplit(., "_") %>% 
+        unlist %>%
+        .[2]
+      
+      crop <- 
+        source_table_names %>%
+        strsplit(., "_") %>% 
+        unlist %>%
+        .[3]
+      
+      result <- 
+        source_table_list %>% 
+        ReplaceNames(., names(.),tolower(names(.))) %>% #lower-case all table names
+        select(-country_name, -`...1`) %>%
+        ReplaceNames(., "country_iso3", "country.iso3") %>%  #standardize geographic variable names
+        mutate(across(where(is.list), ~ suppressWarnings(as.character(unlist(.))))) %>% #convert all list variables into character
+        melt(., id = "country.iso3") %>% #reshape to long
+        mutate( #add/rename variables
+          soot.injection.scenario = 5,
+          crop = crop,
+          years.elapsed = variable %>% str_extract(., "(?<=_)[^_]*$") %>% as.numeric,
+          pct.change.harvest.yield = value %>% as.numeric %>% suppressWarnings()
+        ) %>%
+        left_join( #add country metadata from configs table
+          ., 
+          countries.tb,
+          by = "country.iso3"
+        ) %>%
+        select( #select & order final variables
+          country.name, country.iso3,	country.hemisphere,	
+          country.region,	country.sub.region,	country.intermediate.region, country.nuclear.weapons, 
+          soot.injection.scenario, #associated.publication_earth.system.simulation.reference, associated.publication_analysis.and.discussion,
+          years.elapsed, 
+          crop, pct.change.harvest.yield
+        ) %>% 
+        as_tibble #ensure final result is a tibble
+      
+      print(source_table_names)
+      
+      return(result)
+      
+    }
     
     agriculture.agmip.clean.tb <- #create final cleaned & compiled data table
       Map(
@@ -711,7 +703,7 @@
     #country.level.data.tb <- reduce(
     #  clean.tables.ls[names(clean.tables.ls) %in% country.level.table.names],
     #  full_join,
-    #  by = "country.id"
+    #  by = "country.iso3"
     #)
 
 
@@ -761,7 +753,7 @@
     wb <- createWorkbook()
     
     for (i in seq_along(clean.tables.ls)) {
-      sheet_name <- names(clean.tables.ls)[i]  # Get the name of the list element (if named)
+      sheet_name <- names(clean.tables.ls)[i] %>% gsub("\\.tb","",.)  # Get the name of the list element (if named)
       if (is.null(sheet_name) || sheet_name == "") {
         sheet_name <- paste0("Sheet", i)  # Assign default sheet names if missing
       }
