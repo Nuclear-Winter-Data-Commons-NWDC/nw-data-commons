@@ -1,8 +1,8 @@
 0. OVERARCHING
 
-  Filter all tables to remove rows where indicator blank
+  -Filter all tables to remove rows where indicator blank
   Add code to produce country-level datasets & summaries
-  
+
     --Remove country.id - possibly from entire code and inputs? Only use iso3??
     --Ensure all soot.injection.scenario variables are numeric
     --Rename var climate.forcing.scenario to soot.injection.scenario
@@ -11,17 +11,19 @@
 
 
 0.1 COUNTRY-LEVEL DATA 
-    -- Add country metadata: NATO member (2024), population, land area in sq. km
+    -- Add country metadata: NATO member (2024), 
+  -Add country metadata population, land area in sq. km
   
 0.2 MONTHLY DATA
+
     -- For monthly data, ensure 'season' added to all tables but with number in front so it orders correctly
 
 1. TEMP
-  Correct years.elapsed var so does not depend on start date
-  Correct months.elapsed var so that starts at 1, not 13
-  Correct date var so starts on start date (1/31/2018), rather than 2019
-  Create 'month' var (or ensure is preserved in output)
 
+    --years.elapsed variable starts at 5 for 5, 16, & 150 soot.injection.scenario
+    --months.elapsed variable starts 13 and 61; should start at 1 for all scenarios
+    --Correct date var so starts on start date (1/31/2018), rather than 2019
+    --Create 'month' var (or ensure is preserved in output)
     --Make var climate.forcing.scenario numeric so it will order correctly
     --Figure out time unit
     --Convert units: 
@@ -31,12 +33,19 @@
     --Finalize & merge cleaning code
 
 2. PRECIP
+
   Why does 150tg scenario have a decade+ more data?
   Create precip.pct.change variable
 
+  --Correct years.elapsed var so does not depend on start date
+  --Correct months.elapsed var so that starts at 1, not 13
+  --Correct date var so starts on start date (1/31/2018), rather than 2019
+  --Create 'month' var (or ensure is preserved in output)
+
+
 3. UV
-  Add months_elapsed variable
-  Ensure years.elapsed is numeric
+  -Add months_elapsed variable
+  -Ensure years.elapsed is numeric
   Verify duplicate numbers in .nc files
 
     --Make var climate.forcing.scenario numeric so it will order correctly
@@ -61,7 +70,8 @@
     --Remove 'indicator' var
 
 5. FISH CATCH
-  Create a way to eliminate outliers & check with Cheryl
+  -Create a way to flag outliers & check with Cheryl
+  Figure out why there are 2,356 rows where mean.catch.change and mean.pct.catch.change have different signs (pos/neg)
 
     --Make var climate.forcing.scenario numeric so it will order correctly
     --Change 'fisheries' to 'fish catch'

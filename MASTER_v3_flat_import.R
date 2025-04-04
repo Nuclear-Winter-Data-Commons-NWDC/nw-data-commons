@@ -116,62 +116,64 @@
     
     ImportSourceData_GoogleSheets("1.temperature")
 
-    #source_table_list <- temp.ls[[1]]
-    #source_table_names <- temp.ls %>% names %>% .[1] %>% list(.)
-    CleanReshape_Temp <- function(source_table_list, source_table_names){
+    #source_table_list <- temperature.ls[[1]]
+    #source_table_names <- temperature.ls %>% names %>% .[1] #%>% list(.)
+    CleanReshape_Temp <- function(source_table_list, source_table_names) {
 
       scenario <- 
         source_table_names %>%
-        strsplit(., "_") %>% 
-        lapply(., function(x){x[1]}) %>%
-        unlist %>% as.numeric
+        strsplit("_") %>% 
+        lapply(`[`, 1) %>%
+        unlist() %>%
+        as.numeric()
 
       indicator <- 
         source_table_names %>%
-        strsplit(., "_") %>% 
-        lapply(., function(x){x[2]}) %>%
-        unlist 
-      
+        strsplit("_") %>% 
+        lapply(`[`, 2) %>%
+        unlist()
+
       result <- 
-        source_table_list %>% 
-        ReplaceNames(., names(.),tolower(names(.))) %>% #lower-case all table names
-        ReplaceNames(., c("id", "nation"), c("country.id","country.name")) %>%  #standardize geographic variable names
-        mutate(across(where(is.list), ~ suppressWarnings(as.numeric(unlist(.))))) %>% #convert all list variables into numeric
-        dplyr::select(-country.name) %>%
-        melt(., id = c("country.id")) %>% #reshape to long
+        source_table_list %>%
+        ReplaceNames(., names(.), tolower(names(.))) %>%
+        ReplaceNames(., c("id", "nation"), c("country.id", "country.name")) %>%
+        mutate(across(where(is.list), ~ suppressWarnings(as.numeric(unlist(.))))) %>%
+        select(-country.name) %>%
+        melt(id = "country.id") %>%
         mutate(
-          soot.injection.scenario = scenario,  #add scenario variable
-          variable = variable %>% as.character, #convert variable made from column names of wide table from #factor to character
-          years.elapsed = str_extract(variable, "^[^ ]+") %>% as.numeric,  #create year variable
-          month = str_extract(variable, "(?<= - ).*") %>% as.numeric,  #create month variable
-          indicator = indicator #create indicator variable that tells us which indicator we are looking at
+          soot.injection.scenario = scenario,
+          variable = as.character(variable),
+          indicator = indicator,
+          years.elapsed.raw = str_extract(variable, "^[^ ]+") %>% as.numeric(),
+          month = str_extract(variable, "(?<= - )\\d+") %>% as.numeric()
         ) %>%
+        group_by(soot.injection.scenario) %>%
         mutate(
-          months.elapsed = years.elapsed*12+month
+          years.elapsed = years.elapsed.raw - min(years.elapsed.raw, na.rm = TRUE),
+          months.elapsed = years.elapsed * 12 + month
         ) %>%
+        ungroup() %>%
         mutate(
           start.date = case_when(
             soot.injection.scenario == 0 ~ as.Date("01/31/2018", format = "%m/%d/%Y"),
-            soot.injection.scenario == 5 ~ as.Date("01/31/2020", format = "%m/%d/%Y"),
-            soot.injection.scenario == 16 ~ as.Date("01/31/2020", format = "%m/%d/%Y"),
-            soot.injection.scenario == 150 ~ as.Date("01/31/2020", format = "%m/%d/%Y"),
-            TRUE ~ NA_Date_  # Handle unexpected values safely
-          )
-        ) %>% 
-        mutate(date = start.date %m+% months(months.elapsed)) %>%
-        as_tibble  #ensure final result is a tibble
-      
+            soot.injection.scenario %in% c(5, 16, 150) ~ as.Date("01/31/2020", format = "%m/%d/%Y"),
+            TRUE ~ NA_Date_
+          ),
+          date = start.date %m+% months(months.elapsed - 1)  # months.elapsed starts at 1
+        ) %>%
+        as_tibble()
+
       print(source_table_names)
-      
+
       return(result)
-    
     }
+
     
-    temp.clean.tb <-
+    temperature.clean.tb <-
       Map(
           CleanReshape_Temp,
-          temp.ls,
-          names(temp.ls)
+          temperature.ls,
+          names(temperature.ls)
       ) %>%
       do.call(rbind, .) %>%
       pivot_wider(
@@ -195,75 +197,79 @@
         ) %>%
         dplyr::select( #select & order final variables
           country.name, country.iso3,	country.hemisphere,	
-          country.region,	country.sub.region,	country.intermediate.region, country.nuclear.weapons, country.nato.member.2024,
+          country.region,	country.sub.region,	country.intermediate.region, 
+          country.nuclear.weapons, country.nato.member.2024, 
+          country.population, country.land.area.sq.km,
           soot.injection.scenario, 
           years.elapsed, months.elapsed, date, month, season.n.hemisphere, season.s.hemisphere,
           surface.temp
         ) %>%
       as_tibble()
 
-    temp.clean.tb
+    temperature.clean.tb
 
   #2. PRECIPITATION ----
     
     ImportSourceData_GoogleSheets("2.precipitation")
 
-    #source_table_list <- precip.ls[[1]]
-    #source_table_names <- precip.ls %>% names %>% .[1] %>% list(.)
-    CleanReshape_Precip <- function(source_table_list, source_table_names){
-
+    #source_table_list <- precipitation.ls[[1]]
+    #source_table_names <- precipitation.ls %>% names %>% .[1] %>% list(.)
+    CleanReshape_Precip <- function(source_table_list, source_table_names) {
+      
       scenario <- 
         source_table_names %>%
-        strsplit(., "_") %>% 
-        lapply(., function(x){x[1]}) %>%
-        unlist %>% as.numeric
-
+        strsplit("_") %>%
+        lapply(`[`, 1) %>%
+        unlist() %>%
+        as.numeric()
+      
       indicator <- 
         source_table_names %>%
-        strsplit(., "_") %>% 
-        lapply(., function(x){x[2]}) %>%
-        unlist 
+        strsplit("_") %>%
+        lapply(`[`, 2) %>%
+        unlist()
       
       result <- 
-        source_table_list %>% 
-        ReplaceNames(., names(.),tolower(names(.))) %>% #lower-case all table names
-        ReplaceNames(., c("id", "nation"), c("country.id","country.name")) %>%  #standardize geographic variable names
-        mutate(across(where(is.list), ~ suppressWarnings(as.numeric(unlist(.))))) %>% #convert all list variables into numeric
-        dplyr::select(-country.name) %>%
-        melt(., id = c("country.id")) %>% #reshape to long
+        source_table_list %>%
+        ReplaceNames(., names(.), tolower(names(.))) %>%
+        ReplaceNames(., c("id", "nation"), c("country.id", "country.name")) %>%
+        mutate(across(where(is.list), ~ suppressWarnings(as.numeric(unlist(.))))) %>%
+        select(-country.name) %>%
+        melt(id = "country.id") %>%
         mutate(
-          soot.injection.scenario = scenario,  #add scenario variable
-          variable = variable %>% as.character, #convert variable made from column names of wide table from #factor to character
-          years.elapsed = str_extract(variable, "^[^ ]+") %>% as.numeric,  #create year variable
-          month = str_extract(variable, "(?<= - ).*") %>% as.numeric,  #create month variable
-          indicator = indicator #create indicator variable that tells us which indicator we are looking at
+          soot.injection.scenario = scenario,
+          variable = as.character(variable),
+          indicator = indicator,
+          years.elapsed.raw = str_extract(variable, "^[^ ]+") %>% as.numeric(),
+          month = str_extract(variable, "(?<= - )\\d+") %>% as.numeric()
         ) %>%
+        group_by(soot.injection.scenario) %>%
         mutate(
-          months.elapsed = years.elapsed*12+month
+          years.elapsed = years.elapsed.raw - min(years.elapsed.raw, na.rm = TRUE),
+          months.elapsed = years.elapsed * 12 + month
         ) %>%
+        ungroup() %>%
         mutate(
           start.date = case_when(
             soot.injection.scenario == 0 ~ as.Date("01/31/2018", format = "%m/%d/%Y"),
-            soot.injection.scenario == 5 ~ as.Date("01/31/2020", format = "%m/%d/%Y"),
-            soot.injection.scenario == 16 ~ as.Date("01/31/2020", format = "%m/%d/%Y"),
-            soot.injection.scenario == 150 ~ as.Date("01/31/2020", format = "%m/%d/%Y"),
-            TRUE ~ NA_Date_  # Handle unexpected values safely
-          )
-        ) %>% 
-        mutate(date = start.date %m+% months(months.elapsed)) %>%
-        as_tibble  #ensure final result is a tibble
+            soot.injection.scenario %in% c(5, 16, 150) ~ as.Date("01/31/2020", format = "%m/%d/%Y"),
+            TRUE ~ NA_Date_
+          ),
+          date = start.date %m+% months(months.elapsed - 1)
+        ) %>%
+        as_tibble()
       
       print(source_table_names)
       
       return(result)
-    
     }
+
     
-    precip.clean.tb <-
+    precipitation.clean.tb <-
       Map(
           CleanReshape_Precip,
-          precip.ls,
-          names(precip.ls)
+          precipitation.ls,
+          names(precipitation.ls)
       ) %>%
       do.call(rbind, .) %>%
       pivot_wider(
@@ -286,14 +292,16 @@
         ) %>%
         dplyr::select( #select & order final variables
           country.name, country.iso3,	country.hemisphere,	
-          country.region,	country.sub.region,	country.intermediate.region, country.nuclear.weapons, country.nato.member.2024,
+          country.region,	country.sub.region,	country.intermediate.region, 
+          country.nuclear.weapons, country.nato.member.2024, 
+          country.population, country.land.area.sq.km,
           soot.injection.scenario, 
           years.elapsed, months.elapsed, date, month, season.n.hemisphere, season.s.hemisphere,
           precip.rate.convective
         ) %>%
       as_tibble()
 
-    #precip.clean.tb
+    #precipitation.clean.tb
 
   #3. UV ----
     
@@ -316,29 +324,38 @@
       
       result <- 
         source_table_list %>% 
-        ReplaceNames(., names(.), tolower(names(.))) %>% # lowercase
-        ReplaceNames(., c("id", "nation"), c("country.id","country.name")) %>%  # standardize
-        mutate(across(where(is.list), ~ suppressWarnings(as.numeric(unlist(.))))) %>% 
+        ReplaceNames(., names(.), tolower(names(.))) %>%
+        ReplaceNames(., c("id", "nation"), c("country.id", "country.name")) %>%
+        mutate(across(where(is.list), ~ suppressWarnings(as.numeric(unlist(.))))) %>%
         select(-country.name) %>%
-        melt(., id = c("country.id")) %>% 
+        melt(id = "country.id") %>%
         mutate(
-          soot.injection.scenario = recode(  # handle naming
-            scenario, 
+          soot.injection.scenario = recode(
+            scenario,
             "control" = 0,
             "150Tg" = 150
           ),
-          variable = variable %>% as.character,
-          years.elapsed = str_extract(variable, "^[^ ]+") %>% as.numeric,
-          month = str_extract(variable, "(?<= - ).*") %>% as.numeric,
+          variable = as.character(variable),
+          year.raw = str_extract(variable, "^[^ ]+") %>% as.numeric(),
+          month = str_extract(variable, "(?<= - )\\d+") %>% as.numeric(),
           indicator = indicator
         ) %>%
+        group_by(soot.injection.scenario) %>%
+        mutate(
+          years.elapsed = year.raw - min(year.raw, na.rm = TRUE),
+          months.elapsed = years.elapsed * 12 + month
+        ) %>%
+        ungroup() %>%
         mutate(value = as.numeric(value)) %>%
         left_join(countries.tb, by = "country.id") %>%
         left_join(months.tb, by = "month") %>%
         select(
-          country.name, country.iso3, country.hemisphere,
-          country.region, country.sub.region, country.intermediate.region, country.nuclear.weapons,
-          soot.injection.scenario, years.elapsed, month, season.n.hemisphere, season.s.hemisphere,
+          country.name, country.iso3, country.hemisphere,	
+          country.region, country.sub.region, country.intermediate.region, 
+          country.nuclear.weapons, country.nato.member.2024, 
+          country.population, country.land.area.sq.km,
+          soot.injection.scenario, years.elapsed, months.elapsed, month, 
+          season.n.hemisphere, season.s.hemisphere,
           indicator, value
         ) %>%
         as_tibble()
@@ -347,6 +364,7 @@
       
       return(result)
     }
+
     
     uv.clean.tb <-
       Map(
@@ -411,7 +429,9 @@
         ) %>%
         select( #select & order final variables
           country.name, country.iso3,	country.hemisphere,	
-          country.region,	country.sub.region,	country.intermediate.region, country.nuclear.weapons, 
+          country.region,	country.sub.region,	country.intermediate.region, 
+          country.nuclear.weapons, country.nato.member.2024, 
+          country.population, country.land.area.sq.km,
           soot.injection.scenario, 
           years.elapsed,
           crop, 
@@ -476,8 +496,10 @@
         ) %>%
         select( #select & order final variables
           country.name, country.iso3,	country.hemisphere,	
-          country.region,	country.sub.region,	country.intermediate.region, country.nuclear.weapons, 
-          soot.injection.scenario, #associated.publication_earth.system.simulation.reference, associated.publication_analysis.and.discussion,
+          country.region,	country.sub.region,	country.intermediate.region, 
+          country.nuclear.weapons, country.nato.member.2024, 
+          country.population, country.land.area.sq.km,
+          soot.injection.scenario,
           years.elapsed, 
           crop, pct.change.harvest.yield
         ) %>% 
@@ -559,25 +581,40 @@
       
     }
     
-    fish.catch.clean.tb <- #create final cleaned & compiled data table
+    iqr.multiplier <- 100  # You can adjust this value
+
+    fish.catch.clean.tb <- 
       Map(
         CleanReshape_FishCatch,
         fish.catch.ls,
         names(fish.catch.ls)
       ) %>%
-      bind_rows(.) %>%
-      left_join( #add eez metadata from configs table
-        ., 
-        fish.catch.eez.tb,
-        by = "eez.num"
-      ) %>%
+      bind_rows() %>%
+      left_join(fish.catch.eez.tb, by = "eez.num") %>%
       mutate(
-        mean.pct.catch.change = mean.pct.catch.change * 10^9, #initial CleanReshape function divided all values by 10^9 to get 1000s of metric tons of wet biomass, but these % variables have to be re-rescaled
+        mean.pct.catch.change = mean.pct.catch.change * 10^9,
         std.dev.pct.catch.change = std.dev.pct.catch.change * 10^9,
         eez.name = eez.name %>% gsub("Exclusive Economic Zone", "EEZ", .),
-        mean.catch.per.1000.sq.km = mean.catch/(eez.area/1000)
+        mean.catch.per.1000.sq.km = mean.catch / (eez.area / 1000)
       ) %>%
-      select( #select & order final variables
+      mutate(
+        # Flag outliers in mean.pct.catch.change
+        mean.pct.catch.change.outlier.flag = {
+          q1 <- quantile(mean.pct.catch.change, 0.25, na.rm = TRUE)
+          q3 <- quantile(mean.pct.catch.change, 0.75, na.rm = TRUE)
+          iqr <- q3 - q1
+          lower <- q1 - iqr.multiplier * iqr
+          upper <- q3 + iqr.multiplier * iqr
+          print(upper)
+          print(lower)
+          ifelse(
+            mean.pct.catch.change < lower | mean.pct.catch.change > upper,
+            "outlier",
+            ""
+          )
+        }
+      ) %>%
+      select(
         eez.name, eez.num, eez.area, 
         years.elapsed, 
         soot.injection.scenario,
@@ -587,9 +624,10 @@
         mean.pct.catch.change, 
         std.dev.catch,
         std.dev.catch.change,
-        std.dev.pct.catch.change
-      ) 
-    
+        std.dev.pct.catch.change,
+        mean.pct.catch.change.outlier.flag
+      )
+
     #fish.catch.clean.tb %>%
     #  select(
     #    eez, eez.num, 
@@ -670,11 +708,7 @@
       as.vector
     
     clean_table_names <- 
-      source.table.configs.tb$file.name %>%
-      sapply(function(x) {
-        x_clean <- gsub("^.*?\\.", "", x)  # Remove everything before the first period
-        paste0(x_clean, ".tb")             # Append ".tb"
-      }) %>%
+      source.table.configs.tb$object.name %>%
       as.vector()
     
     clean.tables.ls <- 
@@ -687,6 +721,51 @@
       purrr::compact() # Remove NULL entries for non-existent tibbles
     
     names(clean.tables.ls) <- clean_table_names[clean_object_names %in% ls()]
+
+  #FINAL CLEANING
+
+    # Helper: Drop rows where all indicators of concern are NA
+    filter_by_indicators_of_concern <- function(tb, table.name.raw) {
+      
+      num.rows.initial <- nrow(tb)
+
+      indicators.str <- source.table.configs.tb$indicators.of.concern[
+        source.table.configs.tb$object.name == table.name.raw
+      ]
+
+      indicators <- indicators.str %>%
+        strsplit(",\\s*") %>%
+        unlist()
+
+      indicators <- indicators[indicators %in% names(tb)]
+
+      if (length(indicators) == 0) return(tb)
+
+      tb %<>%
+        filter(if_any(all_of(indicators), ~ !is.na(.)))
+
+      num.rows.final <- nrow(tb)
+
+      percent.removed <- round(100 * (num.rows.initial - num.rows.final) / num.rows.initial, 1)
+
+      cat(
+        "Filtering for rows in '", table.name.raw, "' without data for indicator(s) of concern.\n",
+        "Initial number of rows: ", num.rows.initial, "\n",
+        "Final number of rows: ", num.rows.final, "\n",
+        "Removed ", num.rows.initial - num.rows.final, " rows (", percent.removed, "%)\n\n",
+        sep = ""
+      )
+
+      return(tb)
+    }
+
+    # Apply to each table
+    clean.tables.ls <- mapply(
+      filter_by_indicators_of_concern,
+      clean.tables.ls,
+      names(clean.tables.ls),
+      SIMPLIFY = FALSE
+    )
 
   #CONSOLIDATE TABLES WITH SAME UNIT OF ANALYSIS
 
