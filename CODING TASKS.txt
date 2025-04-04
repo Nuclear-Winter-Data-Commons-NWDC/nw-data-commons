@@ -1,8 +1,9 @@
 0. OVERARCHING
 
-  -Filter all tables to remove rows where indicator blank
+  Add weighted avg precursor variables
   Add code to produce country-level datasets & summaries
 
+    --Filter all tables to remove rows where indicator blank
     --Remove country.id - possibly from entire code and inputs? Only use iso3??
     --Ensure all soot.injection.scenario variables are numeric
     --Rename var climate.forcing.scenario to soot.injection.scenario
@@ -11,8 +12,11 @@
 
 
 0.1 COUNTRY-LEVEL DATA 
+
+  Create single consolidated table of all country-level data
+  
     -- Add country metadata: NATO member (2024), 
-  -Add country metadata population, land area in sq. km
+    -- Add country metadata population, land area in sq. km
   
 0.2 MONTHLY DATA
 

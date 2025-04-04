@@ -167,7 +167,6 @@
 
       return(result)
     }
-
     
     temperature.clean.tb <-
       Map(
@@ -195,14 +194,18 @@
           countries.tb,
           by = "country.id"
         ) %>%
+        mutate(
+          surface.temp.weighted.by.land.area = surface.temp * country.land.area.sq.km,
+          surface.temp.weighted.by.population = surface.temp * country.population.2018
+        ) %>%
         dplyr::select( #select & order final variables
           country.name, country.iso3,	country.hemisphere,	
           country.region,	country.sub.region,	country.intermediate.region, 
           country.nuclear.weapons, country.nato.member.2024, 
-          country.population, country.land.area.sq.km,
+          country.population.2018, country.land.area.sq.km,
           soot.injection.scenario, 
           years.elapsed, months.elapsed, date, month, season.n.hemisphere, season.s.hemisphere,
-          surface.temp
+          surface.temp, surface.temp.weighted.by.land.area, surface.temp.weighted.by.population
         ) %>%
       as_tibble()
 
@@ -290,11 +293,15 @@
           countries.tb,
           by = "country.id"
         ) %>%
+        mutate(
+          precip.rate.convective.weighted.by.land.area = precip.rate.convective * country.land.area.sq.km,
+          precip.rate.convective.weighted.by.population = precip.rate.convective * country.population.2018
+        ) %>%
         dplyr::select( #select & order final variables
           country.name, country.iso3,	country.hemisphere,	
           country.region,	country.sub.region,	country.intermediate.region, 
           country.nuclear.weapons, country.nato.member.2024, 
-          country.population, country.land.area.sq.km,
+          country.population.2018, country.land.area.sq.km,
           soot.injection.scenario, 
           years.elapsed, months.elapsed, date, month, season.n.hemisphere, season.s.hemisphere,
           precip.rate.convective
@@ -353,7 +360,7 @@
           country.name, country.iso3, country.hemisphere,	
           country.region, country.sub.region, country.intermediate.region, 
           country.nuclear.weapons, country.nato.member.2024, 
-          country.population, country.land.area.sq.km,
+          country.population.2018, country.land.area.sq.km,
           soot.injection.scenario, years.elapsed, months.elapsed, month, 
           season.n.hemisphere, season.s.hemisphere,
           indicator, value
@@ -431,7 +438,7 @@
           country.name, country.iso3,	country.hemisphere,	
           country.region,	country.sub.region,	country.intermediate.region, 
           country.nuclear.weapons, country.nato.member.2024, 
-          country.population, country.land.area.sq.km,
+          country.population.2018, country.land.area.sq.km,
           soot.injection.scenario, 
           years.elapsed,
           crop, 
@@ -498,7 +505,7 @@
           country.name, country.iso3,	country.hemisphere,	
           country.region,	country.sub.region,	country.intermediate.region, 
           country.nuclear.weapons, country.nato.member.2024, 
-          country.population, country.land.area.sq.km,
+          country.population.2018, country.land.area.sq.km,
           soot.injection.scenario,
           years.elapsed, 
           crop, pct.change.harvest.yield
@@ -767,25 +774,63 @@
       SIMPLIFY = FALSE
     )
 
-  #CONSOLIDATE TABLES WITH SAME UNIT OF ANALYSIS
+  #CONSOLIDATE CLIMATE INDICATORS INTO SINGLE TABLE
 
-    country.level.table.names <-
-      source.table.configs.tb %>% 
-      filter(unit.of.analysis == "country") %>%
-      select(file.name) %>% as.vector %>%
-      sapply(function(x) {
-          x_clean <- gsub("^.*?\\.", "", x)  # Remove everything before the first period
-          paste0(x_clean, ".tb")             # Append ".tb"
-        }) %>%
-        as.vector()
+    # Get list of table names to include
+    climate.tables <- c("temperature", "precipitation", "uv")
 
-    #country.level.data.tb <- reduce(
-    #  clean.tables.ls[names(clean.tables.ls) %in% country.level.table.names],
-    #  full_join,
-    #  by = "country.iso3"
-    #)
+    # Extract indicators of concern for those tables
+    indicators.of.concern <- 
+      source.table.configs.tb %>%
+      filter(object.name %in% climate.tables) %>%
+      pull(indicators.of.concern) %>%
+      strsplit(split = ",\\s*") %>%
+      unlist() %>%
+      trimws() %>%
+      unique()
 
+    # Function to filter columns per table
+    filter_table <- function(tb, table_name) {
+      relevant.indicators <- 
+        source.table.configs.tb %>%
+        filter(object.name == table_name) %>%
+        pull(indicators.of.concern) %>%
+        strsplit(split = ",\\s*") %>%
+        unlist() %>%
+        trimws()
+      
+      cols.to.keep <- c("country.iso3", "months.elapsed", "years.elapsed", relevant.indicators)
+      tb %>% select(any_of(cols.to.keep))
+    }
 
+    filtered.tables.ls <- clean.tables.ls[climate.tables] %>%
+      imap(~filter_table(.x, .y))
+
+    country.monthly.combined.tb <-
+      reduce(
+        filtered.tables.ls,
+        full_join,
+        by = c("country.iso3", "months.elapsed", "years.elapsed")
+      )
+
+    climate.indicators.tb <- 
+      country.monthly.combined.tb %>%
+      left_join(
+        countries.tb %>% 
+          select(
+            country.iso3,
+            country.name,
+            country.hemisphere,
+            country.region,
+            country.sub.region,
+            country.intermediate.region,
+            country.nuclear.weapons,
+            country.nato.member.2024,
+            country.population.2018,
+            country.land.area.sq.km,
+          ),
+        by = "country.iso3"
+      )
 
 # 4-EXPORT --------------------------------------------------------------------------------
   
