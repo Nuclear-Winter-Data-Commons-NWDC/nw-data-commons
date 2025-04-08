@@ -799,7 +799,7 @@
         unlist() %>%
         trimws()
       
-      cols.to.keep <- c("country.iso3", "months.elapsed", "years.elapsed", relevant.indicators)
+      cols.to.keep <- c("country.iso3", "months.elapsed", "years.elapsed", "soot.injection.scenario",relevant.indicators)
       tb %>% select(any_of(cols.to.keep))
     }
 
@@ -830,7 +830,11 @@
             country.land.area.sq.km,
           ),
         by = "country.iso3"
-      )
+      ) %>%
+      select(-country.iso3) %>%
+      filter(years.elapsed <= 12)
+
+    #clean.tables.ls[["climate.indicators"]] <- climate.indicators.tb
 
 # 4-EXPORT --------------------------------------------------------------------------------
   
