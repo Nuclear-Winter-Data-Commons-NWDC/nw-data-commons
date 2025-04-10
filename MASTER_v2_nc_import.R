@@ -13,7 +13,7 @@
   wd <- "/home/wnf/code/nw-data-commons"
   setwd(wd) # Set working directory
 
-  source.tables.dir <- file.path(wd, "1-source-data") # Use file.path for platform independence
+  source.tables.dir <- file.path(wd, "1-source-data_nc-files") # Use file.path for platform independence
 
   # Check if the source directory exists
   if (!dir.exists(source.tables.dir)){
