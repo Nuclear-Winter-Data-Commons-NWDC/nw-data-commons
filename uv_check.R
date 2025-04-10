@@ -114,7 +114,7 @@
     "uv" = list(
       directory = file.path(source.tables.dir, "3-uv"),
       file_pattern = ".*\\.nc$",
-      variables = c("TUV_UVA", "TUV_UVB", "TUV_UVC", "TUV_UVINDEX", "TUV_UVINDEXMX"),
+      variables = c("TUV_UVA", "TUV_uva", "TUV_UVC", "TUV_UVINDEX", "TUV_UVINDEXMX"),
       time_var = "time",
       lat_var = "lat",
       lon_var = "lon"
@@ -281,28 +281,68 @@
     purrr::compact()
 
 # CHECKING EQUALITY OF UVB & UVC IN .NC FILES
-  uv_data <- gridded_tables.ls[["uv"]] %>%
-    mutate(lon = ifelse(lon > 180, lon - 360, lon))  # Normalize longitude
 
-  # Set path to a specific file
-  test_file <- "/home/wnf/code/nw-data-commons/1-source-data_nc-files/3-uv/uv_150_v2025-03-04.nc"
+  compare_uv_variables <- function(file_paths, config) {
+    results <- list()
 
-  # Open the file
-  nc_file <- ncdf4::nc_open(test_file)
+    var_pairs <- list(
+      c("TUV_UVA", "TUV_UVB"),
+      c("TUV_UVA", "TUV_UVC"),
+      c("TUV_UVB", "TUV_UVC")
+    )
 
-  # Use the config defined earlier
+    for (file_path in file_paths) {
+      nc <- ncdf4::nc_open(file_path)
+      on.exit(ncdf4::nc_close(nc), add = TRUE)
+
+      # Load the raw variable arrays
+      uva_vals <- as.vector(ncdf4::ncvar_get(nc, "TUV_UVA"))
+      uvb_vals <- as.vector(ncdf4::ncvar_get(nc, "TUV_UVB"))
+      uvc_vals <- as.vector(ncdf4::ncvar_get(nc, "TUV_UVC"))
+
+      for (pair in var_pairs) {
+        v1 <- pair[1]
+        v2 <- pair[2]
+
+        # Pull the arrays
+        vals1 <- get(tolower(gsub("TUV_", "", v1)) %>% paste0("_vals"))
+        vals2 <- get(tolower(gsub("TUV_", "", v2)) %>% paste0("_vals"))
+
+        # Remove cases where both are 0 (true no-UV conditions)
+        nonzero_mask <- !(vals1 == 0 & vals2 == 0)
+        vals1 <- vals1[nonzero_mask]
+        vals2 <- vals2[nonzero_mask]
+
+        # Do the comparison
+        is_equal <- vals1 == vals2
+        abs_diff <- abs(vals1 - vals2)
+
+        summary_row <- tibble(
+          file_name = basename(file_path),
+          var_pair = paste(v1, v2, sep = " vs "),
+          total_values = length(vals1),
+          num_identical = sum(is_equal),
+          prop_identical = mean(is_equal),
+          mean_abs_diff = mean(abs_diff),
+          min_abs_diff = min(abs_diff),
+          max_abs_diff = max(abs_diff)
+        )
+
+        results[[length(results) + 1]] <- summary_row
+      }
+    }
+
+    results_df <- bind_rows(results)
+    return(results_df)
+  }
+
+  # -----------------------------
+  # Run it on all UV .nc files
+  # -----------------------------
   uv_config <- configs.ls[["uv"]]
+  uv_files <- list.files(uv_config$directory, pattern = "\\.nc$", full.names = TRUE, recursive = TRUE)
 
-  # Extract both variables as tibbles
-  uvb_df <- flatten_variable(nc_file, "TUV_UVB", uv_config)
-  uvc_df <- flatten_variable(nc_file, "TUV_UVC", uv_config)
+  uv_comparison_summary <- compare_uv_variables(uv_files, uv_config)
 
-  # Join and compare
-  compare_df <- left_join(uvb_df, uvc_df, by = c("lon", "lat", "time"), suffix = c("_uvb", "_uvc"))
-
-  # Check if all values are identical
-  all_identical <- all.equal(compare_df$TUV_UVB, compare_df$TUV_UVC)
-  print(all_identical)
-
-  # Optional: look at differences if any
-  head(compare_df %>% filter(abs(TUV_UVB - TUV_UVC) > 0))
+  # View the summary
+  print(uv_comparison_summary)
