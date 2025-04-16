@@ -31,8 +31,6 @@
     --Make var climate.forcing.scenario numeric so it will order correctly
     --Figure out time unit
     --Convert units: 
-      --PRECC: m/s to mm/month
-      --PRECL: m/s to mm/month
       --TS, TSMN, TSMX: kelvin to celsius
     --Finalize & merge cleaning code
 
@@ -40,7 +38,9 @@
 
   Why does 150tg scenario have a decade+ more data?
   Create precip.pct.change variable
-
+  --Convert units: 
+      --PRECC: m/s to mm/month
+      --PRECL: m/s to mm/month
   --Correct years.elapsed var so does not depend on start date
   --Correct months.elapsed var so that starts at 1, not 13
   --Correct date var so starts on start date (1/31/2018), rather than 2019
@@ -48,10 +48,10 @@
 
 
 3. UV
-  -Add months_elapsed variable
-  -Ensure years.elapsed is numeric
-  Verify duplicate numbers in .nc files
-
+  Remove UV-C
+    --Add months_elapsed variable
+    --Ensure years.elapsed is numeric
+    --Verify duplicate numbers in .nc files
     --Make var climate.forcing.scenario numeric so it will order correctly
     --Remove associated.publications metadata
     --Change vavr name from years to years.elapsed
