@@ -371,7 +371,6 @@
       
       return(result)
     }
-
     
     uv.clean.tb <-
       Map(
@@ -776,63 +775,63 @@
 
   #CONSOLIDATE CLIMATE INDICATORS INTO SINGLE TABLE
 
-    # Get list of table names to include
-    climate.tables <- c("temperature", "precipitation", "uv")
+    # # Get list of table names to include
+    # climate.tables <- c("temperature", "precipitation", "uv")
 
-    # Extract indicators of concern for those tables
-    indicators.of.concern <- 
-      source.table.configs.tb %>%
-      filter(object.name %in% climate.tables) %>%
-      pull(indicators.of.concern) %>%
-      strsplit(split = ",\\s*") %>%
-      unlist() %>%
-      trimws() %>%
-      unique()
+    # # Extract indicators of concern for those tables
+    # indicators.of.concern <- 
+    #   source.table.configs.tb %>%
+    #   filter(object.name %in% climate.tables) %>%
+    #   pull(indicators.of.concern) %>%
+    #   strsplit(split = ",\\s*") %>%
+    #   unlist() %>%
+    #   trimws() %>%
+    #   unique()
 
-    # Function to filter columns per table
-    filter_table <- function(tb, table_name) {
-      relevant.indicators <- 
-        source.table.configs.tb %>%
-        filter(object.name == table_name) %>%
-        pull(indicators.of.concern) %>%
-        strsplit(split = ",\\s*") %>%
-        unlist() %>%
-        trimws()
+    # # Function to filter columns per table
+    # filter_table <- function(tb, table_name) {
+    #   relevant.indicators <- 
+    #     source.table.configs.tb %>%
+    #     filter(object.name == table_name) %>%
+    #     pull(indicators.of.concern) %>%
+    #     strsplit(split = ",\\s*") %>%
+    #     unlist() %>%
+    #     trimws()
       
-      cols.to.keep <- c("country.iso3", "months.elapsed", "years.elapsed", "soot.injection.scenario",relevant.indicators)
-      tb %>% select(any_of(cols.to.keep))
-    }
+    #   cols.to.keep <- c("country.iso3", "months.elapsed", "years.elapsed", "soot.injection.scenario",relevant.indicators)
+    #   tb %>% select(any_of(cols.to.keep))
+    # }
 
-    filtered.tables.ls <- clean.tables.ls[climate.tables] %>%
-      imap(~filter_table(.x, .y))
+    # filtered.tables.ls <- clean.tables.ls[climate.tables] %>%
+    #   imap(~filter_table(.x, .y))
 
-    country.monthly.combined.tb <-
-      reduce(
-        filtered.tables.ls,
-        full_join,
-        by = c("country.iso3", "months.elapsed", "years.elapsed")
-      )
+    # country.monthly.combined.tb <-
+    #   reduce(
+    #     filtered.tables.ls,
+    #     full_join,
+    #     by = c("country.iso3", "months.elapsed", "years.elapsed")
+    #   )
 
-    climate.indicators.tb <- 
-      country.monthly.combined.tb %>%
-      left_join(
-        countries.tb %>% 
-          select(
-            country.iso3,
-            country.name,
-            country.hemisphere,
-            country.region,
-            country.sub.region,
-            country.intermediate.region,
-            country.nuclear.weapons,
-            country.nato.member.2024,
-            country.population.2018,
-            country.land.area.sq.km,
-          ),
-        by = "country.iso3"
-      ) %>%
-      select(-country.iso3) %>%
-      filter(years.elapsed <= 12)
+    # climate.indicators.tb <- 
+    #   country.monthly.combined.tb %>%
+    #   left_join(
+    #     countries.tb %>% 
+    #       select(
+    #         country.iso3,
+    #         country.name,
+    #         country.hemisphere,
+    #         country.region,
+    #         country.sub.region,
+    #         country.intermediate.region,
+    #         country.nuclear.weapons,
+    #         country.nato.member.2024,
+    #         country.population.2018,
+    #         country.land.area.sq.km,
+    #       ),
+    #     by = "country.iso3"
+    #   ) %>%
+    #   select(-country.iso3) %>%
+    #   filter(years.elapsed <= 12)
 
     #clean.tables.ls[["climate.indicators"]] <- climate.indicators.tb
 

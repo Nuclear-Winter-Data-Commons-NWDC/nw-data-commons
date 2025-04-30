@@ -8,12 +8,10 @@
     --Ensure all soot.injection.scenario variables are numeric
     --Rename var climate.forcing.scenario to soot.injection.scenario
     --Get script workign in VS Code. 
-  
-
 
 0.1 COUNTRY-LEVEL DATA 
 
-  Create single consolidated table of all country-level data
+    - Create single consolidated table of all country-level data
   
     -- Add country metadata: NATO member (2024), 
     -- Add country metadata population, land area in sq. km
@@ -48,7 +46,7 @@
 
 
 3. UV
-  Remove UV-C
+    --Remove UV-C
     --Add months_elapsed variable
     --Ensure years.elapsed is numeric
     --Verify duplicate numbers in .nc files
@@ -58,8 +56,6 @@
   
 
 4A. AGRICULTURE CLM
-  Produce new version and send to Lili for checking
-
     --Make var soot.injection.scenario numeric so it will order correctly
     --Remove associated publications & indicator description from data table
     --Rename measure var - % change in yield
