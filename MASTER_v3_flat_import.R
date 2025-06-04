@@ -118,6 +118,50 @@
     }
     
 # 2-CLEANING & RESHAPING --------------------------------------------------------------------------------
+  #0. GENERAL FUNCTIONS FOR ALL TABLES ----
+
+    FlagOutliers_IQR <- function(tb, config.tb = source.table.configs.tb, default.multiplier = 10) {
+      # Infer table name by checking column matches
+      matched.table <- config.tb %>%
+        filter(sapply(indicators.of.concern, function(indicators) {
+          vars <- strsplit(indicators, ",\\s*")[[1]]
+          all(vars %in% colnames(tb))
+        }))
+
+      if (nrow(matched.table) == 0) {
+        warning("No matching table found in config for the current tibble.")
+        return(tb)
+      }
+
+      indicators <- matched.table$indicators.of.concern %>%
+        strsplit(",\\s*") %>% unlist()
+
+      iqr.multiplier <- matched.table$outlier.iqr.multiplier
+      if (length(iqr.multiplier) == 0 || is.na(iqr.multiplier)) {
+        iqr.multiplier <- default.multiplier
+        warning("IQR multiplier not found in config; using default.")
+      }
+
+      for (colname in indicators) {
+        if (!colname %in% colnames(tb)) next
+
+        q1 <- quantile(tb[[colname]], 0.25, na.rm = TRUE)
+        q3 <- quantile(tb[[colname]], 0.75, na.rm = TRUE)
+        iqr <- q3 - q1
+        lower <- q1 - iqr.multiplier * iqr
+        upper <- q3 + iqr.multiplier * iqr
+        message(paste("Outlier bounds for", colname, ": [", round(lower, 2), ",", round(upper, 2), "]"))
+
+
+        flag.col <- paste0(colname, ".outlier.flag")
+        tb[[flag.col]] <- ifelse(
+          tb[[colname]] < lower | tb[[colname]] > upper,
+          "outlier", ""
+        )
+      }
+
+      return(tb)
+    }
 
   #1. TEMPERATURE ----
     
@@ -190,30 +234,31 @@
         surface.temp = surface.temp - 273.15,
         #surface.temp.min = surface.temp.min - 273.15,
         #surface.temp.max = surface.temp.max - 273.15
-        ) %>%
-        left_join( #add months metadata (seasons in n & s hemisphere)
-          ., 
-          months.tb,
-          by = "month"
-        ) %>%
-        left_join( #add country metadata from configs table
-          ., 
-          countries.tb,
-          by = "country.id"
-        ) %>%
-        mutate(
-          surface.temp.weighted.by.land.area = surface.temp * country.land.area.sq.km,
-          surface.temp.weighted.by.population = surface.temp * country.population.2018
-        ) %>%
-        dplyr::select( #select & order final variables
-          country.name, country.iso3,	country.hemisphere,	
-          country.region,	country.sub.region,	country.intermediate.region, 
-          country.nuclear.weapons, country.nato.member.2024, 
-          country.population.2018, country.land.area.sq.km,
-          soot.injection.scenario, 
-          years.elapsed, months.elapsed, date, month, season.n.hemisphere, season.s.hemisphere,
-          surface.temp, surface.temp.weighted.by.land.area, surface.temp.weighted.by.population
-        ) %>%
+      ) %>%
+      left_join( #add months metadata (seasons in n & s hemisphere)
+        ., 
+        months.tb,
+        by = "month"
+      ) %>%
+      left_join( #add country metadata from configs table
+        ., 
+        countries.tb,
+        by = "country.id"
+      ) %>%
+      mutate(
+        surface.temp.weighted.by.land.area = surface.temp * country.land.area.sq.km,
+        surface.temp.weighted.by.population = surface.temp * country.population.2018
+      ) %>%
+      FlagOutliers_IQR() %>%
+      dplyr::select( #select & order final variables
+        country.name, country.iso3,	country.hemisphere,	
+        country.region,	country.sub.region,	country.intermediate.region, 
+        country.nuclear.weapons, country.nato.member.2024, 
+        country.population.2018, country.land.area.sq.km,
+        soot.injection.scenario, 
+        years.elapsed, months.elapsed, date, month, season.n.hemisphere, season.s.hemisphere,
+        surface.temp, surface.temp.outlier.flag, surface.temp.weighted.by.land.area, surface.temp.weighted.by.population
+      ) %>%
       as_tibble()
 
     temperature.clean.tb
@@ -274,7 +319,6 @@
       return(result)
     }
 
-    
     precipitation.clean.tb <-
       Map(
           CleanReshape_Precip,
@@ -287,32 +331,33 @@
         values_from = value
       ) %>%
       mutate( #converting units from m/s to mm/month
-        precip.rate.convective = precip.rate.convective * 1000 * 86400 * 30.4375,
-        #precip.rate.stable = precip.rate.stable * 1000 * 86400 * 30.4375,
-        ) %>%
-        left_join( #add months metadata (seasons in n & s hemisphere)
-          ., 
-          months.tb,
-          by = "month"
-        ) %>%
-        left_join( #add country metadata from configs table
-          ., 
-          countries.tb,
-          by = "country.id"
-        ) %>%
-        mutate(
-          precip.rate.convective.weighted.by.land.area = precip.rate.convective * country.land.area.sq.km,
-          precip.rate.convective.weighted.by.population = precip.rate.convective * country.population.2018
-        ) %>%
-        dplyr::select( #select & order final variables
-          country.name, country.iso3,	country.hemisphere,	
-          country.region,	country.sub.region,	country.intermediate.region, 
-          country.nuclear.weapons, country.nato.member.2024, 
-          country.population.2018, country.land.area.sq.km,
-          soot.injection.scenario, 
-          years.elapsed, months.elapsed, date, month, season.n.hemisphere, season.s.hemisphere,
-          precip.rate.convective
-        ) %>%
+      precip.rate.convective = precip.rate.convective * 1000 * 86400 * 30.4375,
+      #precip.rate.stable = precip.rate.stable * 1000 * 86400 * 30.4375,
+      ) %>%
+      left_join( #add months metadata (seasons in n & s hemisphere)
+        ., 
+        months.tb,
+        by = "month"
+      ) %>%
+      left_join( #add country metadata from configs table
+        ., 
+        countries.tb,
+        by = "country.id"
+      ) %>%
+      mutate(
+        precip.rate.convective.weighted.by.land.area = precip.rate.convective * country.land.area.sq.km,
+        precip.rate.convective.weighted.by.population = precip.rate.convective * country.population.2018
+      ) %>%
+      FlagOutliers_IQR() %>%
+      dplyr::select( #select & order final variables
+        country.name, country.iso3,	country.hemisphere,	
+        country.region,	country.sub.region,	country.intermediate.region, 
+        country.nuclear.weapons, country.nato.member.2024, 
+        country.population.2018, country.land.area.sq.km,
+        soot.injection.scenario, 
+        years.elapsed, months.elapsed, date, month, season.n.hemisphere, season.s.hemisphere,
+        precip.rate.convective, precip.rate.convective.outlier.flag
+      ) %>%
       as_tibble()
 
     #precipitation.clean.tb
@@ -391,6 +436,7 @@
         values_from = value
       ) %>%
       ReplaceNames(., names(.), tolower(names(.))) %>%
+      FlagOutliers_IQR() %>%
       as_tibble()
     
     #uv.clean.tb %>%
@@ -465,6 +511,7 @@
         names(agriculture.clm.ls)
       ) %>%
       do.call(rbind, .) %>%
+      FlagOutliers_IQR() %>%
       as_tibble()
     
     #agriculture.clm.clean.tb %>% 
@@ -531,6 +578,7 @@
         names(agriculture.agmip.ls)
       ) %>%
       do.call(rbind, .) %>%
+      FlagOutliers_IQR() %>%
       as_tibble()
     
     #agriculture.agmip.clean.tb %>% 
@@ -593,8 +641,6 @@
       return(result)
       
     }
-    
-    iqr.multiplier <- 100  # You can adjust this value
 
     fish.catch.clean.tb <- 
       Map(
@@ -610,23 +656,7 @@
         eez.name = eez.name %>% gsub("Exclusive Economic Zone", "EEZ", .),
         mean.catch.per.1000.sq.km = mean.catch / (eez.area / 1000)
       ) %>%
-      mutate(
-        # Flag outliers in mean.pct.catch.change
-        mean.pct.catch.change.outlier.flag = {
-          q1 <- quantile(mean.pct.catch.change, 0.25, na.rm = TRUE)
-          q3 <- quantile(mean.pct.catch.change, 0.75, na.rm = TRUE)
-          iqr <- q3 - q1
-          lower <- q1 - iqr.multiplier * iqr
-          upper <- q3 + iqr.multiplier * iqr
-          print(upper)
-          print(lower)
-          ifelse(
-            mean.pct.catch.change < lower | mean.pct.catch.change > upper,
-            "outlier",
-            ""
-          )
-        }
-      ) %>%
+      FlagOutliers_IQR() %>%
       select(
         eez.name, eez.num, eez.area, 
         years.elapsed, 
@@ -638,7 +668,13 @@
         std.dev.catch,
         std.dev.catch.change,
         std.dev.pct.catch.change,
-        mean.pct.catch.change.outlier.flag
+        mean.catch.outlier.flag,
+        mean.catch.per.1000.sq.km.outlier.flag,
+        mean.catch.change.outlier.flag,
+        mean.pct.catch.change.outlier.flag,
+        std.dev.catch.outlier.flag,
+        std.dev.catch.change.outlier.flag,
+        std.dev.pct.catch.change.outlier.flag
       )
 
     #fish.catch.clean.tb %>%
@@ -707,6 +743,7 @@
         CleanReshape_SeaIce
       ) %>%
       do.call(rbind, .) %>%
+      FlagOutliers_IQR() %>%
       as_tibble()
     
     #sea.ice.clean.tb %>%
@@ -779,138 +816,6 @@
       names(clean.tables.ls),
       SIMPLIFY = FALSE
     )
-
-  #CONSOLIDATE CLIMATE INDICATORS INTO SINGLE TABLE
-
-    # # Get list of table names to include
-    # climate.tables <- c("temperature", "precipitation", "uv")
-
-    # # Extract indicators of concern for those tables
-    # indicators.of.concern <- 
-    #   source.table.configs.tb %>%
-    #   filter(object.name %in% climate.tables) %>%
-    #   pull(indicators.of.concern) %>%
-    #   strsplit(split = ",\\s*") %>%
-    #   unlist() %>%
-    #   trimws() %>%
-    #   unique()
-
-    # # Function to filter columns per table
-    # filter_table <- function(tb, table_name) {
-    #   relevant.indicators <- 
-    #     source.table.configs.tb %>%
-    #     filter(object.name == table_name) %>%
-    #     pull(indicators.of.concern) %>%
-    #     strsplit(split = ",\\s*") %>%
-    #     unlist() %>%
-    #     trimws()
-      
-    #   cols.to.keep <- c("country.iso3", "months.elapsed", "years.elapsed", "soot.injection.scenario",relevant.indicators)
-    #   tb %>% select(any_of(cols.to.keep))
-    # }
-
-    # filtered.tables.ls <- clean.tables.ls[climate.tables] %>%
-    #   imap(~filter_table(.x, .y))
-
-    # country.monthly.combined.tb <-
-    #   reduce(
-    #     filtered.tables.ls,
-    #     full_join,
-    #     by = c("country.iso3", "months.elapsed", "years.elapsed")
-    #   )
-
-    # climate.indicators.tb <- 
-    #   country.monthly.combined.tb %>%
-    #   left_join(
-    #     countries.tb %>% 
-    #       select(
-    #         country.iso3,
-    #         country.name,
-    #         country.hemisphere,
-    #         country.region,
-    #         country.sub.region,
-    #         country.intermediate.region,
-    #         country.nuclear.weapons,
-    #         country.nato.member.2024,
-    #         country.population.2018,
-    #         country.land.area.sq.km,
-    #       ),
-    #     by = "country.iso3"
-    #   ) %>%
-    #   select(-country.iso3) %>%
-    #   filter(years.elapsed <= 12)
-
-    #clean.tables.ls[["climate.indicators"]] <- climate.indicators.tb
-
-# 5-VISUALIZATION --------------------------------------------------------------------------------
-
-  #ONE-OFF GEOSPATIAL COUNTRY-LEVEL HEATMAP
-
-    #Parameters 
-    selected_years <- c(5)
-    selected_scenarios <- c(150)
-    color_low <- "#d73027"      # Color for lowest yield change (e.g., red)
-    color_high <- "#bce0b3"     # Color for highest yield change (e.g., green)
-    crop_variable <- "pct.change.harvest.yield"  # Variable to visualize
-    
-    plot_data <- agriculture.clm.clean.tb
-    crop <- "corn"
-
-# Clean and filter data
-plot_data <- agriculture.clm.clean.tb %>%
-  filter(
-    years.elapsed %in% selected_years,
-    soot.injection.scenario %in% selected_scenarios,
-    crop == crop,
-    !is.na(country.iso3),
-    !is.na(!!sym(crop_variable))
-  ) %>%
-  select(
-    country.iso3, years.elapsed, soot.injection.scenario,
-    !!sym(crop_variable)
-  ) %>%
-  distinct()
-
-# Load base world map
-world <- ne_countries(scale = "medium", returnclass = "sf")
-
-# Join + reduce plot_df to minimal set
-plot_df <- world %>%
-  left_join(plot_data, by = c("iso_a3" = "country.iso3")) %>%
-  select(iso_a3, name, !!sym(crop_variable), geometry)
-
-# Ensure variable is numeric (just in case)
-plot_df[[crop_variable]] <- as.numeric(plot_df[[crop_variable]])
-
-# Check: sample joined values
-print(head(plot_df, 10))
-
-# Title
-title_text <- sprintf(
-  "%% Change in Crop Yields by Country, %sTg Scenario, Year%s %s",
-  paste(unique(plot_data$soot.injection.scenario), collapse = ", "),
-  if (length(selected_years) > 1) "s" else "",
-  paste(unique(plot_data$years.elapsed), collapse = ", ")
-)
-
-# Plot
-ggplot(plot_df) +
-  geom_sf(aes(fill = pct.change.harvest.yield), color = "gray70", size = 0.1) +
-  scale_fill_gradient2(
-    low = color_low,
-    high = color_high,
-    mid = "#ffe367",
-    midpoint = 0,
-    na.value = "lightgray",
-    name = "% Change"
-  ) +
-  labs(title = title_text) +
-  theme_minimal() +
-  theme(
-    panel.background = element_rect(fill = "white", color = NA),
-    legend.position = "right",
-    plot.title = element_text(size = 16, face = "bold")
-  )
 
 
 # 6-EXPORT --------------------------------------------------------------------------------
