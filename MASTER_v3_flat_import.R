@@ -8,7 +8,7 @@
     rm(list=ls()) #Remove lists
     gc()
     options(java.parameters = "- Xmx8g") #helps r not to fail when importing large xlsx files with xlsx package
-    
+
   # SECTION & CODE CLOCKING
     
     sections.all.starttime <- Sys.time()
@@ -47,6 +47,7 @@
     library(rnaturalearthdata)
     library(sf)
     library(stringr)
+    library(countrycode)
     
   # SECTION CLOCKING
     section0.duration <- Sys.time() - section0.starttime
@@ -118,11 +119,37 @@
     }
     
 # 2-CLEANING & RESHAPING --------------------------------------------------------------------------------
-  #0. GENERAL FUNCTIONS FOR ALL TABLES ----
+  #0. GENERAL FUNCTIONS FOR ALL TABLES & ONE-OFF PROCEDURES ----
 
-    FlagOutliers_IQR <- function(tb, config.tb = source.table.configs.tb, default.multiplier = 10) {
-      # Infer table name by checking column matches
-      matched.table <- config.tb %>%
+    #General function for flagging outliers using IQR method
+    FlagOutliers_IQR <- function(
+      tb, 
+      config.tb = source.table.configs.tb, 
+      default.multiplier = 10, 
+      source.table.list.name = NULL
+    ) {
+      print("Looking for matching indicators in the following columns:")
+      print(colnames(tb))
+      print("Against config table rows:")
+      print(config.tb$indicators.of.concern)
+
+      # If source.table.list.name is provided, extract the object name
+      object.name <- NULL
+      if (!is.null(source.table.list.name)) {
+        object.name <- deparse(substitute(source.table.list.name)) %>%
+          gsub("\\.ls$", "", .) # remove .ls suffix if present
+        message(paste("Detected object name:", object.name))
+      }
+
+      # Try to match config row using object.name
+      matched.table <- config.tb
+      if (!is.null(object.name)) {
+        matched.table <- matched.table %>%
+          filter(object.name == !!object.name)
+      }
+
+      # Now further filter using indicators match (if needed)
+      matched.table <- matched.table %>%
         filter(sapply(indicators.of.concern, function(indicators) {
           vars <- strsplit(indicators, ",\\s*")[[1]]
           all(vars %in% colnames(tb))
@@ -133,14 +160,16 @@
         return(tb)
       }
 
-      indicators <- matched.table$indicators.of.concern %>%
-        strsplit(",\\s*") %>% unlist()
-
-      iqr.multiplier <- matched.table$outlier.iqr.multiplier
-      if (length(iqr.multiplier) == 0 || is.na(iqr.multiplier)) {
+      # Pull IQR multiplier
+      iqr.multiplier <- matched.table$outlier.iqr.multiplier %>% first()
+      if (is.null(iqr.multiplier) || is.na(iqr.multiplier)) {
         iqr.multiplier <- default.multiplier
         warning("IQR multiplier not found in config; using default.")
       }
+
+      # Apply outlier detection
+      indicators <- matched.table$indicators.of.concern %>% 
+        strsplit(",\\s*") %>% unlist()
 
       for (colname in indicators) {
         if (!colname %in% colnames(tb)) next
@@ -152,7 +181,6 @@
         upper <- q3 + iqr.multiplier * iqr
         message(paste("Outlier bounds for", colname, ": [", round(lower, 2), ",", round(upper, 2), "]"))
 
-
         flag.col <- paste0(colname, ".outlier.flag")
         tb[[flag.col]] <- ifelse(
           tb[[colname]] < lower | tb[[colname]] > upper,
@@ -162,6 +190,47 @@
 
       return(tb)
     }
+
+
+    # #One-Off Code for fao.crop.indicators table to add iso3 codes & reshape to wider
+    # fao.crop.indicators.long.tb <- fao.crop.indicators.long.tb
+    # fao.crop.indicators.long.tb$`Area Code (M49)` %<>% as.numeric
+    # fao.crop.indicators.long.tb %<>%
+    #   mutate(country.iso3 = countrycode(`Area Code (M49)`, origin = "un", destination = "iso3c"))
+
+    # #Filter only the crops you care about (clean names for output)
+    # crop_map <- c(
+    #   "Maize (corn)" = "corn",
+    #   "Rice" = "rice",
+    #   "Wheat" = "wheat",
+    #   "Sugar cane" = "sugar.cane",
+    #   "Soya beans" = "soy"
+    # )
+
+    # #Reshape from wide (years as columns) to long format
+    # fao.crop.indicators.wide.tb <- fao.crop.indicators.long.tb %>%
+    #   filter(Item %in% names(crop_map)) %>%
+    #   mutate(
+    #     crop = crop_map[Item],                       # rename crop
+    #     element = tolower(gsub(" ", ".", Element))   # standardize element names
+    #   ) %>%
+    #   pivot_longer(cols = c(`2015`), names_to = "year", values_to = "value") %>%
+    #   mutate(
+    #     variable = paste(crop, element, year, sep = ".")
+    #   ) %>%
+    #   select(country.iso3, variable, value) %>%
+    #   filter(!is.na(country.iso3)) %>%
+    #   pivot_wider(names_from = variable, values_from = value)
+
+    # setwd("/home/wnf/code/nw-data-commons/2-outputs")
+    # fao.output.filename <- paste0(
+    #   "fao.crop.indicators.wide.",
+    #   Sys.time() %>% gsub(":",".",.) %>% substr(., 1, nchar(.)-7),
+    #   ".csv",
+    #   sep=""
+    # )
+    # write.csv(fao.crop.indicators.wide.tb, fao.output.filename)
+
 
   #1. TEMPERATURE ----
     
@@ -331,8 +400,8 @@
         values_from = value
       ) %>%
       mutate( #converting units from m/s to mm/month
-      precip.rate.convective = precip.rate.convective * 1000 * 86400 * 30.4375,
-      #precip.rate.stable = precip.rate.stable * 1000 * 86400 * 30.4375,
+        precip.rate.convective = precip.rate.convective * 1000 * 86400 * 30.4375
+        #precip.rate.stable = precip.rate.stable * 1000 * 86400 * 30.4375,
       ) %>%
       left_join( #add months metadata (seasons in n & s hemisphere)
         ., 
@@ -347,6 +416,8 @@
       mutate(
         precip.rate.convective.weighted.by.land.area = precip.rate.convective * country.land.area.sq.km,
         precip.rate.convective.weighted.by.population = precip.rate.convective * country.population.2018
+        #precip.rate.stable.weighted.by.land.area = precip.rate.stable * country.land.area.sq.km,
+        #precip.rate.stable.weighted.by.population = precip.rate.stable * country.population.2018
       ) %>%
       FlagOutliers_IQR() %>%
       dplyr::select( #select & order final variables
@@ -356,7 +427,11 @@
         country.population.2018, country.land.area.sq.km,
         soot.injection.scenario, 
         years.elapsed, months.elapsed, date, month, season.n.hemisphere, season.s.hemisphere,
-        precip.rate.convective, precip.rate.convective.outlier.flag
+        precip.rate.convective, 
+        precip.rate.convective.weighted.by.land.area, precip.rate.convective.weighted.by.population,
+        precip.rate.convective.outlier.flag
+        #precip.rate.stable.weighted.by.land.area, precip.rate.stable.weighted.by.population,
+        #precip.rate.stable.outlier.flag
       ) %>%
       as_tibble()
 
@@ -438,7 +513,7 @@
       ReplaceNames(., names(.), tolower(names(.))) %>%
       FlagOutliers_IQR() %>%
       as_tibble()
-    
+
     #uv.clean.tb %>%
     #  select(-value) %>%
     #  apply(., 2, TableWithNA)
@@ -459,7 +534,8 @@
         source_table_names %>%
         strsplit(., "-") %>% 
         unlist %>%
-        .[2]
+        .[2] %>% 
+        as.numeric
       
       result <- 
         source_table_list %>% 
@@ -486,11 +562,20 @@
           countries.tb,
           by = "country.id"
         ) %>%
+        left_join(
+          fao.crop.indicators.tb,
+          by = "country.iso3"
+        ) %>%
         select( #select & order final variables
           country.name, country.iso3,	country.hemisphere,	
           country.region,	country.sub.region,	country.intermediate.region, 
           country.nuclear.weapons, country.nato.member.2024, 
           country.population.2018, country.land.area.sq.km,
+          corn.area.harvested.2015, corn.yield.2015, corn.production.2015, 
+          rice.area.harvested.2015, rice.yield.2015, rice.production.2015, 
+          soy.area.harvested.2015, soy.yield.2015, soy.production.2015,
+          sugar.cane.area.harvested.2015, sugar.cane.yield.2015, sugar.cane.production.2015, 
+          wheat.area.harvested.2015, wheat.yield.2015, wheat.production.2015,
           soot.injection.scenario, 
           years.elapsed,
           crop, 
@@ -504,84 +589,101 @@
 
     }
     
-    agriculture.clm.clean.tb <- #create final cleaned & compiled data table
+    agriculture.clm.clean.tb <- 
       Map(
         CleanReshape_AgricultureCLM,
         agriculture.clm.ls,
         names(agriculture.clm.ls)
       ) %>%
       do.call(rbind, .) %>%
-      FlagOutliers_IQR() %>%
+      mutate(
+        crop = case_when(
+          crop == "grass" ~ "sugar.cane", 
+          crop == "swheat" ~ "spring.wheat",
+          TRUE ~ crop
+        )
+      ) %>%
+      pivot_wider(
+        names_from = crop,
+        values_from = pct.change.harvest.yield,
+        names_glue = "pct.change.harvest.yield.{crop}"
+      ) %>%
+      FlagOutliers_IQR(source.table.list.name = agriculture.clm.ls) %>% 
       as_tibble()
     
-    #agriculture.clm.clean.tb %>% 
-    #  select(-pct.change.harvest.yield) %>% 
-    #  apply(., 2, TableWithNA) #display unique values for each variable except the indicator (for checking)
+    # agriculture.clm.clean.tb %>% 
+    #   select(names(.)[!grepl("pct.change.harvest.yield|2015", names(.))]) %>% 
+    #   apply(., 2, TableWithNA) #display unique values for each variable except the indicator (for checking)
     
   #4b. AGRICULTURE AGMIP (Multi-Model Aggregates, Jonas) ----
     
     ImportSourceData_GoogleSheets("4b.agriculture.agmip")
-    
-    CleanReshape_AgricultureAGMIP <- function(source_table_list, source_table_names){
-        
-      scenario <- 
-        source_table_names %>%
-        strsplit(., "_") %>% 
-        unlist %>%
-        .[2]
+
+    CleanReshape_AgricultureAGMIP <- function(source_table_list, source_table_names) {
       
-      crop <- 
-        source_table_names %>%
-        strsplit(., "_") %>% 
-        unlist %>%
-        .[3]
-      
+      print("Working on cleaning & reshaping:")
+      print(source_table_names)
+
+      # Extract components
+      split_parts <- strsplit(source_table_names, "_")[[1]]
+      source.model <- tolower(split_parts[1])      # "mills" or "bardeen"
+      scenario <- split_parts[2]
+      crop <- tolower(split_parts[3])              # normalize crop name
+
       result <- 
         source_table_list %>% 
-        ReplaceNames(., names(.),tolower(names(.))) %>% #lower-case all table names
+        ReplaceNames(., names(.), tolower(names(.))) %>%
         select(-country_name, -`...1`) %>%
-        ReplaceNames(., "country_iso3", "country.iso3") %>%  #standardize geographic variable names
-        mutate(across(where(is.list), ~ suppressWarnings(as.character(unlist(.))))) %>% #convert all list variables into character
-        melt(., id = "country.iso3") %>% #reshape to long
-        mutate( #add/rename variables
-          soot.injection.scenario = 5,
+        ReplaceNames(., "country_iso3", "country.iso3") %>%
+        mutate(across(where(is.list), ~ suppressWarnings(as.character(unlist(.))))) %>%
+        melt(., id = "country.iso3") %>%
+        mutate(
           crop = crop,
-          years.elapsed = variable %>% str_extract(., "(?<=_)[^_]*$") %>% as.numeric,
-          pct.change.harvest.yield = value %>% as.numeric %>% suppressWarnings()
+          source.model = source.model,
+          soot.injection.scenario = 5,
+          years.elapsed = str_extract(variable, "(?<=_)[^_]*$") %>% as.numeric(),
+          pct.change.harvest.yield = value %>% as.numeric() %>% suppressWarnings()
         ) %>%
-        left_join( #add country metadata from configs table
-          ., 
-          countries.tb,
-          by = "country.iso3"
-        ) %>%
-        select( #select & order final variables
-          country.name, country.iso3,	country.hemisphere,	
-          country.region,	country.sub.region,	country.intermediate.region, 
-          country.nuclear.weapons, country.nato.member.2024, 
-          country.population.2018, country.land.area.sq.km,
-          soot.injection.scenario,
-          years.elapsed, 
-          crop, pct.change.harvest.yield
+        left_join(countries.tb, by = "country.iso3") %>%
+        left_join(fao.crop.indicators.tb, by = "country.iso3") %>%
+        select(
+          country.name, country.iso3, country.hemisphere, country.region, country.sub.region, country.intermediate.region,
+          country.nuclear.weapons, country.nato.member.2024, country.population.2018, country.land.area.sq.km,
+          corn.area.harvested.2015, corn.yield.2015, corn.production.2015, 
+          rice.area.harvested.2015, rice.yield.2015, rice.production.2015, 
+          soy.area.harvested.2015, soy.yield.2015, soy.production.2015, 
+          wheat.area.harvested.2015, wheat.yield.2015, wheat.production.2015,
+          soot.injection.scenario, years.elapsed,
+          source.model, crop, pct.change.harvest.yield
         ) %>% 
-        as_tibble #ensure final result is a tibble
-      
-      print(source_table_names)
-      
+        filter(!is.na(pct.change.harvest.yield)) %>%
+        as_tibble()
+
       return(result)
-      
     }
-    
-    agriculture.agmip.clean.tb <- #create final cleaned & compiled data table
+
+    # Assemble full clean table
+    agriculture.agmip.clean.tb <- 
       Map(
         CleanReshape_AgricultureAGMIP,
         agriculture.agmip.ls,
         names(agriculture.agmip.ls)
       ) %>%
       do.call(rbind, .) %>%
-      FlagOutliers_IQR() %>%
-      as_tibble()
-    
-    #agriculture.agmip.clean.tb %>% 
+      mutate(
+        crop = case_when(
+          crop == "maize" ~ "corn",
+          TRUE ~ crop
+        )
+      ) %>%
+      pivot_wider(
+        names_from = crop,
+        values_from = pct.change.harvest.yield,
+        names_glue = "pct.change.harvest.yield.{crop}",
+        #values_fn = dplyr::first  # avoid list-columns; keeps values as-is
+      )
+
+    # agriculture.agmip.clean.tb %>% 
     #  select(-names(.)[length(names(.))]) %>% 
     #  apply(., 2, TableWithNA) #display unique values for each variable except the indicator (for checking)
     
@@ -750,7 +852,7 @@
     #  select(-sea.ice.thickness.meters) %>%
     #  apply(., 2, TableWithNA)
   
-  #CONSOLIDATE TABLES INTRO LIST
+  #CONSOLIDATE TABLES INTO LIST
 
     clean_object_names <- 
       source.table.configs.tb$object.name %>%
