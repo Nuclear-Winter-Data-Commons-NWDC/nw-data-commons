@@ -35,7 +35,7 @@
     #LoadCommonPackages()
     
     library(googledrive)
-    drive_auth(email = "william@fluxrme.com")
+    drive_auth(email = "william@fluxrme.com") #
     
     library(googlesheets4) 
     library(tidyverse) 
@@ -393,7 +393,7 @@
         ReplaceNames(., c("id", "nation"), c("country.id", "country.name")) %>%
         mutate(across(where(is.list), ~ suppressWarnings(as.numeric(unlist(.))))) %>%
         select(-country.name) %>%
-        melt(id = "country.id") %>%
+        reshape2::melt(id = "country.id") %>%
         mutate(
           soot.injection.scenario = scenario,
           variable = as.character(variable),
@@ -493,7 +493,7 @@
         ReplaceNames(., c("id", "nation"), c("country.id", "country.name")) %>%
         mutate(across(where(is.list), ~ suppressWarnings(as.numeric(unlist(.))))) %>%
         select(-country.name) %>%
-        melt(id = "country.id") %>%
+        reshape2::melt(id = "country.id") %>%
         mutate(
           soot.injection.scenario = scenario,
           variable = as.character(variable),
@@ -593,7 +593,7 @@
         ReplaceNames(., c("id", "nation"), c("country.id", "country.name")) %>%
         mutate(across(where(is.list), ~ suppressWarnings(as.numeric(unlist(.))))) %>%
         select(-country.name) %>%
-        melt(id = "country.id") %>%
+        reshape2::melt(id = "country.id") %>%
         mutate(
           soot.injection.scenario = recode(
             scenario,
@@ -673,7 +673,7 @@
         ReplaceNames(., names(.),tolower(names(.))) %>% #lower-case all table names
         ReplaceNames(., c("nation-id", "nation-name"), c("country.id","country.name")) %>%  #standardize geographic variable names
         select(-id, -country.name) %>%
-        melt(., id = "country.id") %>% #reshape to long
+        reshape2::melt(., id = "country.id") %>% #reshape to long
         mutate( #add/rename variables
           soot.injection.scenario = recode(
             variable, 
@@ -767,7 +767,7 @@
         select(-country_name, -`...1`) %>%
         ReplaceNames(., "country_iso3", "country.iso3") %>%
         mutate(across(where(is.list), ~ suppressWarnings(as.character(unlist(.))))) %>%
-        melt(., id = "country.iso3") %>%
+        reshape2::melt(., id = "country.iso3") %>%
         mutate(
           crop = crop,
           source.model = source.model,
@@ -833,7 +833,7 @@
         ReplaceNames(., names(.),tolower(names(.))) %>% #lower-case all table names
         ReplaceNames(., c("eez_no"), c("eez.num")) %>%
         mutate(across(where(is.list), ~ suppressWarnings(as.numeric(unlist(.))))) %>% #convert all list variables into character
-        melt(., id = "eez.num") %>% #reshape to long
+        reshape2::melt(., id = "eez.num") %>% #reshape to long
         mutate( #add/rename variables
           soot.injection.scenario = recode(
             scenario, 
@@ -862,11 +862,11 @@
               mult.replacements.per.cell = FALSE
             )
         ) %>%
-        dcast(
-          ., 
-          soot.injection.scenario + eez.num + years.elapsed ~ indicator,
-          value.var = "value"
-        ) %>%
+        pivot_wider(
+          id_cols = c(soot.injection.scenario, eez.num, years.elapsed),
+          names_from = indicator,
+          values_from = value
+        )%>%
         as_tibble #ensure final result is a tibble
       
       print(source_table_names)
@@ -930,7 +930,7 @@
         source_table %>%
         .[-1,] %>%
         ReplaceNames(., names(source_table)[1], "port") %>%
-        melt(
+        reshape2::melt(
           .,
           id = "port"
         ) %>%
