@@ -18,7 +18,7 @@
     
     # Set Working Directory and R Project Directory
 
-      wd <- "/home/wnf/code/nw-data-commons"
+      wd <- "/Users/new/Desktop/nwp"
 
     #Set Source Tables Directory (raw data, configs, etc.)
       source.tables.dir <- paste0(wd, "/1-source-data")
@@ -35,7 +35,7 @@
     #LoadCommonPackages()
     
     library(googledrive)
-    drive_auth(email = "william@fluxrme.com") #
+    drive_auth(email = "asantekesse3@gmail.com") 
     
     library(googlesheets4) 
     library(tidyverse) 
@@ -58,6 +58,15 @@
     library(sf)
     library(stringr)
     library(countrycode)
+    
+    
+    # Added these libraries 
+    library(patchwork)
+    library(viridis)
+    library(patchwork)
+    library(grid)
+    library(graticule)
+    library(units)
     
   # DEFINE USEFUL FUNCTIONS
    
@@ -190,8 +199,7 @@
 # 1-IMPORT --------------------------------------------------------------------------------
   
   # IMPORT CONFIG TABLES ---- 
-    
-    gs4_auth(email = "william@fluxrme.com")
+    gs4_auth(email = "asantekesse3@gmail.com")
     
     sheet.id = "https://docs.google.com/spreadsheets/d/1M9o6hIX9R8f44-UGea09Z27yhNhK340efd6Udgwrnl8/"
         
@@ -435,8 +443,6 @@
       ) %>%
       mutate( #converting units from kelvin to celsius
         surface.temp = surface.temp - 273.15,
-        #surface.temp.min = surface.temp.min - 273.15,
-        #surface.temp.max = surface.temp.max - 273.15
       ) %>%
       left_join( #add months metadata (seasons in n & s hemisphere)
         ., 
