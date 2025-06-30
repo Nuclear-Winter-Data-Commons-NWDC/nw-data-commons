@@ -261,7 +261,7 @@
     }
     
 # 2-CLEANING & RESHAPING --------------------------------------------------------------------------------
-  #0. GENERAL FUNCTIONS FOR ALL TABLES & ONE-OFF PROCEDURES ----
+  #2.0 GENERAL FUNCTIONS FOR ALL TABLES & ONE-OFF PROCEDURES ----
 
     #General function for flagging outliers using IQR method
     FlagOutliers_IQR <- function(
@@ -374,7 +374,7 @@
     # write.csv(fao.crop.indicators.wide.tb, fao.output.filename)
 
 
-  #1. TEMPERATURE ----
+  #2.1 TEMPERATURE ----
     
     ImportSourceData_GoogleSheets("1.temperature")
 
@@ -472,8 +472,7 @@
 
     temperature.clean.tb
 
-  #2. PRECIPITATION ----
-    
+  #2.2 PRECIPITATION ----    
     ImportSourceData_GoogleSheets("2.precipitation")
 
     #source_table_list <- precipitation.ls[[1]]
@@ -574,7 +573,7 @@
 
     #precipitation.clean.tb
 
-  #3. UV ----
+  #2.3 UV ----
     
     ImportSourceData_GoogleSheets("3.uv")
     
@@ -655,7 +654,7 @@
     #  select(-value) %>%
     #  apply(., 2, TableWithNA)
     
-  #4a. AGRICULTURE CLM (Community Land Model) ----
+  #2.4a AGRICULTURE CLM (Community Land Model) ----
     
     ImportSourceData_GoogleSheets("4a.agriculture.clm")
     
@@ -752,7 +751,7 @@
     #   select(names(.)[!grepl("pct.change.harvest.yield|2015", names(.))]) %>% 
     #   apply(., 2, TableWithNA) #display unique values for each variable except the indicator (for checking)
     
-  #4b. AGRICULTURE AGMIP (Multi-Model Aggregates, Jonas) ----
+  #2.4b AGRICULTURE AGMIP (Multi-Model Aggregates, Jonas) ----
     
     ImportSourceData_GoogleSheets("4b.agriculture.agmip")
 
@@ -824,7 +823,7 @@
     #  select(-names(.)[length(names(.))]) %>% 
     #  apply(., 2, TableWithNA) #display unique values for each variable except the indicator (for checking)
     
-  #5. FISH CATCH ----
+  #2.5 FISH CATCH ----
     
     ImportSourceData_GoogleSheets("5.fish.catch")
     
@@ -924,7 +923,7 @@
     #  ) %>%
     #  apply(., 2, TableWithNA)
     
-  #6. SEA ICE ----
+  #2.6 SEA ICE ----
     
     ImportSourceData_GoogleSheets("6.sea.ice")
     
@@ -989,7 +988,7 @@
     #  select(-sea.ice.thickness.meters) %>%
     #  apply(., 2, TableWithNA)
   
-  #CONSOLIDATE TABLES INTO LIST
+  #2.7 CONSOLIDATE TABLES INTO LIST
 
     clean_object_names <- 
       source.table.configs.tb$object.name %>%
@@ -1011,7 +1010,7 @@
     
     names(clean.tables.ls) <- clean_table_names[clean_object_names %in% ls()]
 
-  #FINAL CLEANING
+  #2.8 FINAL CLEANING
 
     # Helper: Drop rows where all indicators of concern are NA
     filter_by_indicators_of_concern <- function(tb, table.name.raw) {
@@ -1057,7 +1056,7 @@
     )
 
 
-# 6-EXPORT --------------------------------------------------------------------------------
+# 3-EXPORT --------------------------------------------------------------------------------
   
   # DEFINE & CREATE OUTPUT DIRECTORY
     
