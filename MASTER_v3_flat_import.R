@@ -14,28 +14,12 @@
     sections.all.starttime <- Sys.time()
     section0.starttime <- sections.all.starttime
   
-  # ESTABLISH BASE DIRECTORIES
-    
-    # Set Working Directory and R Project Directory
-
-      wd <- "/Users/new/Desktop/nwp"
-
-    #Set Source Tables Directory (raw data, configs, etc.)
-      source.tables.dir <- paste0(wd, "/1-source-data")
-
-      if(dir.exists(source.tables.dir)){ 
-        print("source.tables.dir exists.")
-      }else{
-        print("source.tables.dir DOES NOT EXIST.")
-      }
-      print(source.tables.dir)
-  
   # LOAD LIBRARIES/PACKAGES
     #library(wnf.utils)
     #LoadCommonPackages()
     
     library(googledrive)
-    drive_auth(email = "asantekesse3@gmail.com") 
+    drive_auth(email = "william@fluxrme.com") 
     
     library(googlesheets4) 
     library(tidyverse) 
@@ -58,12 +42,8 @@
     library(sf)
     library(stringr)
     library(countrycode)
-    
-    
-    # Added these libraries 
     library(patchwork)
     library(viridis)
-    library(patchwork)
     library(grid)
     library(graticule)
     library(units)
@@ -199,7 +179,7 @@
 # 1-IMPORT --------------------------------------------------------------------------------
   
   # IMPORT CONFIG TABLES ---- 
-    gs4_auth(email = "asantekesse3@gmail.com")
+    gs4_auth(email = "william@fluxrme.com")
     
     sheet.id = "https://docs.google.com/spreadsheets/d/1M9o6hIX9R8f44-UGea09Z27yhNhK340efd6Udgwrnl8/"
         
@@ -762,7 +742,7 @@
 
       # Extract components
       split_parts <- strsplit(source_table_names, "_")[[1]]
-      source.model <- tolower(split_parts[1])      # "mills" or "bardeen"
+      cesm.model.configuration <- tolower(split_parts[1])      # "mills" or "bardeen"
       scenario <- split_parts[2]
       crop <- tolower(split_parts[3])              # normalize crop name
 
@@ -775,7 +755,7 @@
         reshape2::melt(., id = "country.iso3") %>%
         mutate(
           crop = crop,
-          source.model = source.model,
+          cesm.model.configuration = cesm.model.configuration,
           soot.injection.scenario = 5,
           years.elapsed = str_extract(variable, "(?<=_)[^_]*$") %>% as.numeric(),
           pct.change.harvest.yield = value %>% as.numeric() %>% suppressWarnings()
@@ -790,7 +770,7 @@
           soy.area.harvested.2015, soy.yield.2015, soy.production.2015, 
           wheat.area.harvested.2015, wheat.yield.2015, wheat.production.2015,
           soot.injection.scenario, years.elapsed,
-          source.model, crop, pct.change.harvest.yield
+          cesm.model.configuration, crop, pct.change.harvest.yield
         ) %>% 
         filter(!is.na(pct.change.harvest.yield)) %>%
         as_tibble()
@@ -810,6 +790,9 @@
         crop = case_when(
           crop == "maize" ~ "corn",
           TRUE ~ crop
+        ),
+        cesm.model.configuration = case_when(
+          cesm.model.configuration == "bardeen" ~ "toon"
         )
       ) %>%
       pivot_wider(
