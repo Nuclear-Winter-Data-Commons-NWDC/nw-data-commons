@@ -434,10 +434,10 @@
         countries.tb,
         by = "country.id"
       ) %>%
-      mutate(
-        surface.temp.weighted.by.land.area = surface.temp * country.land.area.sq.km,
-        surface.temp.weighted.by.population = surface.temp * country.population.2018
-      ) %>%
+      # mutate(
+      #   surface.temp.weighted.by.land.area = surface.temp * country.land.area.sq.km,
+      #   surface.temp.weighted.by.population = surface.temp * country.population.2018
+      # ) %>%
       FlagOutliers_IQR() %>%
       dplyr::select( #select & order final variables
         country.name, country.iso3,	country.hemisphere,	
@@ -446,13 +446,14 @@
         country.population.2018, country.land.area.sq.km,
         soot.injection.scenario, 
         years.elapsed, months.elapsed, date, month, season.n.hemisphere, season.s.hemisphere,
-        surface.temp, surface.temp.outlier.flag, surface.temp.weighted.by.land.area, surface.temp.weighted.by.population
+        surface.temp, surface.temp.outlier.flag, #surface.temp.weighted.by.land.area, surface.temp.weighted.by.population
+        surface.temp.stdev, surface.temp.stdev.outlier.flag
       ) %>%
       as_tibble()
 
-    temperature.clean.tb
+    temperature.clean.tb %>% as.data.frame %>% .[sample(1:nrow(.), 10),]
 
-  #2.2 PRECIPITATION ----    
+  #2.2 PRECIPITATION ----
     ImportSourceData_GoogleSheets("2.precipitation")
 
     #source_table_list <- precipitation.ls[[1]]
@@ -519,7 +520,8 @@
         values_from = value
       ) %>%
       mutate( #converting unit from m/s to mm/month
-        precip.rate.convective = precip.rate.convective * 1000 * 86400 * 30.4375
+        precip.rate = precip.rate * 1000 * 86400 * 30.4375,
+        precip.stdev = precip.stdev * 1000 * 86400 * 30.4375
       ) %>%
       left_join( #add months metadata (seasons in n & s hemisphere)
         ., 
@@ -531,10 +533,10 @@
         countries.tb,
         by = "country.id"
       ) %>%
-      mutate(
-        precip.rate.convective.weighted.by.land.area = precip.rate.convective * country.land.area.sq.km,
-        precip.rate.convective.weighted.by.population = precip.rate.convective * country.population.2018
-      ) %>%
+      # mutate(
+      #   precip.rate.convective.weighted.by.land.area = precip.rate.convective * country.land.area.sq.km,
+      #   precip.rate.convective.weighted.by.population = precip.rate.convective * country.population.2018
+      # ) %>%
       FlagOutliers_IQR() %>%
       dplyr::select( #select & order final variables
         country.name, country.iso3,	country.hemisphere,	
@@ -543,15 +545,20 @@
         country.population.2018, country.land.area.sq.km,
         soot.injection.scenario, 
         years.elapsed, months.elapsed, date, month, season.n.hemisphere, season.s.hemisphere,
-        precip.rate.convective, 
-        precip.rate.convective.weighted.by.land.area, precip.rate.convective.weighted.by.population,
-        precip.rate.convective.outlier.flag
-        #precip.rate.stable.weighted.by.land.area, precip.rate.stable.weighted.by.population,
-        #precip.rate.stable.outlier.flag
+        precip.rate, precip.rate.outlier.flag,
+        precip.stdev, precip.stdev.outlier.flag
       ) %>%
       as_tibble()
 
-    #precipitation.clean.tb
+    precipitation.clean.tb %>% as.data.frame %>% .[sample(1:nrow(.), 10),]
+
+    precipitation.clean.tb %>%
+      filter(precip.rate == precip.stdev) %>%
+      group_by(years.elapsed, months.elapsed, soot.injection.scenario) %>%
+      summarise(num_countries = n_distinct(country.name), .groups = "drop") %>%
+      as.data.frame %>%
+      arrange(soot.injection.scenario)
+
 
   #2.3 UV ----
     
@@ -634,7 +641,82 @@
     #  select(-value) %>%
     #  apply(., 2, TableWithNA)
     
-  #2.4a AGRICULTURE CLM (Community Land Model) ----
+  #2.4a AGRICULTURE AGMIP (Multi-Model Aggregates, Jonas) ----
+    
+    ImportSourceData_GoogleSheets("4b.agriculture.agmip")
+
+    CleanReshape_AgricultureAGMIP <- function(source_table_list, source_table_names) {
+      
+      print("Working on cleaning & reshaping:")
+      print(source_table_names)
+
+      # Extract components
+      split_parts <- strsplit(source_table_names, "_")[[1]]
+      cesm.model.configuration <- tolower(split_parts[1])      # "mills" or "bardeen"
+      scenario <- split_parts[2]
+      crop <- tolower(split_parts[3])              # normalize crop name
+
+      result <- 
+        source_table_list %>% 
+        ReplaceNames(., names(.), tolower(names(.))) %>%
+        select(-country_name, -`...1`) %>%
+        ReplaceNames(., "country_iso3", "country.iso3") %>%
+        mutate(across(where(is.list), ~ suppressWarnings(as.character(unlist(.))))) %>%
+        reshape2::melt(., id = "country.iso3") %>%
+        mutate(
+          crop = crop,
+          cesm.model.configuration = cesm.model.configuration,
+          soot.injection.scenario = 5,
+          years.elapsed = str_extract(variable, "(?<=_)[^_]*$") %>% as.numeric(),
+          pct.change.harvest.yield = value %>% as.numeric() %>% suppressWarnings()
+        ) %>%
+        left_join(countries.tb, by = "country.iso3") %>%
+        left_join(fao.crop.indicators.tb, by = "country.iso3") %>%
+        select(
+          country.name, country.iso3, country.hemisphere, country.region, country.sub.region, country.intermediate.region,
+          country.nuclear.weapons, country.nato.member.2024, country.population.2018, country.land.area.sq.km,
+          corn.area.harvested.2015, corn.yield.2015, corn.production.2015, 
+          rice.area.harvested.2015, rice.yield.2015, rice.production.2015, 
+          soy.area.harvested.2015, soy.yield.2015, soy.production.2015, 
+          wheat.area.harvested.2015, wheat.yield.2015, wheat.production.2015,
+          soot.injection.scenario, years.elapsed,
+          cesm.model.configuration, crop, pct.change.harvest.yield
+        ) %>% 
+        filter(!is.na(pct.change.harvest.yield)) %>%
+        as_tibble()
+
+      return(result)
+    }
+
+    # Assemble full clean table
+    agriculture.agmip.clean.tb <- 
+      Map(
+        CleanReshape_AgricultureAGMIP,
+        agriculture.agmip.ls,
+        names(agriculture.agmip.ls)
+      ) %>%
+      do.call(rbind, .) %>%
+      mutate(
+        crop = case_when(
+          crop == "maize" ~ "corn",
+          TRUE ~ crop
+        ),
+        cesm.model.configuration = case_when(
+          cesm.model.configuration == "bardeen" ~ "toon"
+        )
+      ) %>%
+      pivot_wider(
+        names_from = crop,
+        values_from = pct.change.harvest.yield,
+        names_glue = "pct.change.harvest.yield.{crop}",
+        #values_fn = dplyr::first  # avoid list-columns; keeps values as-is
+      )
+
+    # agriculture.agmip.clean.tb %>% 
+    #  select(-names(.)[length(names(.))]) %>% 
+    #  apply(., 2, TableWithNA) #display unique values for each variable except the indicator (for checking)
+    
+  #2.4b AGRICULTURE CLM (Community Land Model) ----
     
     ImportSourceData_GoogleSheets("4a.agriculture.clm")
     
@@ -731,81 +813,7 @@
     #   select(names(.)[!grepl("pct.change.harvest.yield|2015", names(.))]) %>% 
     #   apply(., 2, TableWithNA) #display unique values for each variable except the indicator (for checking)
     
-  #2.4b AGRICULTURE AGMIP (Multi-Model Aggregates, Jonas) ----
-    
-    ImportSourceData_GoogleSheets("4b.agriculture.agmip")
-
-    CleanReshape_AgricultureAGMIP <- function(source_table_list, source_table_names) {
-      
-      print("Working on cleaning & reshaping:")
-      print(source_table_names)
-
-      # Extract components
-      split_parts <- strsplit(source_table_names, "_")[[1]]
-      cesm.model.configuration <- tolower(split_parts[1])      # "mills" or "bardeen"
-      scenario <- split_parts[2]
-      crop <- tolower(split_parts[3])              # normalize crop name
-
-      result <- 
-        source_table_list %>% 
-        ReplaceNames(., names(.), tolower(names(.))) %>%
-        select(-country_name, -`...1`) %>%
-        ReplaceNames(., "country_iso3", "country.iso3") %>%
-        mutate(across(where(is.list), ~ suppressWarnings(as.character(unlist(.))))) %>%
-        reshape2::melt(., id = "country.iso3") %>%
-        mutate(
-          crop = crop,
-          cesm.model.configuration = cesm.model.configuration,
-          soot.injection.scenario = 5,
-          years.elapsed = str_extract(variable, "(?<=_)[^_]*$") %>% as.numeric(),
-          pct.change.harvest.yield = value %>% as.numeric() %>% suppressWarnings()
-        ) %>%
-        left_join(countries.tb, by = "country.iso3") %>%
-        left_join(fao.crop.indicators.tb, by = "country.iso3") %>%
-        select(
-          country.name, country.iso3, country.hemisphere, country.region, country.sub.region, country.intermediate.region,
-          country.nuclear.weapons, country.nato.member.2024, country.population.2018, country.land.area.sq.km,
-          corn.area.harvested.2015, corn.yield.2015, corn.production.2015, 
-          rice.area.harvested.2015, rice.yield.2015, rice.production.2015, 
-          soy.area.harvested.2015, soy.yield.2015, soy.production.2015, 
-          wheat.area.harvested.2015, wheat.yield.2015, wheat.production.2015,
-          soot.injection.scenario, years.elapsed,
-          cesm.model.configuration, crop, pct.change.harvest.yield
-        ) %>% 
-        filter(!is.na(pct.change.harvest.yield)) %>%
-        as_tibble()
-
-      return(result)
-    }
-
-    # Assemble full clean table
-    agriculture.agmip.clean.tb <- 
-      Map(
-        CleanReshape_AgricultureAGMIP,
-        agriculture.agmip.ls,
-        names(agriculture.agmip.ls)
-      ) %>%
-      do.call(rbind, .) %>%
-      mutate(
-        crop = case_when(
-          crop == "maize" ~ "corn",
-          TRUE ~ crop
-        ),
-        cesm.model.configuration = case_when(
-          cesm.model.configuration == "bardeen" ~ "toon"
-        )
-      ) %>%
-      pivot_wider(
-        names_from = crop,
-        values_from = pct.change.harvest.yield,
-        names_glue = "pct.change.harvest.yield.{crop}",
-        #values_fn = dplyr::first  # avoid list-columns; keeps values as-is
-      )
-
-    # agriculture.agmip.clean.tb %>% 
-    #  select(-names(.)[length(names(.))]) %>% 
-    #  apply(., 2, TableWithNA) #display unique values for each variable except the indicator (for checking)
-    
+  
   #2.5 FISH CATCH ----
     
     ImportSourceData_GoogleSheets("5.fish.catch")
