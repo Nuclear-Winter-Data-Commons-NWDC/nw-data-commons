@@ -9,6 +9,8 @@
     gc()
     options(java.parameters = "- Xmx8g") #helps r not to fail when importing large xlsx files with xlsx package
 
+    wd <- "/home/wnf/code/nw-data-commons"
+    
   # SECTION & CODE CLOCKING
     
     sections.all.starttime <- Sys.time()
@@ -552,12 +554,12 @@
 
     precipitation.clean.tb %>% as.data.frame %>% .[sample(1:nrow(.), 10),]
 
-    precipitation.clean.tb %>%
-      filter(precip.rate == precip.stdev) %>%
-      group_by(years.elapsed, months.elapsed, soot.injection.scenario) %>%
-      summarise(num_countries = n_distinct(country.name), .groups = "drop") %>%
-      as.data.frame %>%
-      arrange(soot.injection.scenario)
+    # precipitation.clean.tb %>%
+    #   filter(precip.rate == precip.stdev) %>%
+    #   group_by(years.elapsed, months.elapsed, soot.injection.scenario) %>%
+    #   summarise(num_countries = n_distinct(country.name), .groups = "drop") %>%
+    #   as.data.frame %>%
+    #   arrange(soot.injection.scenario)
 
 
   #2.3 UV ----
@@ -643,7 +645,7 @@
     
   #2.4a AGRICULTURE AGMIP (Multi-Model Aggregates, Jonas) ----
     
-    ImportSourceData_GoogleSheets("4b.agriculture.agmip")
+    ImportSourceData_GoogleSheets("4a.agriculture.agmip")
 
     CleanReshape_AgricultureAGMIP <- function(source_table_list, source_table_names) {
       
@@ -718,7 +720,7 @@
     
   #2.4b AGRICULTURE CLM (Community Land Model) ----
     
-    ImportSourceData_GoogleSheets("4a.agriculture.clm")
+    ImportSourceData_GoogleSheets("4b.agriculture.clm")
     
     CleanReshape_AgricultureCLM <- function(source_table_list, source_table_names){
       
@@ -1077,6 +1079,7 @@
       }
     
     setwd(output.dir)
+
     Map(
       ExportCsvs,
       clean.tables.ls,
