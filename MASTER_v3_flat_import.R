@@ -645,8 +645,42 @@
     
   #2.4a AGRICULTURE AGMIP (Multi-Model Aggregates, Jonas) ----
     
+  #Clean & Reshape FAOSTAT crop indicators 
+    fao.crop.indicators.clean.tb <- 
+      fao.crop.indicators.tb %>%
+      ReplaceNames(., names(.), tolower(names(.))) %>%
+      ReplaceNames(., "item", "crop") %>%
+      select(country.iso3, crop, year, value) %>%
+      mutate(crop = tolower(crop)) %>%
+      mutate(
+        crop = case_when(
+          crop == "maize (corn)" ~ "corn",
+          crop == "soya beans" ~ "soya.beans",
+          TRUE ~ crop
+        )
+      ) %>%
+      group_by(country.iso3, crop) %>%
+      summarise(mean.yield = mean(value, na.rm = TRUE), .groups = "drop") %>%
+      pivot_wider(
+        names_from = crop,
+        values_from = mean.yield,
+        names_glue = "mean.yield.{crop}"
+      )
+
+    # fao.crop.indicators.clean.tb %>% #one-off code to produce pairwise correlation coefficients for yields of crops
+    #   select(
+    #     mean.yield.corn,
+    #     mean.yield.rice,
+    #     mean.yield.wheat,
+    #     mean.yield.soya.beans
+    #   ) %>%
+    #   cor(use = "pairwise.complete.obs")
+
+
+  #Import Agriculture.AGMIP Data
     ImportSourceData_GoogleSheets("4a.agriculture.agmip")
 
+  #Clean & Reshape Agriculture.AGMIP Data
     CleanReshape_AgricultureAGMIP <- function(source_table_list, source_table_names) {
       
       print("Working on cleaning & reshaping:")
@@ -701,6 +735,7 @@
       mutate(
         crop = case_when(
           crop == "maize" ~ "corn",
+          crop == "soy" ~ "soya.beans"
           TRUE ~ crop
         ),
         cesm.model.configuration = case_when(
@@ -798,7 +833,7 @@
       do.call(rbind, .) %>%
       mutate(
         crop = case_when(
-          crop == "grass" ~ "sugar.cane", 
+          crop == "grass" ~ "livestock.pasture.grass", 
           crop == "swheat" ~ "spring.wheat",
           TRUE ~ crop
         )
