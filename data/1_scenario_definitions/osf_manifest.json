@@ -1,0 +1,10 @@
+{
+  "project": "e28gq",
+  "component": "",
+  "files": [
+    {
+      "osf_path": "Temperature and Precipitation/nw_ur_150_07.TS_TSMN_TSMX_PRECC_PRECL.nc.tar.gz",
+      "dest": "data/2_model_outputs/Temperature and Precipitation/nw_ur_150_07.nc.tar.gz"
+    }
+  ]
+}
