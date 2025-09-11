@@ -4,4 +4,13 @@
 *.xlsx
 
 1-source-data/*
-2-outputs/*
+2-outputs/*# --- nw-data-commons (OSF/data management) ---
+# Dotenv files with secrets/tokens (example is committed separately)
+.env
+.env.local
+
+# Keep only scenario definitions in Git, fetch other data from OSF
+data/2_model_outputs/
+data/3_aggregated/
+data/4_standardized/
+# ---------------------------------------------
