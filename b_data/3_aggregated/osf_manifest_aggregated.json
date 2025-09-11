@@ -1,0 +1,38 @@
+{
+  "project": "<YOUR_OSF_PROJECT_ID>",
+  "component": "3_aggregated",
+  "files": [
+    {
+      "osf_path": "3_aggregated/0.configs.xlsx",
+      "dest": "b_data/3_aggregated/0.configs.xlsx"
+    },
+    {
+      "osf_path": "3_aggregated/1.temperature.xlsx",
+      "dest": "b_data/3_aggregated/1.temperature.xlsx"
+    },
+    {
+      "osf_path": "3_aggregated/2.precipitation.xlsx",
+      "dest": "b_data/3_aggregated/2.precipitation.xlsx"
+    },
+    {
+      "osf_path": "3_aggregated/3.uv.xlsx",
+      "dest": "b_data/3_aggregated/3.uv.xlsx"
+    },
+    {
+      "osf_path": "3_aggregated/4a.agriculture.agmip.xlsx",
+      "dest": "b_data/3_aggregated/4a.agriculture.agmip.xlsx"
+    },
+    {
+      "osf_path": "3_aggregated/4b.agriculture.clm.xlsx",
+      "dest": "b_data/3_aggregated/4b.agriculture.clm.xlsx"
+    },
+    {
+      "osf_path": "3_aggregated/5.fish.catch.xlsx",
+      "dest": "b_data/3_aggregated/5.fish.catch.xlsx"
+    },
+    {
+      "osf_path": "3_aggregated/6.sea.ice.xlsx",
+      "dest": "b_data/3_aggregated/6.sea.ice.xlsx"
+    }
+  ]
+}
