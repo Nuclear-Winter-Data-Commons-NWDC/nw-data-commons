@@ -78,7 +78,7 @@ def main():
         print("[INFO] No files listed in manifest; nothing to download yet.")
         return
 
-    base_dir = Path("data").resolve()
+    base_dir = Path("b_data").resolve()
 
     for entry in files:
         remote = entry["osf_path"].lstrip("/")

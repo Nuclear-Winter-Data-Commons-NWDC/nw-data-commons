@@ -1,64 +1,44 @@
-# 1-IMPORT --------------------------------------------------------------------------------
-  
-  # IMPORT CONFIG TABLES ---- 
-    gs4_auth(email = "william@fluxrme.com")
-    
-    sheet.id = "https://docs.google.com/spreadsheets/d/1M9o6hIX9R8f44-UGea09Z27yhNhK340efd6Udgwrnl8/"
-        
-    configs.ss <-
-      as_sheets_id(sheet.id)
-      
-    sheet.names.v <- sheet_names(configs.ss)
-    
-    all.configs.ls <-
-      lapply(
-        sheet.names.v, 
-        function(x){
-          read_sheet(configs.ss, sheet = x)
-        }
-      )
-    
-    names(all.configs.ls) <- sheet.names.v
-    
-    #Assign each table to its own tibble object
-      ListToTibbleObjects(all.configs.ls) #Converts list elements to separate tibble objects names with their respective sheet names with ".tb" appended
-    
-    
-  # IMPORT SOURCE DATA (defining function) ----
-  
-    source.data.folder.id <- "1JS013_BF_b_cwfC-kirYzF-Y0yYxf31d"
+# 01_import_aggregated_data.R
+# Import all .xlsx files from b_data/3_aggregated and load each sheet as a tibble
 
-    import.files.tb <- 
-      drive_ls(path = as_id(source.data.folder.id)) %>%
-      mutate(mimeType = map_chr(drive_resource, "mimeType")) %>%
-      filter(mimeType == "application/vnd.google-apps.spreadsheet") 
-      
-    ImportSourceData_GoogleSheets <- function(name_of_file_to_be_imported){
-        
-      file.id <- 
-        import.files.tb %>% 
-        filter(name == name_of_file_to_be_imported) %>% 
-        dplyr::select(id) %>%
-        unlist %>% as.vector() %>%
-        as_sheets_id(.)
-      
-      sheet.names <- sheet_names(file.id)
-      
-      configs <- source.table.configs.tb %>% filter(file.name == name_of_file_to_be_imported)
-      
-      import.tables.ls <- 
-        lapply(
-          sheet.names, 
-          function(x){
-            read_sheet(file.id, sheet = x)
-          }
-        )
-      
-      names(import.tables.ls) <- sheet.names #assign sheet names as list element names
-      
-      list.name <- configs$object.name %>% paste0(., ".ls", collapse = "")
-      assign(list.name, import.tables.ls, envir = .GlobalEnv) #create a list of the imported tables in the global environment
-      print(list.name)
-      
-    }
-    
+# INITIAL SETUP
+rm(list = ls())
+gc()
+
+library(readxl)
+library(tibble)
+library(dplyr)
+library(stringr)
+library(purrr)
+
+# Set the directory containing the .xlsx files
+xlsx_dir <- "b_data/3_aggregated/"
+
+# List all .xlsx files in the directory
+xlsx_files <- list.files(xlsx_dir, pattern = "\\.xlsx$", full.names = TRUE)
+
+# Function to import all sheets from a single .xlsx file
+import_all_sheets <- function(file_path) {
+  sheet_names <- excel_sheets(file_path)
+  sheets_list <- lapply(sheet_names, function(sheet) {
+    read_excel(file_path, sheet = sheet)
+  })
+  names(sheets_list) <- sheet_names
+  return(sheets_list)
+}
+
+# Import all .xlsx files and their sheets
+all_data <- lapply(xlsx_files, import_all_sheets)
+names(all_data) <- basename(xlsx_files)
+
+# Optionally, assign each sheet to the global environment as a tibble
+for (file in names(all_data)) {
+  for (sheet in names(all_data[[file]])) {
+    obj_name <- paste0(str_replace_all(tools::file_path_sans_ext(file), "\\.", "_"), "_", str_replace_all(sheet, "\\s+", "_"))
+    assign(obj_name, all_data[[file]][[sheet]], envir = .GlobalEnv)
+    print(paste("Imported:", obj_name))
+  }
+}
+
+# all_data is a nested list: all_data[[filename]][[sheetname]]
+# Each sheet is also available as a tibble in the global environment
