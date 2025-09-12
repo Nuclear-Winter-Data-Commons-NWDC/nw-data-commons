@@ -8,6 +8,9 @@ library(lubridate)
 library(reshape2)
 library(magrittr)
 
+# Import utility functions (including FlagOutliers_IQR)
+source("c_scripts/3_standardize/00_utils.R")
+
 # Use the imported list from 01_import_aggregated_data.R
 # The temperature tables are in all_data[["1.temperature"]]
 temperature.ls <- all_data[["1.temperature"]]
