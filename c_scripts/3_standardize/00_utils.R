@@ -1,8 +1,8 @@
 # 0-SETUP --------------------------------------------------------------------------------
 	
   # INITIAL SETUP
-    rm(list=ls()) #Remove lists
-    gc()
+    #rm(list=ls()) #Remove lists
+    #gc()
     options(java.parameters = "- Xmx8g") #helps r not to fail when importing large xlsx files with xlsx package
 
     wd <- "/home/wnf/code/nw-data-commons"
