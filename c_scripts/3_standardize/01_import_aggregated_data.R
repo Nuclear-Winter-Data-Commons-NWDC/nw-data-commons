@@ -40,5 +40,6 @@ for (file in names(all_data)) {
   }
 }
 
+names(all_data) %<>% gsub(".xlsx","", .)
 # all_data is a nested list: all_data[[filename]][[sheetname]]
 # Each sheet is also available as a tibble in the global environment
