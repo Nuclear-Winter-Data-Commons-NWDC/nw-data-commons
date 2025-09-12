@@ -1,6 +1,11 @@
 # run_all.R
 # Master script to execute entire data cleaning pipeline
 
+# 0. Restore renv environment (installs all required packages)
+if (requireNamespace("renv", quietly = TRUE)) {
+  renv::restore(prompt = FALSE)
+}
+
 # 1. Load utility functions
 source("c_scripts/3_standardize/00_utils.R")
 
