@@ -42,8 +42,9 @@ CleanReshape_SeaIce <- function(source_table, source_table_name) {
     ) %>%
     left_join(months.tb, by = "month") %>%
     left_join(ports.tb, by = "port") %>%
+    ReplaceNames(., "country", "country.name") %>%
     select(
-      port, country, container.traffic, latitude, longitude,
+      port, country.name, container.traffic, latitude, longitude,
       soot.injection.scenario,
       months.elapsed, years.elapsed, month,
       season.n.hemisphere, season.s.hemisphere,
