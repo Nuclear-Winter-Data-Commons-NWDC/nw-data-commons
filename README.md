@@ -20,7 +20,7 @@ For users who want to begin with pre-aggregated data:
 1. Ensure your OSF token is set in your `.env` file or as an environment variable (`OSF_TOKEN`).
 2. Use the manifest at `b_data/3_aggregated/osf_manifest_aggregated.json`.
 3. Download the aggregated Excel files by running:
-   ```
+   ```sh
    python c_scripts/1_download_or_extract/osf_fetch.py --manifest b_data/3_aggregated/osf_manifest_aggregated.json
    ```
 4. The `.xlsx` files will be downloaded to `b_data/3_aggregated/`.
@@ -35,7 +35,7 @@ For users who wish to reproduce the aggregation process from raw model outputs:
 1. Ensure your OSF token is set in your `.env` file or as an environment variable (`OSF_TOKEN`).
 2. Use the manifest at `b_data/1_scenario_definitions/osf_manifest_model_outputs.json`.
 3. Download the model output files by running:
-   ```
+   ```sh
    python c_scripts/1_download_or_extract/osf_fetch.py --manifest b_data/1_scenario_definitions/osf_manifest_model_outputs.json
    ```
 4. The model output files will be downloaded to `b_data/2_model_outputs/`.
@@ -46,17 +46,41 @@ For users who wish to reproduce the aggregation process from raw model outputs:
 
 ## Getting Started
 
-1. Clone the repository.
-2. Install dependencies:
-   ```
+1. **Clone the repository.**
+
+2. **Install Python dependencies:**
+   ```sh
    pip install -r requirements.txt
    ```
-   For R, use:
+
+3. **Install system dependencies (Linux/Ubuntu):**
+   ```sh
+   bash install_system_deps.sh
    ```
+   *If you are on MacOS or Windows, see the comments in `install_system_deps.sh` for guidance or install equivalent libraries using your OS package manager.*
+
+4. **Restore the R environment:**
+   ```r
    renv::restore()
    ```
-3. Choose your workflow and download the appropriate data using the manifest and commands above.
-4. Follow the analysis scripts in `c_scripts/3_standardize/` and `c_scripts/4_analysis_examples/`.
+   This will install all required R packages as specified in `renv.lock`.
+
+5. **Choose your workflow and download the appropriate data using the manifest and commands above.**
+
+6. **Run the R pipeline:**
+   ```r
+   source("c_scripts/3_standardize/run_all.R")
+   ```
+   This will execute the full data cleaning and analysis pipeline.
+
+---
+
+## Troubleshooting
+
+- If you encounter errors about missing system libraries during R package installation, install them using your OS package manager and let us know so we can update the script.
+- For R package issues, ensure you are running `renv::restore()` from the project root directory.
+
+---
 
 ## Contact
 
