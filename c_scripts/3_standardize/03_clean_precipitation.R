@@ -1,5 +1,4 @@
-# 2.2 PRECIPITATION ----
-# Clean and reshape precipitation data imported from .xlsx files
+# PRECIPITATION
 
 library(dplyr)
 library(stringr)
