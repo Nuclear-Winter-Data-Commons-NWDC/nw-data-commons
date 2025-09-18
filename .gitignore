@@ -14,3 +14,4 @@ data/2_model_outputs/
 data/3_aggregated/
 data/4_standardized/
 # ---------------------------------------------
+.venv/
