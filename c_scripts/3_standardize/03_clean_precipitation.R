@@ -57,7 +57,7 @@ CleanReshape_Precip <- function(source_table, source_table_name) {
     mutate(
       start.date = case_when(
         soot.injection.scenario == 0 ~ as.Date("01/31/2018", format = "%m/%d/%Y"),
-        soot.injection.scenario %in% c(5, 16, 150) ~ as.Date("01/31/2020", format = "%m/%d/%Y"),
+        soot.injection.scenario %in% c(5, 16, 27, 37, 47, 150) ~ as.Date("01/31/2020", format = "%m/%d/%Y"),
         TRUE ~ NA_Date_
       ),
       date = start.date %m+% months(months.elapsed)  # months.elapsed starts at 0
