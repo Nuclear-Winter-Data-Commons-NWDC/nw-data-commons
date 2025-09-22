@@ -46,7 +46,7 @@
     library(graticule)
     library(units)
     
-  # DEFINE USEFUL FUNCTIONS
+  # GENERAL HELPER FUNCTIONS
    
     ListToTibbleObjects <- function(list){
       for(i in 1:length(list)){
@@ -170,12 +170,9 @@
       return(vector)
     }
 
-  # SECTION CLOCKING
-    section0.duration <- Sys.time() - section0.starttime
-    section0.duration
-    
+  # GENERAL FUNCTIONS FOR ALL TABLES & ONE-OFF PROCEDURES ----
 
-  #2.0 GENERAL FUNCTIONS FOR ALL TABLES & ONE-OFF PROCEDURES ----
+    
 
     #General function for flagging outliers using IQR method
     FlagOutliers_IQR <- function(
