@@ -129,6 +129,8 @@ agriculture.agmip.clean.tb <-
     soot.injection.scenario, years.elapsed, cesm.model.configuration,
     everything()
   ) %>%
+    dplyr::select(-dplyr::any_of(c("country.id", "country.ggcmi.id", "country.agricultural.land.area.sq.km"))
+  ) %>%
   as_tibble()
 
 # (Optional) quick peek

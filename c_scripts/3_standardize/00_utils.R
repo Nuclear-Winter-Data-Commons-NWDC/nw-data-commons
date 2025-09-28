@@ -47,7 +47,10 @@
     library(units)
     
   # GENERAL HELPER FUNCTIONS
-   
+    TableWithNA <- function(vector){
+      table(vector, useNA = "always")
+    }
+    
     ListToTibbleObjects <- function(list){
       for(i in 1:length(list)){
         
