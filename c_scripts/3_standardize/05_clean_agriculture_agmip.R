@@ -15,7 +15,7 @@ normalize_crop <- function(x) {
   x <- tolower(x)
   case_when(
     x %in% c("maize", "maize (corn)", "corn") ~ "corn",
-    x %in% c("soy", "soybeans", "soya beans", "soya.beans") ~ "soya.beans",
+    x %in% c("soy", "soybean", "soybeans", "soya beans", "soya.beans") ~ "soya.beans",
     x %in% c("wheat") ~ "wheat",
     x %in% c("rice") ~ "rice",
     TRUE ~ x
@@ -53,18 +53,23 @@ fao.crop.indicators.clean.tb <-
   )
 
 # Clean & Reshape Agriculture.AGMIP Data
+# New sheet-name pattern: Model_Scenario_Crop_(mean|SD), e.g.:
+#   Bardeen_5Tg_maize_mean, Bardeen_5Tg_wheat_SD, Mills_5Tg_rice_mean
 CleanReshape_AgricultureAGMIP <- function(source_table, source_table_name) {
   message("Working on: ", source_table_name)
 
-  # Expected like "..._Bardeen_5Tg_maize" or "..._Mills_control_wheat"
   parts <- strsplit(gsub("\\.", "_", source_table_name), "_")[[1]]
-  model_raw    <- parts[1] %>% tolower()
-  scenario_raw <- parts[2] %>% tolower()
-  crop_raw     <- parts[3] %>% tolower()
+  parts <- tolower(parts)
+
+  model_raw    <- dplyr::coalesce(parts[1], NA_character_)
+  scenario_raw <- dplyr::coalesce(parts[2], NA_character_)
+  crop_raw     <- dplyr::coalesce(parts[3], NA_character_)
+  stat_raw     <- dplyr::coalesce(parts[4], NA_character_)  # "mean" or "sd"
 
   cesm.model.configuration <- ifelse(model_raw == "bardeen", "toon", model_raw)
   soot.injection.scenario  <- parse_scenario_tg(scenario_raw)
   crop_norm                <- normalize_crop(crop_raw)
+  stat_norm                <- ifelse(stat_raw %in% c("sd","stdev","std"), "sd", "mean")
 
   df <-
     source_table %>%
@@ -73,50 +78,70 @@ CleanReshape_AgricultureAGMIP <- function(source_table, source_table_name) {
     select(-any_of(c("country_name", "...1"))) %>%
     mutate(across(where(is.list), ~ suppressWarnings(as.character(unlist(.)))))
 
-  # Melt wide → long; years.elapsed0 is whatever index is present
+   # Long reshape (force character before parsing to avoid readr error)
   long0 <-
     reshape2::melt(df, id = "country.iso3") %>%
-    mutate(
-      crop                     = crop_norm,
-      cesm.model.configuration = cesm.model.configuration,
-      soot.injection.scenario  = soot.injection.scenario,
-      years.elapsed0           = suppressWarnings(readr::parse_number(stringr::str_extract(variable, "(?<=_)\\d+$"))),
-      pct.change.harvest.yield = suppressWarnings(readr::parse_number(value))
+    dplyr::mutate(
+      variable_chr = as.character(variable),
+      value_chr    = as.character(value),
+      years.elapsed0 = suppressWarnings(
+        readr::parse_number(stringr::str_extract(variable_chr, "(?<=_)\\d+$"))
+      ),
+      value_num = suppressWarnings(readr::parse_number(value_chr))
     ) %>%
-    select(-variable, -value)
+    dplyr::select(-variable, -value, -variable_chr, -value_chr)
 
-  # Ensure 1-indexed years: if a sheet appears 0-indexed (min==0), add +1
+
+  # Ensure 1-indexed years: if sheet appears 0-indexed (min==0), add +1
   min_idx <- suppressWarnings(min(long0$years.elapsed0, na.rm = TRUE))
   long <- long0 %>%
     mutate(years.elapsed = if (is.finite(min_idx) && min_idx == 0) years.elapsed0 + 1 else years.elapsed0) %>%
     select(-years.elapsed0)
 
-  result <-
-    long %>%
+  # Map to final variable name depending on stat (mean vs sd)
+  # mean  -> pct.change.harvest.yield.{crop}
+  # sd    -> stdev.pct.change.harvest.yield.{crop}
+  long <- long %>%
+    mutate(
+      cesm.model.configuration = cesm.model.configuration,
+      soot.injection.scenario  = soot.injection.scenario,
+      crop                     = crop_norm,
+      stat                     = stat_norm,
+      variable_name = ifelse(
+        stat == "sd",
+        paste0("stdev.pct.change.harvest.yield.", crop),
+        paste0("pct.change.harvest.yield.",       crop)
+      )
+    ) %>%
+    filter(!is.na(value_num))
 
-    filter(!is.na(pct.change.harvest.yield)) %>%
-    as_tibble()
-
-  return(result)
+  # Return a tidy frame keyed by PK + variable_name
+  long %>%
+    transmute(
+      country.iso3,
+      soot.injection.scenario,
+      years.elapsed,
+      cesm.model.configuration,
+      variable_name,
+      value = value_num
+    )
 }
 
-# Assemble full clean table (wide on PK so crops are across columns)
+# Assemble full clean table: pivot variable_name wide, then join metadata
 agriculture.agmip.clean.tb <-
   Map(
     CleanReshape_AgricultureAGMIP,
     agriculture.agmip.ls,
     names(agriculture.agmip.ls)
   ) %>%
-  do.call(rbind, .) %>%
-  # Wide by crop on the correct PK to avoid stacking
-  pivot_wider(
-    id_cols    = c(country.iso3, soot.injection.scenario, years.elapsed, cesm.model.configuration),
-    names_from = crop,
-    values_from = pct.change.harvest.yield,
-    names_glue = "pct.change.harvest.yield.{crop}",
-    values_fn  = dplyr::first  # guard against accidental duplicates
+  dplyr::bind_rows() %>%
+  tidyr::pivot_wider(
+    id_cols     = c(country.iso3, soot.injection.scenario, years.elapsed, cesm.model.configuration),
+    names_from  = variable_name,
+    values_from = value,
+    values_fn   = dplyr::first
   ) %>%
-  # Join metadata
+  # Join metadata after pivot so they aren't dropped
   left_join(countries.tb, by = "country.iso3") %>%
   left_join(fao.crop.indicators.clean.tb, by = "country.iso3") %>%
   # Bring common metadata to the front (keeps rest as is)
@@ -125,13 +150,15 @@ agriculture.agmip.clean.tb <-
     country.region, country.sub.region, country.intermediate.region,
     country.nuclear.weapons, country.nato.member.2024,
     country.population.2018, country.land.area.sq.km,
-    mean.yield.corn, mean.yield.rice, mean.yield.wheat, mean.yield.soya.beans,
     soot.injection.scenario, years.elapsed, cesm.model.configuration,
-    everything()
+    mean.yield.corn, mean.yield.rice, mean.yield.wheat, mean.yield.soya.beans,
+    dplyr::everything()
   ) %>%
-    dplyr::select(-dplyr::any_of(c("country.id", "country.ggcmi.id", "country.agricultural.land.area.sq.km"))
-  ) %>%
-  as_tibble()
+  # Drop IDs you don't want to carry
+  dplyr::select(-dplyr::any_of(c(
+    "country.id", "country.ggcmi.id", "country.agricultural.land.area.sq.km"
+  ))) %>%
+  tibble::as_tibble()
 
 # (Optional) quick peek
 # agriculture.agmip.clean.tb %>% slice_sample(n = 10)
