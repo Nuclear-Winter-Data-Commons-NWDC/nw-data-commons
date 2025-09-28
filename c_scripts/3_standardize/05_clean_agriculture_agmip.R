@@ -58,10 +58,9 @@ CleanReshape_AgricultureAGMIP <- function(source_table, source_table_name) {
 
   # Expected like "..._Bardeen_5Tg_maize" or "..._Mills_control_wheat"
   parts <- strsplit(gsub("\\.", "_", source_table_name), "_")[[1]]
-  i_agmip <- max(which(tolower(parts) == "agmip"))
-  model_raw    <- tolower(dplyr::coalesce(parts[i_agmip + 1], NA_character_))
-  scenario_raw <- tolower(dplyr::coalesce(parts[i_agmip + 2], NA_character_))
-  crop_raw     <- tolower(dplyr::coalesce(parts[i_agmip + 3], NA_character_))
+  model_raw    <- parts[1] %>% tolower()
+  scenario_raw <- parts[2] %>% tolower()
+  crop_raw     <- parts[3] %>% tolower()
 
   cesm.model.configuration <- ifelse(model_raw == "bardeen", "toon", model_raw)
   soot.injection.scenario  <- parse_scenario_tg(scenario_raw)
@@ -94,8 +93,7 @@ CleanReshape_AgricultureAGMIP <- function(source_table, source_table_name) {
 
   result <-
     long %>%
-    left_join(countries.tb, by = "country.iso3") %>%
-    left_join(fao.crop.indicators.clean.tb, by = "country.iso3") %>%
+
     filter(!is.na(pct.change.harvest.yield)) %>%
     as_tibble()
 
@@ -110,10 +108,6 @@ agriculture.agmip.clean.tb <-
     names(agriculture.agmip.ls)
   ) %>%
   do.call(rbind, .) %>%
-  mutate(
-    crop = normalize_crop(crop),
-    cesm.model.configuration = ifelse(cesm.model.configuration == "bardeen", "toon", cesm.model.configuration)
-  ) %>%
   # Wide by crop on the correct PK to avoid stacking
   pivot_wider(
     id_cols    = c(country.iso3, soot.injection.scenario, years.elapsed, cesm.model.configuration),
@@ -122,6 +116,9 @@ agriculture.agmip.clean.tb <-
     names_glue = "pct.change.harvest.yield.{crop}",
     values_fn  = dplyr::first  # guard against accidental duplicates
   ) %>%
+  # Join metadata
+  left_join(countries.tb, by = "country.iso3") %>%
+  left_join(fao.crop.indicators.clean.tb, by = "country.iso3") %>%
   # Bring common metadata to the front (keeps rest as is)
   dplyr::select(
     country.name, country.iso3, country.hemisphere,
