@@ -33,7 +33,11 @@ CleanReshape_FishCatch <- function(source_table, source_table_name) {
     reshape2::melt(id = "eez.num") %>%
     mutate(
       soot.injection.scenario = readr::parse_number(scenario),
-      years.elapsed = str_extract(variable, "(?<=_)\\d+$") %>% as.numeric(),
+      years.elapsed = dplyr::coalesce(
+        stringr::str_match(variable, "(?i)_\\s*yr(\\d+)")[,2],
+        stringr::str_match(variable, "_\\s*(\\d+)\\s*$")[,2],
+        stringr::str_match(variable, "(\\d+)\\s*$")[,2]
+      ) %>% as.numeric(),
       indicator.raw = str_extract(variable, "(?<=_).*?(?=_[^_]*$)"),
       value = suppressWarnings(as.numeric(value)) / 1e9
     ) %>%
@@ -71,9 +75,7 @@ fish.catch.clean.tb <-
     names(fish.catch.ls)
   ) %>%
   bind_rows() %>%
-  left_join(fish.catch.eez.tb, by = "eez.num") %>%
-  # ensure numeric, treating "NaN" as NA
-  mutate(
+  mutate( # ensure numeric, treating "NaN" as NA
     mean.pct.catch.change = readr::parse_number(as.character(mean.pct.catch.change), na = c("", "NA", "N/A", "NaN")),
     std.dev.pct.catch.change = readr::parse_number(as.character(std.dev.pct.catch.change), na = c("", "NA", "N/A", "NaN")),
     mean.catch = readr::parse_number(as.character(mean.catch), na = c("", "NA", "N/A", "NaN")),
@@ -81,6 +83,7 @@ fish.catch.clean.tb <-
     mean.catch.change = readr::parse_number(as.character(mean.catch.change), na = c("", "NA", "N/A", "NaN")),
     std.dev.catch.change = readr::parse_number(as.character(std.dev.catch.change), na = c("", "NA", "N/A", "NaN"))
   ) %>%
+  left_join(fish.catch.eez.tb, by = "eez.num") %>%
   mutate(
     mean.pct.catch.change = mean.pct.catch.change * 1e9,
     std.dev.pct.catch.change = std.dev.pct.catch.change * 1e9,
@@ -108,3 +111,6 @@ fish.catch.clean.tb <-
     std.dev.pct.catch.change.outlier.flag
   ) %>%
   as_tibble()
+
+# Quick spot check
+fish.catch.clean.tb %>% slice_sample(n = 10)

@@ -78,9 +78,9 @@ CleanReshape_AgricultureCLM <- function(source_table, source_table_name) {
       country.region, country.sub.region, country.intermediate.region,
       country.nuclear.weapons, country.nato.member.2024,
       country.population.2018, country.land.area.sq.km,
-      mean.yield.corn, mean.yield.rice, mean.yield.wheat, mean.yield.soya.beans,
       soot.injection.scenario,
       years.elapsed,
+      mean.yield.corn, mean.yield.rice, mean.yield.wheat, mean.yield.soya.beans,
       crop,
       pct.change.harvest.yield
     ) %>%

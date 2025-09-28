@@ -20,7 +20,10 @@ sea.ice.ls <- all_data[["6.sea.ice"]]
 
 # Clean & reshape a single sea ice sheet
 CleanReshape_SeaIce <- function(source_table, source_table_name) {
-  scenario <- str_extract(source_table_name, "(?<=NW-).*")
+  scenario <- 
+    stringr::str_extract(source_table_name, "[0-9.]+(?=Tg)") %>%
+    as.numeric() %>%
+    dplyr::recode(`46.8` = 47)
 
   result <-
     source_table %>%
@@ -32,13 +35,7 @@ CleanReshape_SeaIce <- function(source_table, source_table_name) {
       months.elapsed = as.numeric(gsub("\\.", "", month)) - 1,
       month = (months.elapsed - 1) %% 12 + 1,
       years.elapsed = (months.elapsed - 1) %/% 12,
-      soot.injection.scenario = recode(
-        scenario,
-        "37tg" = 37,
-        "46.8tg" = 47,
-        "150tg" = 150,
-        .default = NA_real_
-      )
+      soot.injection.scenario = scenario
     ) %>%
     left_join(months.tb, by = "month") %>%
     left_join(ports.tb, by = "port") %>%
@@ -66,5 +63,5 @@ sea.ice.clean.tb <-
   FlagOutliers_IQR() %>%
   as_tibble()
 
-# Optional preview
-# sea.ice.clean.tb %>% as.data.frame() %>% .[sample(1:nrow(.), 10),]
+# Quick spot check
+sea.ice.clean.tb %>% slice_sample(n = 10)
