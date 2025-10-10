@@ -1,0 +1,31 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+type: software
+title: "Nuclear Winter Data Commons"
+abstract: "Scripts, data, and documentation for the Nuclear Winter simulation dataset and analysis workflow"
+authors:
+  - family-names: Faulkner
+    given-names: William
+    email: william@fluxrme.com
+    affiliation: "Science Policy Research Unit, University of Sussex"
+    orcid: ""
+  - family-names: Garza
+    given-names: Victoria
+    affiliation: "Louisiana State University"
+  - family-names: Asante
+    given-names: "E. Kesse"
+    affiliation: "Louisiana State University"
+repository-code: "https://github.com/wnfaulkner/nw-data-commons"
+license: MIT
+year: 2025
+preferred-citation:
+  type: article
+  title: "Accessible Climate and Impact Model Output for Studying the Human and Environmental Impacts of Nuclear Conflict"
+  authors:
+    - family-names: Harrison
+      given-names: Cheryl
+    - name: "et al."
+  year: 2024
+  publisher: "EarthArXiv"
+  doi: "10.31223/X5XB20"
+  url: "https://eartharxiv.org/repository/view/10406/"
