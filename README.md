@@ -1,6 +1,34 @@
 # Nuclear Winter Data Commons
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![DOI](https://img.shields.io/badge/DOI-10.31223%2FX5XB20-blue)](https://doi.org/10.31223/X5XB20)
+
 This repository contains scripts, data, and documentation for the Nuclear Winter simulation dataset and analysis workflow.
+
+## Citation
+
+If you use this code or data in your research, please cite:
+
+```bibtex
+@article{harrison2024accessible,
+  title={Accessible Climate and Impact Model Output for Studying the Human and Environmental Impacts of Nuclear Conflict},
+  author={Harrison, Cheryl and others},
+  year={2024},
+  publisher={EarthArXiv},
+  doi={10.31223/X5XB20},
+  url={https://eartharxiv.org/repository/view/10406/}
+}
+```
+
+**Preprint:** Harrison, C. et al. (2024). "Accessible Climate and Impact Model Output for Studying the Human and Environmental Impacts of Nuclear Conflict." *EarthArXiv*. https://doi.org/10.31223/X5XB20
+
+The preprint is also included in this repository as `NW_Data_Harrison_preprint.pdf`.
+
+## Data Access
+
+The primary data source for this project is hosted on the Open Science Framework (OSF) at https://osf.io/e28gq/.
+
+**Note:** Access to the data requires submitting an application to OSF with a description of your intended use. Some model outputs are currently available; all outputs will be available by the time of publication.
 
 ## Current Status
 
@@ -82,9 +110,67 @@ For users who wish to reproduce the aggregation process from raw model outputs:
 
 ---
 
-## Contact
+## Repository Structure
 
-For questions or updates, please see the issues tracker or contact the maintainers.
+```
+nw-data-commons/
+├── b_data/                    # Data directory
+│   ├── 1_scenario_definitions/    # Scenario definitions and model output manifests
+│   ├── 2_model_outputs/           # Raw model outputs (downloaded)
+│   └── 3_aggregated/              # Aggregated data files
+├── c_scripts/                 # Analysis scripts
+│   ├── 1_download_or_extract/     # Data download scripts
+│   ├── 2_aggregate/               # Aggregation notebooks
+│   └── 3_standardize/             # R data processing pipeline
+├── install_system_deps.sh     # System dependencies installer
+├── requirements.txt           # Python dependencies
+└── renv.lock                  # R environment lock file
+```
+
+---
+
+## Contributing
+
+We welcome contributions! Please:
+1. Fork the repository
+2. Create a feature branch
+3. Submit a pull request with a clear description of changes
+
+For major changes, please open an issue first to discuss what you would like to change.
+
+---
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+The MIT License allows you to freely use, modify, and distribute this code, provided you include the original copyright notice.
+
+---
+
+## Authors & Contact
+
+**Maintainers:**
+- **William Faulkner** (Corresponding Author)
+  Science Policy Research Unit, University of Sussex
+  Email: william@fluxrme.com
+
+**Contributors:**
+- **Victoria Garza**
+  Louisiana State University
+
+- **E. Kesse Asante**
+  Louisiana State University
+
+For questions, issues, or collaboration inquiries, please:
+- Open an issue on the [GitHub repository](https://github.com/wnfaulkner/nw-data-commons)
+- Contact the corresponding author via email
+
+---
+
+## Acknowledgments
+
+This repository supports the research presented in Harrison et al. (2024). We thank all contributors to the original climate and impact modeling efforts that produced the underlying datasets.
 
 ---
 

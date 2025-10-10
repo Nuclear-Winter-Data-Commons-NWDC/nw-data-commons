@@ -3,15 +3,25 @@
 *.csv
 *.xlsx
 
-1-source-data/*
-2-outputs/*# --- nw-data-commons (OSF/data management) ---
+# --- nw-data-commons (OSF/data management) ---
 # Dotenv files with secrets/tokens (example is committed separately)
 .env
 .env.local
 
-# Keep only scenario definitions in Git, fetch other data from OSF
-data/2_model_outputs/
-data/3_aggregated/
-data/4_standardized/
-# ---------------------------------------------
+# Virtual environment
 .venv/
+
+# IDE settings
+.vscode/
+
+# Keep only scenario definitions in Git, fetch other data from OSF
+b_data/2_model_outputs/
+b_data/3_aggregated/
+b_data/4_standardized/*/
+
+# Allow .gitkeep files to preserve directory structure
+!b_data/4_standardized/.gitkeep
+
+# To commit a specific standardized output folder, use:
+# git add -f b_data/4_standardized/YYYY-MM-DD_HHMMSS/
+# ---------------------------------------------
