@@ -22,7 +22,7 @@ If you use this code or data in your research, please cite:
 
 **Preprint:** Harrison, C. et al. (2024). "Accessible Climate and Impact Model Output for Studying the Human and Environmental Impacts of Nuclear Conflict." *EarthArXiv*. https://doi.org/10.31223/X5XB20
 
-The preprint is also included in this repository as `NW_Data_Harrison_preprint.pdf`.
+The preprint is also included in this repository as /d_docs/`NW_Data_Harrison_preprint.pdf`.
 
 ## Data Access
 
