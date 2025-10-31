@@ -204,6 +204,24 @@
           filter(object.name == !!object.name)
       }
 
+      # Check if we found a match
+      if (nrow(matched.table) == 0) {
+        warning("No matching table found in config for the current tibble.")
+        return(tb)
+      }
+
+      # Check if indicators.of.concern is blank/NA/empty BEFORE filtering
+      indicators.str <- matched.table$indicators.of.concern %>% first()
+      if (is.null(indicators.str) || is.na(indicators.str) || trimws(indicators.str) == "") {
+        object.name.str <- if (!is.null(object.name)) paste0(" for '", object.name, "'") else ""
+        warning(paste0(
+          "Outlier flagging skipped", object.name.str,
+          ": 'indicators.of.concern' is blank in config table. ",
+          "No outlier flag variables will be created."
+        ))
+        return(tb)
+      }
+
       # Further filter by matching indicator variables
       matched.table <- matched.table %>%
         filter(sapply(indicators.of.concern, function(indicators) {
@@ -212,7 +230,7 @@
         }))
 
       if (nrow(matched.table) == 0) {
-        warning("No matching table found in config for the current tibble.")
+        warning("No matching table found in config for the current tibble (indicator columns don't match).")
         return(tb)
       }
 
@@ -224,7 +242,7 @@
       }
 
       # Indicators to evaluate
-      indicators <- matched.table$indicators.of.concern %>% 
+      indicators <- indicators.str %>%
         strsplit(",\\s*") %>% unlist()
 
       for (colname in indicators) {
@@ -239,11 +257,20 @@
 
         flag.col <- paste0(colname, ".outlier.flag")
 
-        tb[[flag.col]] <- case_when(
+        temp.flag.col <- case_when(
           is.na(tb[[colname]]) ~ "",
           tb[[colname]] < lower | tb[[colname]] > upper ~ "outlier",
           TRUE ~ ""
         )
+
+        # Check if the flag column would be entirely blank (no outliers found)
+        if (!any(temp.flag.col == "outlier")) {
+          warning(paste("No outliers found for", colname, "; flag variable", flag.col, "not added."))
+          next
+        }
+
+        # Only add the flag column if outliers were found
+        tb[[flag.col]] <- temp.flag.col
       }
 
       return(tb)

@@ -102,13 +102,15 @@ fish.catch.clean.tb <-
     std.dev.catch,
     std.dev.catch.change,
     std.dev.pct.catch.change,
-    mean.catch.outlier.flag,
-    mean.catch.per.1000.sq.km.outlier.flag,
-    mean.catch.change.outlier.flag,
-    mean.pct.catch.change.outlier.flag,
-    std.dev.catch.outlier.flag,
-    std.dev.catch.change.outlier.flag,
-    std.dev.pct.catch.change.outlier.flag
+    any_of(c(
+      "mean.catch.outlier.flag",
+      "mean.catch.per.1000.sq.km.outlier.flag",
+      "mean.catch.change.outlier.flag",
+      "mean.pct.catch.change.outlier.flag",
+      "std.dev.catch.outlier.flag",
+      "std.dev.catch.change.outlier.flag",
+      "std.dev.pct.catch.change.outlier.flag"
+    ))
   ) %>%
   as_tibble()
 

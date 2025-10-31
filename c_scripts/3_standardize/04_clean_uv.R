@@ -75,7 +75,7 @@ CleanReshape_UV <- function(source_table, source_table_name) {
     ) %>%
     ungroup() %>%
     mutate(
-      value = as.numeric(value)
+      value = suppressWarnings(as.numeric(value))
     ) %>%
     # join config metadata if country.id exists; otherwise attempt country.iso3
     { 

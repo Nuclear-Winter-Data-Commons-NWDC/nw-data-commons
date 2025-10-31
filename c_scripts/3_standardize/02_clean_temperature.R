@@ -90,14 +90,14 @@ temperature.clean.tb <-
   ) %>%
   FlagOutliers_IQR() %>%
   dplyr::select( # select & order final variables
-    country.name, country.iso3, country.hemisphere,	
-    country.region, country.sub.region, country.intermediate.region, 
-    country.nuclear.weapons, country.nato.member.2024, 
+    country.name, country.iso3, country.hemisphere,
+    country.region, country.sub.region, country.intermediate.region,
+    country.nuclear.weapons, country.nato.member.2024,
     country.population.2018, country.land.area.sq.km,
-    soot.injection.scenario, 
+    soot.injection.scenario,
     years.elapsed, months.elapsed, date, month, season.n.hemisphere, season.s.hemisphere,
-    surface.temp, surface.temp.outlier.flag,
-    surface.temp.stdev, surface.temp.stdev.outlier.flag
+    surface.temp, any_of("surface.temp.outlier.flag"),
+    surface.temp.stdev, any_of("surface.temp.stdev.outlier.flag")
   ) %>%
   as_tibble()
 

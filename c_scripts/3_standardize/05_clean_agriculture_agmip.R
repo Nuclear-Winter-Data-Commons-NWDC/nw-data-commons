@@ -144,6 +144,8 @@ library(magrittr)
     # Join metadata after pivot so they aren't dropped
     left_join(countries.tb, by = "country.iso3") %>%
     left_join(fao.crop.indicators.clean.tb, by = "country.iso3") %>%
+    # Flag outliers
+    FlagOutliers_IQR() %>%
     # Bring common metadata to the front (keeps rest as is)
     dplyr::select(
       country.name, country.iso3, country.hemisphere,
