@@ -60,7 +60,6 @@ sea.ice.clean.tb <-
     names(sea.ice.ls)
   ) %>%
   do.call(rbind, .) %>%
-  FlagOutliers_IQR() %>%
   as_tibble()
 
 # Quick spot check
