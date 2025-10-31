@@ -160,17 +160,17 @@
 
   # 1) readme (as-is)
   addWorksheet(wb, sanitize_sheet_name("readme"))
-  writeData(wb, sheet = "readme", readme_tb)
+  writeData(wb, sheet = "readme", readme_tb, keepNA = FALSE)
 
   # 2) variables (constructed)
   addWorksheet(wb, sanitize_sheet_name("variables"))
-  writeData(wb, sheet = "variables", variables_out)
+  writeData(wb, sheet = "variables", variables_out, keepNA = FALSE)
 
   # 3) data sheets
   for (sn in data_sheets) {
     if (!sn %in% names(clean.tables.ls)) next
     addWorksheet(wb, sanitize_sheet_name(sn))
-    writeData(wb, sheet = sn, clean.tables.ls[[sn]])
+    writeData(wb, sheet = sn, clean.tables.ls[[sn]], keepNA = FALSE)
   }
 
   saveWorkbook(wb, xlsx_path, overwrite = TRUE)

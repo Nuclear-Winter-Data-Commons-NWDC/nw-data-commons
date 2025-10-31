@@ -133,7 +133,7 @@ uv.clean.tb <-
   # normalize names to lowercase
   ReplaceNames(., names(.), tolower(names(.))) %>%
   # flag outliers using utility function
-  FlagOutliers_IQR() %>%
+  FlagOutliers_IQR(source.table.list.name = uv.ls) %>%
   as_tibble()
 
 # Optional: preview (commented)

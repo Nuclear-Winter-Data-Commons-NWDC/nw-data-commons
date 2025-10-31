@@ -88,7 +88,7 @@ temperature.clean.tb <-
     countries.tb,
     by = "country.id"
   ) %>%
-  FlagOutliers_IQR() %>%
+  FlagOutliers_IQR(source.table.list.name = temperature.ls) %>%
   dplyr::select( # select & order final variables
     country.name, country.iso3, country.hemisphere,
     country.region, country.sub.region, country.intermediate.region,
