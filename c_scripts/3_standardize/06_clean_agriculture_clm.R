@@ -110,7 +110,7 @@ agriculture.clm.clean.tb <-
     names_glue = "pct.change.harvest.yield.{crop}",
     values_fn = dplyr::first   # avoid list-columns on duplicate keys
   ) %>%
-  FlagOutliers_IQR() %>%
+  FlagOutliers_IQR(source.table.list.name = agriculture.clm.ls) %>%
   as_tibble()
 
 # Optional quick peek (can remove)

@@ -90,7 +90,7 @@ fish.catch.clean.tb <-
     eez.name = gsub("Exclusive Economic Zone", "EEZ", eez.name),
     mean.catch.per.1000.sq.km = mean.catch / (eez.area / 1000)
   ) %>%
-  FlagOutliers_IQR() %>%
+  FlagOutliers_IQR(source.table.list.name = fish.catch.ls) %>%
   select(
     eez.name, eez.num, eez.area,
     years.elapsed,

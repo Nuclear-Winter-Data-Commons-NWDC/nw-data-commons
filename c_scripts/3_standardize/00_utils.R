@@ -258,18 +258,20 @@
         flag.col <- paste0(colname, ".outlier.flag")
 
         temp.flag.col <- case_when(
-          is.na(tb[[colname]]) ~ "",
+          is.na(tb[[colname]]) ~ NA_character_,
           tb[[colname]] < lower | tb[[colname]] > upper ~ "outlier",
-          TRUE ~ ""
+          TRUE ~ NA_character_
         )
 
         # Check if the flag column would be entirely blank (no outliers found)
-        if (!any(temp.flag.col == "outlier")) {
+        outlier_count <- sum(temp.flag.col == "outlier", na.rm = TRUE)
+        if (outlier_count == 0) {
           warning(paste("No outliers found for", colname, "; flag variable", flag.col, "not added."))
           next
         }
 
         # Only add the flag column if outliers were found
+        message(paste("Found", outlier_count, "outlier(s) for", colname, "; adding flag variable", flag.col))
         tb[[flag.col]] <- temp.flag.col
       }
 

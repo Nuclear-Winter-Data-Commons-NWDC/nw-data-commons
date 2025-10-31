@@ -75,6 +75,28 @@ clean.tables.ls <-
     SIMPLIFY = FALSE
   )
 
+# Helper: Convert "NA" text strings to actual NA values
+convert_na_text_to_na <- function(tb) {
+  if (nrow(tb) == 0) return(tb)
+
+  # Apply to all character columns
+  tb <- tb %>%
+    mutate(across(where(is.character), ~ {
+      # Replace "NA" text (case-insensitive) with actual NA
+      ifelse(toupper(trimws(.)) == "NA", NA_character_, .)
+    }))
+
+  return(tb)
+}
+
+# Apply NA text conversion to each clean table
+if (interactive()) {
+  cat("Converting 'NA' text strings to actual NA values in all tables...\n")
+}
+
+clean.tables.ls <-
+  lapply(clean.tables.ls, convert_na_text_to_na)
+
 # Optional: quick check (commented)
 # print(names(clean.tables.ls))
 # lapply(clean.tables.ls, head, 2)

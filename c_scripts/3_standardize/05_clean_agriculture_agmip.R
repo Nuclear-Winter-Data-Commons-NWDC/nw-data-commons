@@ -145,7 +145,7 @@ library(magrittr)
     left_join(countries.tb, by = "country.iso3") %>%
     left_join(fao.crop.indicators.clean.tb, by = "country.iso3") %>%
     # Flag outliers
-    FlagOutliers_IQR() %>%
+    FlagOutliers_IQR(source.table.list.name = agriculture.agmip.ls) %>%
     # Bring common metadata to the front (keeps rest as is)
     dplyr::select(
       country.name, country.iso3, country.hemisphere,
