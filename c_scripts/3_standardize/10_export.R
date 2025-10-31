@@ -9,9 +9,8 @@
   })
 
 # Expect: clean.tables.ls already created by 09_final_cleaning_and_consolidation.R
-# Pull configs for readme & variables
+# Pull configs for variables (readme will be cloned directly from source Excel)
   configs <- all_data[["0.configs"]]
-  readme_tb     <- configs[["readme"]]
   variables_src <- configs[["variables"]]
 
 # -------------------------------------------------------------------------------
@@ -156,11 +155,29 @@
 # -------------------------------------------------------------------------------
 # Write Excel
 
-  wb <- createWorkbook()
+  # Load source configs workbook to copy readme sheet with formatting
+  configs_path <- "b_data/3_aggregated/0.configs.xlsx"
+  source_configs_wb <- loadWorkbook(configs_path)
 
-  # 1) readme (as-is)
-  addWorksheet(wb, sanitize_sheet_name("readme"))
-  writeData(wb, sheet = "readme", readme_tb, keepNA = FALSE)
+  # 1) readme - start with source workbook (preserves all formatting)
+  # Then remove all sheets except readme
+  wb <- source_configs_wb
+
+  # Remove all sheets except readme
+  all_sheets <- sheets(wb)
+  sheets_to_remove <- all_sheets[all_sheets != "readme"]
+  for (sheet_name in sheets_to_remove) {
+    removeWorksheet(wb, sheet_name)
+  }
+
+  # Remove all named ranges to prevent Excel repair issues
+  # Named ranges reference removed sheets and cause corruption warnings
+  named_regions <- tryCatch(getNamedRegions(wb), error = function(e) NULL)
+  if (!is.null(named_regions) && length(named_regions) > 0) {
+    for (name in named_regions) {
+      tryCatch(deleteNamedRegion(wb, name), error = function(e) NULL)
+    }
+  }
 
   # 2) variables (constructed)
   addWorksheet(wb, sanitize_sheet_name("variables"))
