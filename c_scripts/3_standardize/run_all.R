@@ -20,12 +20,13 @@ source("c_scripts/3_standardize/05_clean_agriculture_agmip.R")
 source("c_scripts/3_standardize/06_clean_agriculture_clm.R")
 source("c_scripts/3_standardize/07_clean_fish_catch.R")
 source("c_scripts/3_standardize/08_clean_sea_ice.R")
+source("c_scripts/3_standardize/09_clean_starvation.R")
 
 # 4. Merge all cleaned datasets and save final output
-source("c_scripts/3_standardize/09_final_cleaning_and_consolidation.R")
+source("c_scripts/3_standardize/10_final_cleaning_and_consolidation.R")
 
 # 5. Export Cleaned Datasets
-source("c_scripts/3_standardize/10_export.R")
+source("c_scripts/3_standardize/11_export.R")
 
 # 6. Optionally run example analyses
 # source("c_scripts/4_analysis_examples/example_visualization.r")
