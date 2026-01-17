@@ -25,3 +25,6 @@ b_data/4_standardized/*/
 # To commit a specific standardized output folder, use:
 # git add -f b_data/4_standardized/YYYY-MM-DD_HHMMSS/
 # ---------------------------------------------
+
+# Claude Code session files
+.claude/

@@ -6,6 +6,7 @@
     library(purrr)
     library(tidyr)
     library(openxlsx)
+    library(readODS)
   })
 
 # Expect: clean.tables.ls already created by 09_final_cleaning_and_consolidation.R
@@ -208,4 +209,33 @@
     message("Wrote ", length(csv_paths), " CSVs and workbook: ", xlsx_path, "\nOutput folder: ", run_dir)
   }
 
-  invisible(list(dir = run_dir, xlsx = xlsx_path, csvs = csv_paths))
+# -------------------------------------------------------------------------------
+# Write ODS (Open Document Spreadsheet) format
+# Note: R's readODS is extremely slow for large files. Use ssconvert instead.
+
+  ods_path <- file.path(run_dir, "0_standardized_data.ods")
+
+  # Check if ssconvert (gnumeric) is available - much faster than R
+  ssconvert_available <- system("command -v ssconvert", ignore.stdout = TRUE) == 0
+
+  if (ssconvert_available) {
+    if (interactive()) {
+      message("Converting to ODS using ssconvert (fast)...")
+    }
+    conversion_script <- file.path(getwd(), "convert_to_ods.sh")
+    cmd <- paste0(conversion_script, " '", xlsx_path, "' '", ods_path, "'")
+    result <- system(cmd)
+    if (result == 0 && interactive()) {
+      ods_size <- file.info(ods_path)$size / (1024 * 1024)
+      message("Wrote ODS file: ", ods_path, " (", round(ods_size, 1), " MB)")
+    }
+  } else {
+    if (interactive()) {
+      message("Skipping ODS generation (ssconvert not found)")
+      message("To enable fast ODS conversion: sudo apt install gnumeric")
+      message("Or convert manually: ./convert_to_ods.sh ", xlsx_path)
+    }
+    ods_path <- NULL
+  }
+
+  invisible(list(dir = run_dir, xlsx = xlsx_path, ods = ods_path, csvs = csv_paths))
