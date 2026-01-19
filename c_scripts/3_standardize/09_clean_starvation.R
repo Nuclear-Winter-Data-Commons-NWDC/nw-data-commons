@@ -76,6 +76,8 @@ starvation.clean.tb <-
     names(starvation.ls)
   ) %>%
   bind_rows() %>%
+  # Remove 'Total' rows (aggregate row not needed for country-level analysis)
+  filter(!grepl("^Total$", country.name, ignore.case = TRUE)) %>%
   # Join with country metadata
   left_join(
     countries.tb %>%

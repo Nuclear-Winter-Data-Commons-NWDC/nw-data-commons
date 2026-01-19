@@ -150,8 +150,8 @@
     "agriculture.agmip",
     "agriculture.clm",
     "fish.catch",
-    "sea.ice",
-    "starvation"
+    "starvation",
+    "sea.ice"
   )
 
 # -------------------------------------------------------------------------------
