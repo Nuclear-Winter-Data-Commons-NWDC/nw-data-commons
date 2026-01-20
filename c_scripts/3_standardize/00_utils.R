@@ -248,31 +248,56 @@
       for (colname in indicators) {
         if (!colname %in% colnames(tb)) next
 
-        q1 <- quantile(tb[[colname]], 0.25, na.rm = TRUE)
-        q3 <- quantile(tb[[colname]], 0.75, na.rm = TRUE)
-        iqr <- q3 - q1
-        lower <- q1 - iqr.multiplier * iqr
-        upper <- q3 + iqr.multiplier * iqr
-        message(paste("Outlier bounds for", colname, ": [", round(lower, 2), ",", round(upper, 2), "]"))
-
         flag.col <- paste0(colname, ".outlier.flag")
 
-        temp.flag.col <- case_when(
-          is.na(tb[[colname]]) ~ NA_character_,
-          tb[[colname]] < lower | tb[[colname]] > upper ~ "outlier",
-          TRUE ~ NA_character_
-        )
+        # Check if soot.injection.scenario exists for per-scenario IQR calculation
+        if ("soot.injection.scenario" %in% colnames(tb)) {
+          message(paste("Calculating per-scenario outlier bounds for", colname))
+
+          # Calculate outliers per scenario
+          tb <- tb %>%
+            group_by(soot.injection.scenario) %>%
+            mutate(
+              q1 = quantile(.data[[colname]], 0.25, na.rm = TRUE),
+              q3 = quantile(.data[[colname]], 0.75, na.rm = TRUE),
+              iqr = q3 - q1,
+              lower = q1 - !!iqr.multiplier * iqr,
+              upper = q3 + !!iqr.multiplier * iqr,
+              !!flag.col := case_when(
+                is.na(.data[[colname]]) ~ NA_character_,
+                .data[[colname]] < lower | .data[[colname]] > upper ~ "outlier",
+                TRUE ~ NA_character_
+              )
+            ) %>%
+            ungroup() %>%
+            select(-q1, -q3, -iqr, -lower, -upper)
+
+        } else {
+          # Fallback to global IQR calculation
+          q1 <- quantile(tb[[colname]], 0.25, na.rm = TRUE)
+          q3 <- quantile(tb[[colname]], 0.75, na.rm = TRUE)
+          iqr <- q3 - q1
+          lower <- q1 - iqr.multiplier * iqr
+          upper <- q3 + iqr.multiplier * iqr
+          message(paste("Outlier bounds for", colname, ": [", round(lower, 2), ",", round(upper, 2), "]"))
+
+          tb[[flag.col]] <- case_when(
+            is.na(tb[[colname]]) ~ NA_character_,
+            tb[[colname]] < lower | tb[[colname]] > upper ~ "outlier",
+            TRUE ~ NA_character_
+          )
+        }
 
         # Check if the flag column would be entirely blank (no outliers found)
-        outlier_count <- sum(temp.flag.col == "outlier", na.rm = TRUE)
+        outlier_count <- sum(tb[[flag.col]] == "outlier", na.rm = TRUE)
         if (outlier_count == 0) {
           warning(paste("No outliers found for", colname, "; flag variable", flag.col, "not added."))
+          tb <- tb %>% select(-all_of(flag.col))
           next
         }
 
-        # Only add the flag column if outliers were found
-        message(paste("Found", outlier_count, "outlier(s) for", colname, "; adding flag variable", flag.col))
-        tb[[flag.col]] <- temp.flag.col
+        # Report outliers found
+        message(paste("Found", outlier_count, "outlier(s) for", colname))
       }
 
       return(tb)

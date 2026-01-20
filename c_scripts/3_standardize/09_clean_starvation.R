@@ -51,11 +51,11 @@ CleanReshape_Starvation <- function(source_table, source_table_name) {
       # Extract soot injection scenario from column names like "5 Tg", "150 Tg +hw", etc.
       # Use str_extract to get the number directly (more robust than case_when)
       soot.injection.scenario = as.numeric(str_extract(scenario.raw, "^\\d+")),
-      # Extract scenario modifier (e.g., "+hw", "+ tw")
-      scenario.modifier = case_when(
-        str_detect(scenario.raw, "(?i)\\+\\s*hw") ~ "high warming",
-        str_detect(scenario.raw, "(?i)\\+\\s*tw") ~ "total war",
-        TRUE ~ "standard"
+      # Extract food waste reduction scenario (e.g., "+hw", "+ tw")
+      food.waste.reduction.scenario = case_when(
+        str_detect(scenario.raw, "(?i)\\+\\s*hw") ~ "50% reduction",
+        str_detect(scenario.raw, "(?i)\\+\\s*tw") ~ "100% reduction",
+        TRUE ~ "0% reduction"
       ),
       # Add trade status and livestock type from sheet name
       trade.status = trade.status,
@@ -105,7 +105,7 @@ starvation.clean.tb <-
     country.nuclear.weapons, country.nato.member.2024,
     country.population.2018, country.land.area.sq.km,
     population,
-    soot.injection.scenario, scenario.modifier,
+    soot.injection.scenario, food.waste.reduction.scenario,
     trade.status, livestock.type,
     num.starving.millions,
     pct.population.starving,
