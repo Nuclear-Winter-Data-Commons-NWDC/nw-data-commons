@@ -1,0 +1,40 @@
+PROTOCOL NOTES: STANDARDIZED NEW DATASET INTEGRATION
+=====================================================
+
+Session Date: 2026-01-14
+Purpose: Documenting decisions and lessons learned while integrating the starvation dataset into the nw-data-commons pipeline
+
+PROTOCOL DECISIONS:
+-------------------
+
+1. FILE NUMBERING CONVENTION
+   Decision: Use sequential integer numbering for all scripts in c_scripts/3_standardize/
+   Rationale: Avoid decimal numbering (e.g., 08.5) which can create confusion and looks unprofessional
+   Implementation: When adding new datasets, renumber all affected scripts to maintain sequential order
+   Example: If adding script between 08 and 09, renumber:
+            - Old 08 stays 08
+            - New script becomes 09
+            - Old 09 becomes 10
+            - Old 10 becomes 11
+            - etc.
+
+
+LESSONS LEARNED:
+----------------
+
+[To be added during integration process]
+
+
+DATA STRUCTURE OBSERVATIONS:
+-----------------------------
+
+[To be added as we discover patterns]
+
+
+FUTURE IMPROVEMENTS:
+--------------------
+
+[To be added based on pain points encountered]
+
+
+REMINDER: Before ending session, finalize this document with complete protocol for adding new datasets.

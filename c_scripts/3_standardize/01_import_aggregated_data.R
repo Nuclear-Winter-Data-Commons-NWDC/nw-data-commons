@@ -88,13 +88,15 @@ configs <- all_data[["0.configs"]]
 # These will be NULL if the corresponding sheet is missing.
 months.tb                <- configs[["months"]]
 countries.tb             <- configs[["countries"]]
-source.table.configs.tb  <- configs[["source.table.configs"]]
 scenarios.tb             <- configs[["scenarios"]]
 variables.tb             <- configs[["variables"]]              # (cleaned just above)
 fao.crop.indicators.tb   <- configs[["fao.crop.indicators"]]
 fish.catch.indicators.tb <- configs[["fish.catch.indicators"]]
 fish.catch.eez.tb        <- configs[["fish.catch.eez"]]
 ports.tb                 <- configs[["ports"]]
+
+# Load source.table.configs from CSV (no longer in Excel)
+source.table.configs.tb <- read.csv("b_data/1_configs/standardization_configs.csv", stringsAsFactors = FALSE)
 
 # all_data is a nested list: all_data[[filename]][[sheetname]]
 # Each sheet is also available as a tibble in the global environment

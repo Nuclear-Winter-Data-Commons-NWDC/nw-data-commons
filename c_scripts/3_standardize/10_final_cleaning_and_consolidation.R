@@ -7,7 +7,9 @@ library(magrittr)
 
 # configs
 configs <- all_data[["0.configs"]]
-source.table.configs.tb <- configs[["source.table.configs"]]
+
+# Load source.table.configs from CSV (no longer in Excel)
+source.table.configs.tb <- read.csv("b_data/1_configs/standardization_configs.csv", stringsAsFactors = FALSE)
 
 # 2.7 CONSOLIDATE TABLES INTO LIST
 

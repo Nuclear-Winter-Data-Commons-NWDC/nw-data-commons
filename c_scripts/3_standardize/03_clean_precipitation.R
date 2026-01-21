@@ -14,7 +14,9 @@ source("c_scripts/3_standardize/00_utils.R")
 configs <- all_data[["0.configs"]]
 months.tb <- configs[["months"]]
 countries.tb <- configs[["countries"]]
-source.table.configs.tb <- configs[["source.table.configs"]]
+
+# Load source.table.configs from CSV (no longer in Excel)
+source.table.configs.tb <- read.csv("b_data/1_configs/standardization_configs.csv", stringsAsFactors = FALSE)
 
 # The precipitation tables are in all_data[["2.precipitation"]]
 precipitation.ls <- all_data[["2.precipitation"]]

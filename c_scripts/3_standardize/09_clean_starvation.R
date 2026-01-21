@@ -39,12 +39,15 @@ CleanReshape_Starvation <- function(source_table, source_table_name) {
 
   if ("population_2010" %in% names(source_table)) {
     source_table <- source_table %>%
-      ReplaceNames(., "population_2010", "population")
+      ReplaceNames(., "population_2010", "country.population.2010")
+  } else if ("population" %in% names(source_table)) {
+    source_table <- source_table %>%
+      ReplaceNames(., "population", "country.population.2010")
   }
 
   # Convert to long format
   long <- source_table %>%
-    reshape2::melt(id = c("nation", "population")) %>%
+    reshape2::melt(id = c("nation", "country.population.2010")) %>%
     ReplaceNames(., c("nation", "variable", "value"),
                  c("country.name", "scenario.raw", "num.starving.millions")) %>%
     mutate(
@@ -60,8 +63,8 @@ CleanReshape_Starvation <- function(source_table, source_table_name) {
       # Add trade status and livestock type from sheet name
       trade.status = trade.status,
       livestock.type = livestock.type,
-      # Convert population from millions to actual count (if needed for consistency)
-      population = as.numeric(population),
+      # Convert population to numeric
+      country.population.2010 = as.numeric(country.population.2010),
       num.starving.millions = as.numeric(num.starving.millions)
     ) %>%
     select(-scenario.raw)
@@ -84,17 +87,14 @@ starvation.clean.tb <-
       select(country.name, country.iso3, country.hemisphere,
              country.region, country.sub.region, country.intermediate.region,
              country.nuclear.weapons, country.nato.member.2024,
-             country.population.2018, country.land.area.sq.km) %>%
-      mutate(country.population.2018 = as.numeric(country.population.2018)),
+             country.land.area.sq.km),
     by = "country.name"
   ) %>%
   # Calculate derived metrics
   mutate(
-    population = as.numeric(population),
+    country.population.2010 = as.numeric(country.population.2010),
     num.starving.millions = as.numeric(num.starving.millions),
-    pct.population.starving = (num.starving.millions / population) * 100,
-    # Use country.population.2018 as backup if population column is missing/NA
-    pct.population.starving.2018 = (num.starving.millions / country.population.2018) * 100
+    pct.population.starving.2010 = (num.starving.millions / country.population.2010) * 100
   ) %>%
   # Apply outlier detection
   FlagOutliers_IQR(source.table.list.name = starvation.ls) %>%
@@ -103,17 +103,13 @@ starvation.clean.tb <-
     country.name, country.iso3, country.hemisphere,
     country.region, country.sub.region, country.intermediate.region,
     country.nuclear.weapons, country.nato.member.2024,
-    country.population.2018, country.land.area.sq.km,
-    population,
+    country.population.2010, country.land.area.sq.km,
     soot.injection.scenario, food.waste.reduction.scenario,
     trade.status, livestock.type,
     num.starving.millions,
-    pct.population.starving,
-    pct.population.starving.2018,
+    pct.population.starving.2010,
     any_of(c(
-      "num.starving.millions.outlier.flag",
-      "pct.population.starving.outlier.flag",
-      "pct.population.starving.2018.outlier.flag"
+      "pct.population.starving.2010.outlier.flag"
     ))
   ) %>%
   as_tibble()
