@@ -49,14 +49,11 @@ for (file in names(all_data)) {
 names(all_data) %<>% gsub("\\.xlsx$", "", .)
 
 # ---------------------------------------------------------------------------
-# Ensure UPDATED configs workbook (0.configs.xlsx) is wired correctly:
-# - Keep all existing config sheets.
-# - Make sure 'variables' sheet exists under all_data[["0.configs"]]$variables
-#   with lower-cased headers and a normalized 'range' column.
+# Load variables from CSV instead of Excel
 # ---------------------------------------------------------------------------
-configs_path <- file.path("b_data", "3_aggregated", "0.configs.xlsx")
-if (!file.exists(configs_path)) {
-  stop("Expected configs workbook not found at: ", configs_path)
+variables_csv_path <- "b_data/1_configs/variables.csv"
+if (!file.exists(variables_csv_path)) {
+  stop("Expected variables.csv not found at: ", variables_csv_path)
 }
 
 # Create configs container if missing
@@ -64,20 +61,16 @@ if (is.null(all_data[["0.configs"]])) {
   all_data[["0.configs"]] <- list()
 }
 
-# (Re)load variables sheet explicitly to ensure it reflects the latest file
-configs_variables_tb <- readxl::read_excel(configs_path, sheet = "variables")
+# Load variables from CSV
+configs_variables_tb <- read.csv(variables_csv_path, stringsAsFactors = FALSE)
+
 # Lower-case and trim headers for consistency
 names(configs_variables_tb) <- tolower(trimws(names(configs_variables_tb)))
 
-# Normalize header alias: 'range/unique values' -> 'range' (keep both if you like)
-if (!"range" %in% names(configs_variables_tb) && "range/unique values" %in% names(configs_variables_tb)) {
-  configs_variables_tb$range <- configs_variables_tb[["range/unique values"]]
-}
-
-# Store the cleaned variables table back into all_data
+# Store the variables table into all_data
 all_data[["0.configs"]][["variables"]] <- configs_variables_tb
 
-# Also expose a convenient variables.tb in the global env (optional, matches your pattern)
+# Also expose a convenient variables.tb in the global env
 assign("variables.tb", configs_variables_tb, envir = .GlobalEnv)
 
 # ---------------------------------------------------------------------------

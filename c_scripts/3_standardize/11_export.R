@@ -10,9 +10,14 @@
   })
 
 # Expect: clean.tables.ls already created by 09_final_cleaning_and_consolidation.R
-# Pull configs for variables (readme will be cloned directly from source Excel)
-  configs <- all_data[["0.configs"]]
-  variables_src <- configs[["variables"]]
+# Load variables from CSV (readme will be cloned directly from source Excel)
+  variables_csv_path <- "b_data/1_configs/variables.csv"
+  if (!file.exists(variables_csv_path)) {
+    stop("Expected variables.csv not found at: ", variables_csv_path)
+  }
+
+  variables_src <- read.csv(variables_csv_path, stringsAsFactors = FALSE)
+  names(variables_src) <- tolower(trimws(names(variables_src)))
 
 # -------------------------------------------------------------------------------
 # Helpers
@@ -195,14 +200,31 @@
   saveWorkbook(wb, xlsx_path, overwrite = TRUE)
 
 # -------------------------------------------------------------------------------
-# Write CSVs (only the seven data sheets) into the same run folder
+# Write CSVs (data sheets + variables + readme) into the same run folder
 
   csv_paths <- c()
+
+  # Export data sheets
   for (sn in data_sheets) {
     if (!sn %in% names(clean.tables.ls)) next
     csv_path <- file.path(run_dir, paste0(sn, ".csv"))
     write.csv(clean.tables.ls[[sn]], csv_path, row.names = FALSE, na = "", fileEncoding = "UTF-8")
     csv_paths[sn] <- csv_path
+  }
+
+  # Export variables table
+  variables_csv_path <- file.path(run_dir, "variables.csv")
+  write.csv(variables_out, variables_csv_path, row.names = FALSE, na = "", fileEncoding = "UTF-8")
+  csv_paths["variables"] <- variables_csv_path
+
+  # Export readme as markdown (copy from template)
+  readme_template_path <- "d_context/readme_template.md"
+  if (file.exists(readme_template_path)) {
+    readme_md_path <- file.path(run_dir, "readme.md")
+    file.copy(readme_template_path, readme_md_path, overwrite = TRUE)
+    csv_paths["readme"] <- readme_md_path
+  } else {
+    warning("Readme template not found at: ", readme_template_path)
   }
 
   if (interactive()) {

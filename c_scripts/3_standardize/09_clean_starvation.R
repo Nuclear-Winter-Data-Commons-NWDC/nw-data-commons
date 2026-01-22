@@ -63,11 +63,12 @@ CleanReshape_Starvation <- function(source_table, source_table_name) {
       # Add trade status and livestock type from sheet name
       trade.status = trade.status,
       livestock.type = livestock.type,
-      # Convert population to numeric
-      country.population.2010 = as.numeric(country.population.2010),
-      num.starving.millions = as.numeric(num.starving.millions)
+      # Convert population to numeric and rescale from millions to actual count
+      country.population.2010 = as.numeric(country.population.2010) * 1000000,
+      # Rescale num.starving from millions to actual count and rename
+      num.starving = as.numeric(num.starving.millions) * 1000000
     ) %>%
-    select(-scenario.raw)
+    select(-scenario.raw, -num.starving.millions)
 
   return(long)
 }
@@ -93,8 +94,9 @@ starvation.clean.tb <-
   # Calculate derived metrics
   mutate(
     country.population.2010 = as.numeric(country.population.2010),
-    num.starving.millions = as.numeric(num.starving.millions),
-    pct.population.starving.2010 = (num.starving.millions / country.population.2010) * 100
+    num.starving = as.numeric(num.starving),
+    # Both population and num.starving are now in actual count
+    pct.population.starving.2010 = (num.starving / country.population.2010) * 100
   ) %>%
   # Apply outlier detection
   FlagOutliers_IQR(source.table.list.name = starvation.ls) %>%
@@ -106,7 +108,7 @@ starvation.clean.tb <-
     country.population.2010, country.land.area.sq.km,
     soot.injection.scenario, food.waste.reduction.scenario,
     trade.status, livestock.type,
-    num.starving.millions,
+    num.starving,
     pct.population.starving.2010,
     any_of(c(
       "pct.population.starving.2010.outlier.flag"

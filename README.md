@@ -83,9 +83,9 @@ For users who wish to reproduce the aggregation process from raw model outputs:
 
 3. **Install system dependencies (Linux/Ubuntu):**
    ```sh
-   bash install_system_deps.sh
+   bash c_scripts/install_system_deps.sh
    ```
-   *If you are on MacOS or Windows, see the comments in `install_system_deps.sh` for guidance or install equivalent libraries using your OS package manager.*
+   *If you are on MacOS or Windows, see the comments in `c_scripts/install_system_deps.sh` for guidance or install equivalent libraries using your OS package manager.*
 
 4. **Restore the R environment:**
    ```r
@@ -121,8 +121,8 @@ nw-data-commons/
 ├── c_scripts/                 # Analysis scripts
 │   ├── 1_download_or_extract/     # Data download scripts
 │   ├── 2_aggregate/               # Aggregation notebooks
-│   └── 3_standardize/             # R data processing pipeline
-├── install_system_deps.sh     # System dependencies installer
+│   ├── 3_standardize/             # R data processing pipeline
+│   └── install_system_deps.sh     # System dependencies installer
 ├── requirements.txt           # Python dependencies
 └── renv.lock                  # R environment lock file
 ```
