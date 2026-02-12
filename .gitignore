@@ -1,9 +1,14 @@
+# --- nw-data-commons (OSF/data management) ---
+
+# Large data files (stored on OSF, not in Git)
 *.nc
 *.nc4
 *.csv
 *.xlsx
+*.ods
+*.tar.gz
+*.rtf
 
-# --- nw-data-commons (OSF/data management) ---
 # Dotenv files with secrets/tokens (example is committed separately)
 .env
 .env.local
@@ -14,16 +19,33 @@
 # IDE settings
 .vscode/
 
-# Keep only scenario definitions in Git, fetch other data from OSF
+# Legacy data directories (replaced by osf_data_current/osf_data_most_recent_previous)
+b_data/1_configs/
 b_data/2_model_outputs/
 b_data/3_aggregated/
-b_data/4_standardized/*/
+b_data/4_standardized/
 
-# Allow .gitkeep files to preserve directory structure
-!b_data/4_standardized/.gitkeep
+# OSF-synced data directories (track structure, not data files)
+# Data files excluded by extensions above
+# Directory structure preserved via .gitkeep files
+b_data/osf_data_current/
+b_data/osf_data_most_recent_previous/
 
-# To commit a specific standardized output folder, use:
-# git add -f b_data/4_standardized/YYYY-MM-DD_HHMMSS/
+# Allow .gitkeep files to preserve directory structure everywhere
+!**/.gitkeep
+
+# Allow specific small metadata files
+!b_data/osf_data_current/2_aggregated/datasets.json
+!b_data/osf_data_current/2_aggregated/DATASETS_CATALOG.md
+!b_data/osf_data_current/2_aggregated/osf_manifest_aggregated.json
+!b_data/osf_data_most_recent_previous/2_aggregated/datasets.json
+!b_data/osf_data_most_recent_previous/2_aggregated/DATASETS_CATALOG.md
+!b_data/osf_data_most_recent_previous/2_aggregated/osf_manifest_aggregated.json
+
+# Allow small documentation files
+!b_data/osf_data_current/3_standardized/0_readme_v*.md
+!b_data/osf_data_most_recent_previous/3_standardized/0_readme_v*.md
+
 # ---------------------------------------------
 
 # Claude Code session files

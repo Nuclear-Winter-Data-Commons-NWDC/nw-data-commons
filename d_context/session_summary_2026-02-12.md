@@ -97,52 +97,61 @@
 ## Remaining Tasks for Next Session
 
 ### High Priority
-1. **Complete local repository restructuring**
-   - Run `c_scripts/sync_from_osf.sh` to download all files with `_current` naming
-   - Move existing fisheries directory: `mv b_data/3_aggregated/5.fish.catch b_data/3_aggregated/fisheries/`
-   - Verify all datasets have `_current` versions locally
 
-2. **Create fisheries cleaning script**
+1. **Verify OSF-Local Sync Integrity**
+   - Systematically compare `osf_data_current/` with OSF repository
+   - Check file counts per directory match
+   - Verify all filenames follow `{basename}_v{YYYY-MM-DD}.{ext}` convention
+   - Confirm no remaining `_current` suffixes exist
+   - Validate downwelling files use underscores instead of dots
+   - Document any discrepancies found
+
+2. **Set up Google Drive automated backup**
+   - Configure automated sync of `b_data/` directory to Google Drive
+   - Establish backup schedule (daily/weekly)
+   - Document backup restoration procedure
+   - Test backup/restore workflow
+   - Consider: Selective sync (exclude osf_data_most_recent_previous to save space?)
+
+3. **Create fisheries cleaning script**
    - File: `c_scripts/3_standardize/08_clean_fish_catch.R`
    - Handle multi-CSV format (one per scenario)
    - Parse scenario from filename
    - Map to standardized schema
    - Integrate outlier detection
 
-3. **Create downwelling solar flux cleaning script**
+4. **Create downwelling solar flux cleaning script**
    - File: `c_scripts/3_standardize/XX_clean_downwelling.R`
-   - Download CSVs from OSF `/2_model_outputs/Downwelling Solar Flux at Surface/`
+   - Process CSVs from OSF `/2_aggregated/downwelling_solar_flux/`
    - Parse scenario from filenames
    - Aggregate mean/min/max/stdev
    - Map to standardized format
 
-4. **Fix ODS conversion script path**
+5. **Fix ODS conversion script path**
    - Update `c_scripts/3_standardize/11_export.R` line ~247
    - Change from `convert_to_ods.sh` to `c_scripts/convert_to_ods.sh`
 
-5. **Test complete pipeline**
+6. **Test complete pipeline**
    - Run `Rscript -e "source('c_scripts/3_standardize/run_all.R')"`
    - Verify fisheries and downwelling datasets process correctly
    - Check for errors/warnings
 
-6. **Add OSF upload to pipeline**
+7. **Add OSF upload to pipeline**
    - Create `c_scripts/3_standardize/12_upload_to_osf.R` or integrate into export
    - Use osf_manager.py for uploads
    - Add validation checks
 
 ### Medium Priority
-7. **Update pipeline scripts to use new directory structure**
-   - Update manifests to reference new paths
-   - Update any hardcoded references to old numbered files
 
-8. **Clean up old OSF files**
-   - Delete original numbered files from `/3_aggregated/` root
-   - Verify new structure is complete first
+8. **Update pipeline scripts to use new directory structure**
+   - Update manifests to reference new paths from osf_data_current/
+   - Update any hardcoded references to old numbered directories
 
 9. **Documentation updates**
-   - Update README with new structure
-   - Document `_current`/`_previous` versioning system
+   - Update README with new OSF workflow
+   - Document dual-backup strategy (OSF + Google Drive + osf_data_most_recent_previous)
    - Add examples of using osf_manager.py
+   - Document version-date naming convention
 
 ### Deferred
 - Data quality validation framework (from original session plan)
