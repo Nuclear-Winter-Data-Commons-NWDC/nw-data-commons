@@ -1,0 +1,667 @@
+{
+  "new": [
+    {
+      "path": "2_aggregated/fish_catch/fish_catch_v2_BAU_27tg_v2026-02-12.csv",
+      "normalized_path": "2_aggregated/fish_catch/fish_catch_v2_BAU_27tg.csv",
+      "osf_size": 4057848,
+      "osf_modified": "2026-02-12T18:13:19.873726"
+    },
+    {
+      "path": "Nuclear Winter Data Commons Intro Tutorial.mp4",
+      "normalized_path": "Nuclear Winter Data Commons Intro Tutorial.mp4",
+      "osf_size": 56880871,
+      "osf_modified": "2025-11-16T18:02:47.269129"
+    },
+    {
+      "path": "2_aggregated/fish_catch/fish_catch_v2_BAU_47tg_v2026-02-12.csv",
+      "normalized_path": "2_aggregated/fish_catch/fish_catch_v2_BAU_47tg.csv",
+      "osf_size": 4057878,
+      "osf_modified": "2026-02-12T18:13:35.940480"
+    },
+    {
+      "path": "2_aggregated/fish_catch/fish_catch_v1_v2025-09-11.xlsx",
+      "normalized_path": "2_aggregated/fish_catch/fish_catch_v1.xlsx",
+      "osf_size": 1107715,
+      "osf_modified": "2026-02-12T18:12:04.441440"
+    },
+    {
+      "path": "2_aggregated/fish_catch/fish_catch_v2_BAU_5tg_v2026-02-12.csv",
+      "normalized_path": "2_aggregated/fish_catch/fish_catch_v2_BAU_5tg.csv",
+      "osf_size": 4057792,
+      "osf_modified": "2026-02-12T18:12:46.440617"
+    },
+    {
+      "path": "2_aggregated/agriculture_agmip/agriculture_agmip_v2025-09-11.xlsx",
+      "normalized_path": "2_aggregated/agriculture_agmip/agriculture_agmip.xlsx",
+      "osf_size": 144603,
+      "osf_modified": "2026-02-12T17:52:00.229620"
+    },
+    {
+      "path": "3_standardized/1_standardized_data_v2026-01-22.ods",
+      "normalized_path": "3_standardized/1_standardized_data.ods",
+      "osf_size": 49616106,
+      "osf_modified": "2026-02-12T18:35:44.060364"
+    },
+    {
+      "path": "2_aggregated/fish_catch/fish_catch_v2_BAU_16tg_v2026-02-12.csv",
+      "normalized_path": "2_aggregated/fish_catch/fish_catch_v2_BAU_16tg.csv",
+      "osf_size": 4058017,
+      "osf_modified": "2026-02-12T18:13:04.061698"
+    },
+    {
+      "path": "2_aggregated/fish_catch/fish_catch_v2_BAU_150tg_v2026-02-12.csv",
+      "normalized_path": "2_aggregated/fish_catch/fish_catch_v2_BAU_150tg.csv",
+      "osf_size": 4057861,
+      "osf_modified": "2026-02-12T18:13:49.707726"
+    }
+  ],
+  "updated": [
+    {
+      "path": "2_aggregated/downwelling_shortwave_radiation/nw_targets_01_FSDS_country_mean_max_v2025-12-19.csv",
+      "local_path": "2_aggregated/downwelling_shortwave_radiation/nw_targets_01_FSDS_country_mean_max_v2026-02-12.csv",
+      "normalized_path": "2_aggregated/downwelling_shortwave_radiation/nw_targets_01_FSDS_country_mean_max.csv",
+      "local_modified": "2026-02-12T12:25:57.266320",
+      "osf_modified": "2026-02-12T19:19:19.264981",
+      "local_size": 671368,
+      "osf_size": 671368
+    },
+    {
+      "path": "2_aggregated/downwelling_shortwave_radiation/nw_targets_03_FSDS_country_mean_v2025-12-19.csv",
+      "local_path": "2_aggregated/downwelling_shortwave_radiation/nw_targets_03_FSDS_country_mean_v2026-02-12.csv",
+      "normalized_path": "2_aggregated/downwelling_shortwave_radiation/nw_targets_03_FSDS_country_mean.csv",
+      "local_modified": "2026-02-12T12:25:58.443941",
+      "osf_modified": "2026-02-12T19:28:49.922228",
+      "local_size": 671944,
+      "osf_size": 671944
+    },
+    {
+      "path": "2_aggregated/downwelling_shortwave_radiation/nw_targets_02_FSDS_country_mean_min_v2025-12-19.csv",
+      "local_path": "2_aggregated/downwelling_shortwave_radiation/nw_targets_02_FSDS_country_mean_min_v2026-02-12.csv",
+      "normalized_path": "2_aggregated/downwelling_shortwave_radiation/nw_targets_02_FSDS_country_mean_min.csv",
+      "local_modified": "2026-02-12T12:25:58.025708",
+      "osf_modified": "2026-02-12T19:27:04.382264",
+      "local_size": 671384,
+      "osf_size": 671384
+    },
+    {
+      "path": "2_aggregated/downwelling_shortwave_radiation/nw_cntrl_03_FSDS_country_mean_stdev_v2025-12-19.csv",
+      "local_path": "2_aggregated/downwelling_shortwave_radiation/nw_cntrl_03_FSDS_country_mean_stdev_v2026-02-12.csv",
+      "normalized_path": "2_aggregated/downwelling_shortwave_radiation/nw_cntrl_03_FSDS_country_mean_stdev.csv",
+      "local_modified": "2026-02-12T12:25:56.952981",
+      "osf_modified": "2026-02-12T19:15:43.563437",
+      "local_size": 945674,
+      "osf_size": 945674
+    },
+    {
+      "path": "2_aggregated/downwelling_shortwave_radiation/nw_cntrl_03_FSDS_country_mean_max_v2025-12-19.csv",
+      "local_path": "2_aggregated/downwelling_shortwave_radiation/nw_cntrl_03_FSDS_country_mean_max_v2026-02-12.csv",
+      "normalized_path": "2_aggregated/downwelling_shortwave_radiation/nw_cntrl_03_FSDS_country_mean_max.csv",
+      "local_modified": "2026-02-12T12:25:56.627873",
+      "osf_modified": "2026-02-12T19:13:54.580828",
+      "local_size": 938546,
+      "osf_size": 938546
+    },
+    {
+      "path": "2_aggregated/sea_ice/sea_ice_v2025-09-11.xlsx",
+      "local_path": "2_aggregated/sea_ice/sea_ice_v2025-09-12.xlsx",
+      "normalized_path": "2_aggregated/sea_ice/sea_ice.xlsx",
+      "local_modified": "2025-09-12T00:21:11.457905",
+      "osf_modified": "2026-02-12T17:54:48.823742",
+      "local_size": 56032,
+      "osf_size": 56032
+    },
+    {
+      "path": "2_aggregated/downwelling_shortwave_radiation/nw_cntrl_03_FSDS_country_mean_v2025-12-19.csv",
+      "local_path": "2_aggregated/downwelling_shortwave_radiation/nw_cntrl_03_FSDS_country_mean_v2026-02-12.csv",
+      "normalized_path": "2_aggregated/downwelling_shortwave_radiation/nw_cntrl_03_FSDS_country_mean.csv",
+      "local_modified": "2026-02-12T12:25:56.439230",
+      "osf_modified": "2026-02-12T19:13:02.055807",
+      "local_size": 939779,
+      "osf_size": 939779
+    },
+    {
+      "path": "2_aggregated/downwelling_shortwave_radiation/nw_targets_02_FSDS_country_mean_stdev_v2025-12-19.csv",
+      "local_path": "2_aggregated/downwelling_shortwave_radiation/nw_targets_02_FSDS_country_mean_stdev_v2026-02-12.csv",
+      "normalized_path": "2_aggregated/downwelling_shortwave_radiation/nw_targets_02_FSDS_country_mean_stdev.csv",
+      "local_modified": "2026-02-12T12:25:58.238846",
+      "osf_modified": "2026-02-12T19:27:57.964622",
+      "local_size": 677524,
+      "osf_size": 677524
+    },
+    {
+      "path": "2_aggregated/starvation/starvation_v2026-02-12.xlsx",
+      "local_path": "2_aggregated/starvation/starvation_v2026-01-14.xlsx",
+      "normalized_path": "2_aggregated/starvation/starvation.xlsx",
+      "local_modified": "2026-01-14T20:08:58.871555",
+      "osf_modified": "2026-02-12T17:55:26.264876",
+      "local_size": 61951,
+      "osf_size": 61951
+    },
+    {
+      "path": "2_aggregated/downwelling_shortwave_radiation/nw_targets_01_FSDS_country_mean_min_v2025-12-19.csv",
+      "local_path": "2_aggregated/downwelling_shortwave_radiation/nw_targets_01_FSDS_country_mean_min_v2026-02-12.csv",
+      "normalized_path": "2_aggregated/downwelling_shortwave_radiation/nw_targets_01_FSDS_country_mean_min.csv",
+      "local_modified": "2026-02-12T12:25:57.483283",
+      "osf_modified": "2026-02-12T19:20:14.729896",
+      "local_size": 671730,
+      "osf_size": 671730
+    },
+    {
+      "path": "2_aggregated/downwelling_shortwave_radiation/nw_targets_01_FSDS_country_mean_stdev_v2025-12-19.csv",
+      "local_path": "2_aggregated/downwelling_shortwave_radiation/nw_targets_01_FSDS_country_mean_stdev_v2026-02-12.csv",
+      "normalized_path": "2_aggregated/downwelling_shortwave_radiation/nw_targets_01_FSDS_country_mean_stdev.csv",
+      "local_modified": "2026-02-12T12:25:57.595782",
+      "osf_modified": "2026-02-12T19:21:07.299666",
+      "local_size": 676547,
+      "osf_size": 676547
+    },
+    {
+      "path": "2_aggregated/downwelling_shortwave_radiation/nw_targets_03_FSDS_country_mean_min_v2025-12-19.csv",
+      "local_path": "2_aggregated/downwelling_shortwave_radiation/nw_targets_03_FSDS_country_mean_min_v2026-02-12.csv",
+      "normalized_path": "2_aggregated/downwelling_shortwave_radiation/nw_targets_03_FSDS_country_mean_min.csv",
+      "local_modified": "2026-02-12T12:25:58.761637",
+      "osf_modified": "2026-02-12T19:30:40.993736",
+      "local_size": 671221,
+      "osf_size": 671221
+    },
+    {
+      "path": "4_3rd_party_metadata/countries.csv",
+      "local_path": "4_3rd_party_metadata/countries.csv",
+      "normalized_path": "4_3rd_party_metadata/countries.csv",
+      "local_modified": "2026-02-13T12:22:11.951116",
+      "osf_modified": "2026-02-13T18:05:42.797388",
+      "local_size": 22893,
+      "osf_size": 22893
+    },
+    {
+      "path": "4_3rd_party_metadata/ports.csv",
+      "local_path": "4_3rd_party_metadata/ports.csv",
+      "normalized_path": "4_3rd_party_metadata/ports.csv",
+      "local_modified": "2026-02-13T12:23:20.574939",
+      "osf_modified": "2026-02-13T18:05:37.212196",
+      "local_size": 1058,
+      "osf_size": 1058
+    },
+    {
+      "path": "4_3rd_party_metadata/datasets.json",
+      "local_path": "4_3rd_party_metadata/datasets.json",
+      "normalized_path": "4_3rd_party_metadata/datasets.json",
+      "local_modified": "2026-02-13T17:22:06.003156",
+      "osf_modified": "2026-02-13T18:06:07.208392",
+      "local_size": 1955,
+      "osf_size": 1955
+    },
+    {
+      "path": "4_3rd_party_metadata/DATASETS_CATALOG.md",
+      "local_path": "4_3rd_party_metadata/DATASETS_CATALOG.md",
+      "normalized_path": "4_3rd_party_metadata/DATASETS_CATALOG.md",
+      "local_modified": "2026-02-13T17:22:15.100163",
+      "osf_modified": "2026-02-13T18:05:51.607035",
+      "local_size": 1915,
+      "osf_size": 1915
+    },
+    {
+      "path": "2_aggregated/downwelling_shortwave_radiation/nw_targets_04_FSDS_country_mean_max_v2025-12-19.csv",
+      "local_path": "2_aggregated/downwelling_shortwave_radiation/nw_targets_04_FSDS_country_mean_max_v2026-02-12.csv",
+      "normalized_path": "2_aggregated/downwelling_shortwave_radiation/nw_targets_04_FSDS_country_mean_max.csv",
+      "local_modified": "2026-02-12T12:25:59.280626",
+      "osf_modified": "2026-02-12T19:33:22.056181",
+      "local_size": 672231,
+      "osf_size": 672231
+    },
+    {
+      "path": "2_aggregated/downwelling_shortwave_radiation/nw_targets_01_FSDS_country_mean_v2025-12-19.csv",
+      "local_path": "2_aggregated/downwelling_shortwave_radiation/nw_targets_01_FSDS_country_mean_v2026-02-12.csv",
+      "normalized_path": "2_aggregated/downwelling_shortwave_radiation/nw_targets_01_FSDS_country_mean.csv",
+      "local_modified": "2026-02-12T12:25:57.069446",
+      "osf_modified": "2026-02-12T19:16:41.336249",
+      "local_size": 672416,
+      "osf_size": 672416
+    },
+    {
+      "path": "2_aggregated/precipitation/precipitation_v2025-09-12.xlsx",
+      "local_path": "2_aggregated/precipitation/precipitation_v2025-09-12.xlsx",
+      "normalized_path": "2_aggregated/precipitation/precipitation.xlsx",
+      "local_modified": "2025-09-12T00:20:48.789923",
+      "osf_modified": "2026-02-13T18:06:24.717339",
+      "local_size": 4255781,
+      "osf_size": 4255781
+    },
+    {
+      "path": "2_aggregated/downwelling_shortwave_radiation/nw_cntrl_03_FSDS_country_mean_min_v2025-12-19.csv",
+      "local_path": "2_aggregated/downwelling_shortwave_radiation/nw_cntrl_03_FSDS_country_mean_min_v2026-02-12.csv",
+      "normalized_path": "2_aggregated/downwelling_shortwave_radiation/nw_cntrl_03_FSDS_country_mean_min.csv",
+      "local_modified": "2026-02-12T12:25:56.832571",
+      "osf_modified": "2026-02-12T19:14:47.487323",
+      "local_size": 938947,
+      "osf_size": 938947
+    },
+    {
+      "path": "4_3rd_party_metadata/fao_crop_indicators.csv",
+      "local_path": "4_3rd_party_metadata/fao_crop_indicators.csv",
+      "normalized_path": "4_3rd_party_metadata/fao_crop_indicators.csv",
+      "local_modified": "2026-02-13T12:22:52.520873",
+      "osf_modified": "2026-02-13T18:06:00.814052",
+      "local_size": 1240772,
+      "osf_size": 1240772
+    },
+    {
+      "path": "2_aggregated/downwelling_shortwave_radiation/nw_targets_02_FSDS_country_mean_v2025-12-19.csv",
+      "local_path": "2_aggregated/downwelling_shortwave_radiation/nw_targets_02_FSDS_country_mean_v2026-02-12.csv",
+      "normalized_path": "2_aggregated/downwelling_shortwave_radiation/nw_targets_02_FSDS_country_mean.csv",
+      "local_modified": "2026-02-12T12:25:57.712299",
+      "osf_modified": "2026-02-12T19:22:06.282726",
+      "local_size": 672135,
+      "osf_size": 672135
+    },
+    {
+      "path": "2_aggregated/uv_radiation/uv_radiation_v2025-09-11.xlsx",
+      "local_path": "2_aggregated/uv_radiation/uv_radiation_v2025-09-12.xlsx",
+      "normalized_path": "2_aggregated/uv_radiation/uv_radiation.xlsx",
+      "local_modified": "2025-09-12T00:20:53.433898",
+      "osf_modified": "2026-02-12T17:57:05.453837",
+      "local_size": 2368490,
+      "osf_size": 2368490
+    },
+    {
+      "path": "2_aggregated/agriculture_clm/agriculture_clm_v2025-09-11.xlsx",
+      "local_path": "2_aggregated/agriculture_clm/agriculture_clm_v2025-09-12.xlsx",
+      "normalized_path": "2_aggregated/agriculture_clm/agriculture_clm.xlsx",
+      "local_modified": "2025-09-12T00:21:02.349884",
+      "osf_modified": "2026-02-12T17:53:18.039371",
+      "local_size": 1059103,
+      "osf_size": 1059103
+    },
+    {
+      "path": "2_aggregated/downwelling_shortwave_radiation/nw_targets_02_FSDS_country_mean_max_v2025-12-19.csv",
+      "local_path": "2_aggregated/downwelling_shortwave_radiation/nw_targets_02_FSDS_country_mean_max_v2026-02-12.csv",
+      "normalized_path": "2_aggregated/downwelling_shortwave_radiation/nw_targets_02_FSDS_country_mean_max.csv",
+      "local_modified": "2026-02-12T12:25:57.868995",
+      "osf_modified": "2026-02-12T19:26:05.862190",
+      "local_size": 672834,
+      "osf_size": 672834
+    },
+    {
+      "path": "2_aggregated/downwelling_shortwave_radiation/nw_targets_03_FSDS_country_mean_stdev_v2025-12-19.csv",
+      "local_path": "2_aggregated/downwelling_shortwave_radiation/nw_targets_03_FSDS_country_mean_stdev_v2026-02-12.csv",
+      "normalized_path": "2_aggregated/downwelling_shortwave_radiation/nw_targets_03_FSDS_country_mean_stdev.csv",
+      "local_modified": "2026-02-12T12:25:58.958689",
+      "osf_modified": "2026-02-12T19:31:33.728090",
+      "local_size": 677933,
+      "osf_size": 677933
+    },
+    {
+      "path": "2_aggregated/temperature/temperature_v2026-02-12.xlsx",
+      "local_path": "2_aggregated/temperature/temperature_v2026-02-12.xlsx",
+      "normalized_path": "2_aggregated/temperature/temperature.xlsx",
+      "local_modified": "2026-02-12T15:42:53.703120",
+      "osf_modified": "2026-02-13T18:06:14.665315",
+      "local_size": 6329406,
+      "osf_size": 6329406
+    },
+    {
+      "path": "2_aggregated/downwelling_shortwave_radiation/nw_targets_03_FSDS_country_mean_max_v2025-12-19.csv",
+      "local_path": "2_aggregated/downwelling_shortwave_radiation/nw_targets_03_FSDS_country_mean_max_v2026-02-12.csv",
+      "normalized_path": "2_aggregated/downwelling_shortwave_radiation/nw_targets_03_FSDS_country_mean_max.csv",
+      "local_modified": "2026-02-12T12:25:58.616864",
+      "osf_modified": "2026-02-12T19:29:43.041319",
+      "local_size": 673262,
+      "osf_size": 673262
+    },
+    {
+      "path": "3_standardized/starvation_v2026-01-22.csv",
+      "local_path": "3_standardized/starvation_v2026-01-22.csv",
+      "normalized_path": "3_standardized/starvation.csv",
+      "local_modified": "2026-01-22T01:47:01.716863",
+      "osf_modified": "2026-01-22T01:59:53.855493",
+      "local_size": 1189520,
+      "osf_size": 1189520
+    },
+    {
+      "path": "2_aggregated/downwelling_shortwave_radiation/nw_targets_04_FSDS_country_mean_v2025-12-19.csv",
+      "local_path": "2_aggregated/downwelling_shortwave_radiation/nw_targets_04_FSDS_country_mean_v2026-02-12.csv",
+      "normalized_path": "2_aggregated/downwelling_shortwave_radiation/nw_targets_04_FSDS_country_mean.csv",
+      "local_modified": "2026-02-12T12:25:59.095492",
+      "osf_modified": "2026-02-12T19:32:29.076004",
+      "local_size": 672169,
+      "osf_size": 672169
+    }
+  ],
+  "deleted": [
+    {
+      "path": "2_aggregated/agriculture_agmip/Mills_5Tg_soy_production_change_country_yr1-15_multi_model_mean_2025-09-24.csv",
+      "normalized_path": "2_aggregated/agriculture_agmip/Mills_5Tg_soy_production_change_country_yr1-15_multi_model_mean_2025-09-24.csv",
+      "local_size": 16348,
+      "local_modified": "2025-09-28T19:51:47.449066"
+    },
+    {
+      "path": "2_aggregated/fish_catch/output_BAU_37Tg_v2023-09-19.csv",
+      "normalized_path": "2_aggregated/fish_catch/output_BAU_37Tg.csv",
+      "local_size": 368239,
+      "local_modified": "2026-02-12T19:57:04.978652"
+    },
+    {
+      "path": "2_aggregated/fish_catch/output_BAU_150Tg_v2023-09-19.csv",
+      "normalized_path": "2_aggregated/fish_catch/output_BAU_150Tg.csv",
+      "local_size": 368597,
+      "local_modified": "2026-02-12T19:55:45.113628"
+    },
+    {
+      "path": "2_aggregated/agriculture_agmip/Bardeen_5Tg_soy_production_change_country_yr1-15_multi_model_mean_2025-09-24.csv",
+      "normalized_path": "2_aggregated/agriculture_agmip/Bardeen_5Tg_soy_production_change_country_yr1-15_multi_model_mean_2025-09-24.csv",
+      "local_size": 16220,
+      "local_modified": "2025-09-28T19:51:47.453363"
+    },
+    {
+      "path": "1_model_outputs/sea_ice/testfile-150Tg.csv",
+      "normalized_path": "1_model_outputs/sea_ice/testfile-150Tg.csv",
+      "local_size": 23975,
+      "local_modified": "2026-02-12T19:58:54.099962"
+    },
+    {
+      "path": "2_aggregated/agriculture_agmip/Mills_5Tg_rice_production_change_country_yr1-15_multi_model_mean_2025-09-24.csv",
+      "normalized_path": "2_aggregated/agriculture_agmip/Mills_5Tg_rice_production_change_country_yr1-15_multi_model_mean_2025-09-24.csv",
+      "local_size": 19477,
+      "local_modified": "2025-09-28T19:51:47.444769"
+    },
+    {
+      "path": "2_aggregated/agriculture_agmip/Bardeen_5Tg_wheat_production_change_country_yr1-15_multi_model_SD_2025-09-24.csv",
+      "normalized_path": "2_aggregated/agriculture_agmip/Bardeen_5Tg_wheat_production_change_country_yr1-15_multi_model_SD_2025-09-24.csv",
+      "local_size": 18301,
+      "local_modified": "2025-09-28T19:51:47.431879"
+    },
+    {
+      "path": "2_aggregated/agriculture_agmip/Mills_5Tg_maize_production_change_country_yr1-15_multi_model_SD_2025-09-24.csv",
+      "normalized_path": "2_aggregated/agriculture_agmip/Mills_5Tg_maize_production_change_country_yr1-15_multi_model_SD_2025-09-24.csv",
+      "local_size": 19720,
+      "local_modified": "2025-09-28T19:51:47.436175"
+    },
+    {
+      "path": "2_aggregated/agriculture_agmip/Bardeen_5Tg_rice_production_change_country_yr1-15_multi_model_SD_2025-09-24.csv",
+      "normalized_path": "2_aggregated/agriculture_agmip/Bardeen_5Tg_rice_production_change_country_yr1-15_multi_model_SD_2025-09-24.csv",
+      "local_size": 18683,
+      "local_modified": "2025-09-28T19:51:47.436175"
+    },
+    {
+      "path": "2_aggregated/agriculture_agmip/Bardeen_5Tg_wheat_production_change_country_yr1-15_multi_model_mean_2025-09-24.csv",
+      "normalized_path": "2_aggregated/agriculture_agmip/Bardeen_5Tg_wheat_production_change_country_yr1-15_multi_model_mean_2025-09-24.csv",
+      "local_size": 19197,
+      "local_modified": "2025-09-28T19:51:47.401800"
+    },
+    {
+      "path": "2_aggregated/agriculture_agmip/Mills_5Tg_rice_production_change_country_yr1-15_multi_model_SD_2025-09-24.csv",
+      "normalized_path": "2_aggregated/agriculture_agmip/Mills_5Tg_rice_production_change_country_yr1-15_multi_model_SD_2025-09-24.csv",
+      "local_size": 18957,
+      "local_modified": "2025-09-28T19:51:47.440472"
+    },
+    {
+      "path": "2_aggregated/osf_manifest_aggregated.json",
+      "normalized_path": "2_aggregated/osf_manifest_aggregated.json",
+      "local_size": 1020,
+      "local_modified": "2025-09-30T19:48:13.050611"
+    },
+    {
+      "path": "2_aggregated/fish_catch/output_BAU_16Tg_v2023-09-19.csv",
+      "normalized_path": "2_aggregated/fish_catch/output_BAU_16Tg.csv",
+      "local_size": 367759,
+      "local_modified": "2026-02-12T19:56:11.950265"
+    },
+    {
+      "path": "2_aggregated/agriculture_agmip/Mills_5Tg_wheat_production_change_country_yr1-15_multi_model_mean_2025-09-24.csv",
+      "normalized_path": "2_aggregated/agriculture_agmip/Mills_5Tg_wheat_production_change_country_yr1-15_multi_model_mean_2025-09-24.csv",
+      "local_size": 19227,
+      "local_modified": "2025-09-28T19:51:47.457660"
+    },
+    {
+      "path": "2_aggregated/fish_catch/readme_fisheriesNW_v2023-09-19.rtf",
+      "normalized_path": "2_aggregated/fish_catch/readme_fisheriesNW.rtf",
+      "local_size": 2315,
+      "local_modified": "2026-02-12T19:58:27.296543"
+    },
+    {
+      "path": "3_standardized/0_standardized_data_v2026-02-12.xlsx:Zone.Identifier",
+      "normalized_path": "3_standardized/0_standardized_data_v2026-02-12.xlsx:Zone.Identifier",
+      "local_size": 25,
+      "local_modified": "2026-02-13T16:18:14.470218"
+    },
+    {
+      "path": "2_aggregated/fish_catch/output_BAU_5Tg_v2023-09-19.csv",
+      "normalized_path": "2_aggregated/fish_catch/output_BAU_5Tg.csv",
+      "local_size": 366625,
+      "local_modified": "2026-02-12T19:57:59.770422"
+    },
+    {
+      "path": "2_aggregated/agriculture_agmip/Bardeen_5Tg_maize_production_change_country_yr1-15_multi_model_SD_2025-09-24.csv",
+      "normalized_path": "2_aggregated/agriculture_agmip/Bardeen_5Tg_maize_production_change_country_yr1-15_multi_model_SD_2025-09-24.csv",
+      "local_size": 19563,
+      "local_modified": "2025-09-28T19:51:47.393207"
+    },
+    {
+      "path": "2_aggregated/agriculture_agmip/Mills_5Tg_soy_production_change_country_yr1-15_multi_model_SD_2025-09-24.csv",
+      "normalized_path": "2_aggregated/agriculture_agmip/Mills_5Tg_soy_production_change_country_yr1-15_multi_model_SD_2025-09-24.csv",
+      "local_size": 15858,
+      "local_modified": "2025-09-28T19:51:47.453363"
+    },
+    {
+      "path": "2_aggregated/agriculture_agmip/Mills_5Tg_wheat_production_change_country_yr1-15_multi_model_SD_2025-09-24.csv",
+      "normalized_path": "2_aggregated/agriculture_agmip/Mills_5Tg_wheat_production_change_country_yr1-15_multi_model_SD_2025-09-24.csv",
+      "local_size": 18512,
+      "local_modified": "2025-09-28T19:51:47.457660"
+    },
+    {
+      "path": "3_standardized/downwelling_shortwave_radiation_v2026-02-13.csv",
+      "normalized_path": "3_standardized/downwelling_shortwave_radiation.csv",
+      "local_size": 11767808,
+      "local_modified": "2026-02-13T16:46:59.255979"
+    },
+    {
+      "path": "2_aggregated/agriculture_agmip/Mills_5Tg_maize_production_change_country_yr1-15_multi_model_mean_2025-09-24.csv",
+      "normalized_path": "2_aggregated/agriculture_agmip/Mills_5Tg_maize_production_change_country_yr1-15_multi_model_mean_2025-09-24.csv",
+      "local_size": 20748,
+      "local_modified": "2025-09-28T19:51:47.436175"
+    },
+    {
+      "path": "2_aggregated/fish_catch/output_BAU_47Tg_v2023-09-19.csv",
+      "normalized_path": "2_aggregated/fish_catch/output_BAU_47Tg.csv",
+      "local_size": 368309,
+      "local_modified": "2026-02-12T19:57:32.838448"
+    },
+    {
+      "path": "2_aggregated/agriculture_agmip/Bardeen_5Tg_soy_production_change_country_yr1-15_multi_model_SD_2025-09-24.csv",
+      "normalized_path": "2_aggregated/agriculture_agmip/Bardeen_5Tg_soy_production_change_country_yr1-15_multi_model_SD_2025-09-24.csv",
+      "local_size": 15792,
+      "local_modified": "2025-09-28T19:51:47.461957"
+    },
+    {
+      "path": "2_aggregated/fish_catch/output_BAU_27Tg_v2023-09-19.csv",
+      "normalized_path": "2_aggregated/fish_catch/output_BAU_27Tg.csv",
+      "local_size": 367926,
+      "local_modified": "2026-02-12T19:56:37.985967"
+    },
+    {
+      "path": "2_aggregated/agriculture_agmip/Bardeen_5Tg_rice_production_change_country_yr1-15_multi_model_mean_2025-09-24.csv",
+      "normalized_path": "2_aggregated/agriculture_agmip/Bardeen_5Tg_rice_production_change_country_yr1-15_multi_model_mean_2025-09-24.csv",
+      "local_size": 19419,
+      "local_modified": "2025-09-28T19:51:47.414691"
+    }
+  ],
+  "unchanged": [
+    {
+      "path": "3_standardized/fish_catch_v2026-02-13.csv",
+      "osf_path": "3_standardized/fish_catch_v2025-10-31.csv",
+      "normalized_path": "3_standardized/fish_catch.csv",
+      "local_modified": "2026-02-13T14:59:29.347400",
+      "osf_modified": "2025-10-31T17:04:51.065186"
+    },
+    {
+      "path": "3_standardized/1_standardized_data_v2026-02-13.xlsx",
+      "osf_path": "3_standardized/1_standardized_data_v2026-01-26.xlsx",
+      "normalized_path": "3_standardized/1_standardized_data.xlsx",
+      "local_modified": "2026-02-13T16:46:58.276830",
+      "osf_modified": "2026-02-12T18:21:23.405946"
+    },
+    {
+      "path": "1_model_outputs/temperature_and_precipitation/nw_cntrl_03.TS_TSMN_TSMX_PRECC_PRECL_v2024-12-12.nc.tar.gz",
+      "osf_path": "1_model_outputs/temperature_and_precipitation/nw_cntrl_03.TS_TSMN_TSMX_PRECC_PRECL_v2024-12-12.nc.tar.gz",
+      "normalized_path": "1_model_outputs/temperature_and_precipitation/nw_cntrl_03.TS_TSMN_TSMX_PRECC_PRECL_v2024-12-12.nc.tar.gz",
+      "local_modified": "2026-02-12T20:05:37.657547",
+      "osf_modified": "2024-12-12T15:19:11.440626"
+    },
+    {
+      "path": "0_configs/configs_v2026-01-21.xlsx",
+      "osf_path": "0_configs/configs_v2026-01-21.xlsx",
+      "normalized_path": "0_configs/configs.xlsx",
+      "local_modified": "2026-02-13T17:15:00.715810",
+      "osf_modified": "2026-02-12T19:45:04.081133"
+    },
+    {
+      "path": "3_standardized/agriculture_clm_v2025-10-31.csv",
+      "osf_path": "3_standardized/agriculture_clm_v2025-10-31.csv",
+      "normalized_path": "3_standardized/agriculture_clm.csv",
+      "local_modified": "2026-01-22T01:47:01.450171",
+      "osf_modified": "2025-10-31T17:04:51.058742"
+    },
+    {
+      "path": "3_standardized/variables_v2026-02-13.csv",
+      "osf_path": "3_standardized/variables_v2026-01-22.csv",
+      "normalized_path": "3_standardized/variables.csv",
+      "local_modified": "2026-02-13T16:36:47.205521",
+      "osf_modified": "2026-01-22T02:00:04.028611"
+    },
+    {
+      "path": "1_model_outputs/temperature_and_precipitation/nw_ur_150_07.TS_TSMN_TSMX_PRECC_PRECL_v2024-12-12.nc.tar.gz",
+      "osf_path": "1_model_outputs/temperature_and_precipitation/nw_ur_150_07.TS_TSMN_TSMX_PRECC_PRECL_v2024-12-12.nc.tar.gz",
+      "normalized_path": "1_model_outputs/temperature_and_precipitation/nw_ur_150_07.TS_TSMN_TSMX_PRECC_PRECL_v2024-12-12.nc.tar.gz",
+      "local_modified": "2026-02-12T20:06:26.921744",
+      "osf_modified": "2024-12-12T15:19:16.159769"
+    },
+    {
+      "path": "2_aggregated/downwelling_shortwave_radiation/nw_ur_150_07_FSDS_country_mean_min_v2026-02-12.csv",
+      "osf_path": "2_aggregated/downwelling_shortwave_radiation/nw_ur_150_07_FSDS_country_mean_min_v2025-12-19.csv",
+      "normalized_path": "2_aggregated/downwelling_shortwave_radiation/nw_ur_150_07_FSDS_country_mean_min.csv",
+      "local_modified": "2026-02-12T12:25:56.037862",
+      "osf_modified": "2025-12-19T18:20:34.786507"
+    },
+    {
+      "path": "2_aggregated/downwelling_shortwave_radiation/nw_ur_150_07_FSDS_country_mean_max_v2026-02-12.csv",
+      "osf_path": "2_aggregated/downwelling_shortwave_radiation/nw_ur_150_07_FSDS_country_mean_max_v2025-12-19.csv",
+      "normalized_path": "2_aggregated/downwelling_shortwave_radiation/nw_ur_150_07_FSDS_country_mean_max.csv",
+      "local_modified": "2026-02-12T12:25:55.793276",
+      "osf_modified": "2025-12-19T18:20:34.336274"
+    },
+    {
+      "path": "2_aggregated/downwelling_shortwave_radiation/nw_ur_150_07_FSDS_country_mean_stdev_v2026-02-12.csv",
+      "osf_path": "2_aggregated/downwelling_shortwave_radiation/nw_ur_150_07_FSDS_country_mean_stdev_v2025-12-19.csv",
+      "normalized_path": "2_aggregated/downwelling_shortwave_radiation/nw_ur_150_07_FSDS_country_mean_stdev.csv",
+      "local_modified": "2026-02-12T12:25:56.254601",
+      "osf_modified": "2025-12-19T18:20:33.525282"
+    },
+    {
+      "path": "2_aggregated/datasets.json",
+      "osf_path": "2_aggregated/datasets_v2026-02-12.json",
+      "normalized_path": "2_aggregated/datasets.json",
+      "local_modified": "2026-02-13T15:16:22.873067",
+      "osf_modified": "2026-02-12T18:18:41.302948"
+    },
+    {
+      "path": "2_aggregated/downwelling_shortwave_radiation/nw_targets_04_FSDS_country_mean_stdev_v2026-02-12.csv",
+      "osf_path": "2_aggregated/downwelling_shortwave_radiation/nw_targets_04_FSDS_country_mean_stdev_v2025-12-19.csv",
+      "normalized_path": "2_aggregated/downwelling_shortwave_radiation/nw_targets_04_FSDS_country_mean_stdev.csv",
+      "local_modified": "2026-02-12T12:25:59.586499",
+      "osf_modified": "2025-12-19T18:20:33.526539"
+    },
+    {
+      "path": "3_standardized/temperature_v2025-10-31.csv",
+      "osf_path": "3_standardized/temperature_v2025-10-31.csv",
+      "normalized_path": "3_standardized/temperature.csv",
+      "local_modified": "2026-01-22T01:46:57.999582",
+      "osf_modified": "2025-10-31T17:06:04.623449"
+    },
+    {
+      "path": "3_standardized/agriculture_agmip_v2025-10-31.csv",
+      "osf_path": "3_standardized/agriculture_agmip_v2025-10-31.csv",
+      "normalized_path": "3_standardized/agriculture_agmip.csv",
+      "local_modified": "2026-01-22T01:47:01.314773",
+      "osf_modified": "2025-10-31T17:04:49.278254"
+    },
+    {
+      "path": "3_standardized/0_readme_v2026-02-13.md",
+      "osf_path": "3_standardized/0_readme_v2026-01-22.md",
+      "normalized_path": "3_standardized/0_readme.md",
+      "local_modified": "2026-02-13T16:36:47.209687",
+      "osf_modified": "2026-02-12T18:34:02.448789"
+    },
+    {
+      "path": "2_aggregated/downwelling_shortwave_radiation/nw_ur_150_07_FSDS_country_mean_v2026-02-12.csv",
+      "osf_path": "2_aggregated/downwelling_shortwave_radiation/nw_ur_150_07_FSDS_country_mean_v2025-12-19.csv",
+      "normalized_path": "2_aggregated/downwelling_shortwave_radiation/nw_ur_150_07_FSDS_country_mean.csv",
+      "local_modified": "2026-02-12T12:25:55.516659",
+      "osf_modified": "2025-12-19T18:20:33.754025"
+    },
+    {
+      "path": "1_model_outputs/temperature_and_precipitation/nw_targets_04.TS_TSMN_TSMX_PRECC_PRECL_v2024-12-12.nc.tar.gz",
+      "osf_path": "1_model_outputs/temperature_and_precipitation/nw_targets_04.TS_TSMN_TSMX_PRECC_PRECL_v2024-12-12.nc.tar.gz",
+      "normalized_path": "1_model_outputs/temperature_and_precipitation/nw_targets_04.TS_TSMN_TSMX_PRECC_PRECL_v2024-12-12.nc.tar.gz",
+      "local_modified": "2026-02-12T20:05:44.192164",
+      "osf_modified": "2024-12-12T15:19:08.413519"
+    },
+    {
+      "path": "3_standardized/sea_ice_v2025-10-31.csv",
+      "osf_path": "3_standardized/sea_ice_v2025-10-31.csv",
+      "normalized_path": "3_standardized/sea_ice.csv",
+      "local_modified": "2026-01-22T01:47:01.790716",
+      "osf_modified": "2025-10-31T17:04:47.596589"
+    },
+    {
+      "path": "2_aggregated/downwelling_shortwave_radiation/nw_targets_04_FSDS_country_mean_min_v2026-02-12.csv",
+      "osf_path": "2_aggregated/downwelling_shortwave_radiation/nw_targets_04_FSDS_country_mean_min_v2025-12-19.csv",
+      "normalized_path": "2_aggregated/downwelling_shortwave_radiation/nw_targets_04_FSDS_country_mean_min.csv",
+      "local_modified": "2026-02-12T12:25:59.445636",
+      "osf_modified": "2025-12-19T18:20:34.806531"
+    },
+    {
+      "path": "2_aggregated/DATASETS_CATALOG.md",
+      "osf_path": "2_aggregated/DATASETS_CATALOG_v2026-02-12.md",
+      "normalized_path": "2_aggregated/DATASETS_CATALOG.md",
+      "local_modified": "2026-02-13T15:16:57.485254",
+      "osf_modified": "2026-02-12T18:19:29.749875"
+    },
+    {
+      "path": "3_standardized/uv_radiation_v2025-10-31.csv",
+      "osf_path": "3_standardized/uv_radiation_v2025-10-31.csv",
+      "normalized_path": "3_standardized/uv_radiation.csv",
+      "local_modified": "2026-01-22T01:47:01.261435",
+      "osf_modified": "2025-10-31T17:05:15.086615"
+    },
+    {
+      "path": "1_model_outputs/temperature_and_precipitation/gadm0_mask_v2024-12-12.nc4",
+      "osf_path": "1_model_outputs/temperature_and_precipitation/gadm0_mask_v2024-12-12.nc4",
+      "normalized_path": "1_model_outputs/temperature_and_precipitation/gadm0_mask.nc4",
+      "local_modified": "2026-02-12T20:05:27.588772",
+      "osf_modified": "2024-12-12T15:18:59.157544"
+    },
+    {
+      "path": "1_model_outputs/temperature_and_precipitation/nw_targets_05.TS_TSMN_TSMX_PRECC_PRECL_v2024-12-12.nc.tar.gz",
+      "osf_path": "1_model_outputs/temperature_and_precipitation/nw_targets_05.TS_TSMN_TSMX_PRECC_PRECL_v2024-12-12.nc.tar.gz",
+      "normalized_path": "1_model_outputs/temperature_and_precipitation/nw_targets_05.TS_TSMN_TSMX_PRECC_PRECL_v2024-12-12.nc.tar.gz",
+      "local_modified": "2026-02-12T20:05:50.419922",
+      "osf_modified": "2024-12-12T15:19:08.316964"
+    },
+    {
+      "path": "3_standardized/precipitation_v2025-10-31.csv",
+      "osf_path": "3_standardized/precipitation_v2025-10-31.csv",
+      "normalized_path": "3_standardized/precipitation.csv",
+      "local_modified": "2026-01-22T01:47:00.551623",
+      "osf_modified": "2025-10-31T17:06:01.541008"
+    }
+  ],
+  "summary": {
+    "new_count": 9,
+    "updated_count": 30,
+    "deleted_count": 26,
+    "unchanged_count": 24,
+    "total_osf": 63,
+    "total_local": 80,
+    "note": "Counts based on normalized paths (version dates stripped)"
+  }
+}

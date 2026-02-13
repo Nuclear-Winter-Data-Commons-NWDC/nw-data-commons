@@ -15,12 +15,13 @@ library(magrittr)
 source("c_scripts/3_standardize/00_utils_core.R")
 
 # Configs & reference tables (ensure these are present in all_data from import script)
+# 3rd-party metadata (countries) loaded by 00_utils_import.R
+# Internal metadata from configs
 configs <- all_data[["0.configs"]]
 months.tb <- configs[["months"]]
-countries.tb <- configs[["countries"]]
 
-# UV aggregated input list (from 01_import_aggregated_data.R)
-uv.ls <- all_data[["3.uv"]]
+# UV aggregated input list (from 00_utils_import.R)
+uv.ls <- all_data[["uv_radiation"]]
 uv.sheet.names <- names(uv.ls)
 
 # Helper to parse scenario strings robustly

@@ -11,12 +11,13 @@ library(magrittr)
 source("c_scripts/3_standardize/00_utils_core.R")
 
 # configs & inputs
+# 3rd-party metadata (ports) loaded by 00_utils_import.R
+# Internal metadata from configs
 configs <- all_data[["0.configs"]]
 months.tb <- configs[["months"]]
-ports.tb <- configs[["ports"]]
 
 # list of sea ice sheets
-sea.ice.ls <- all_data[["6.sea.ice"]]
+sea.ice.ls <- all_data[["sea_ice"]]
 
 # Clean & reshape a single sea ice sheet
 CleanReshape_SeaIce <- function(source_table, source_table_name) {

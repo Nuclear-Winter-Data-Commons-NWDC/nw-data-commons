@@ -9,10 +9,10 @@ library(magrittr)
 
 source("c_scripts/3_standardize/00_utils_core.R")
 
+# 3rd-party metadata (countries) loaded by 00_utils_import.R
 # configs & inputs
 configs <- all_data[["0.configs"]]
-countries.tb <- configs[["countries"]]
-starvation.ls <- all_data[["7.starvation"]]
+starvation.ls <- all_data[["starvation"]]
 
 CleanReshape_Starvation <- function(source_table, source_table_name) {
   # Parse sheet name to extract trade status and livestock type

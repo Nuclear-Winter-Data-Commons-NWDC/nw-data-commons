@@ -105,19 +105,31 @@ if (is.null(source.table.configs.tb)) {
 }
 
 # ---------------------------------------------------------------------------
-# Convenience references
+# Load 3rd-party metadata from CSV files
+# ---------------------------------------------------------------------------
+# 3rd-party metadata is stored separately from internal configs for easier updates
+third_party_dir <- "b_data/osf_data_current/4_3rd_party_metadata"
+
+if (!dir.exists(third_party_dir)) {
+  stop("3rd-party metadata directory not found: ", third_party_dir)
+}
+
+# Load 3rd-party metadata CSVs
+countries.tb <- readr::read_csv(file.path(third_party_dir, "countries.csv"), show_col_types = FALSE)
+fao.crop.indicators.tb <- readr::read_csv(file.path(third_party_dir, "fao_crop_indicators.csv"), show_col_types = FALSE)
+ports.tb <- readr::read_csv(file.path(third_party_dir, "ports.csv"), show_col_types = FALSE)
+
+# ---------------------------------------------------------------------------
+# Convenience references for internal configs
 # ---------------------------------------------------------------------------
 configs <- all_data[["0.configs"]]
 
-# These will be NULL if the corresponding sheet is missing.
+# Internal metadata from configs workbook (project-specific)
 months.tb                <- configs[["months"]]
-countries.tb             <- configs[["countries"]]
 scenarios.tb             <- configs[["scenarios"]]
 variables.tb             <- configs[["variables"]]              # (cleaned just above)
-fao.crop.indicators.tb   <- configs[["fao.crop.indicators"]]
 fish.catch.indicators.tb <- configs[["fish.catch.indicators"]]
 fish.catch.eez.tb        <- configs[["fish.catch.eez"]]
-ports.tb                 <- configs[["ports"]]
 
 # all_data is a nested list: all_data[[filename]][[sheetname]]
 # Each sheet is also available as a tibble in the global environment

@@ -11,13 +11,10 @@ library(magrittr)
 # utils
 source("c_scripts/3_standardize/00_utils_core.R")
 
-# configs & inputs
-configs <- all_data[["0.configs"]]
-countries.tb <- configs[["countries"]]
-fao.crop.indicators.tb <- configs[["fao.crop.indicators"]]
+# 3rd-party metadata (countries, fao.crop.indicators) loaded by 00_utils_import.R
 
 # list of CLM sheets
-agriculture.clm.ls <- all_data[["4b.agriculture.clm"]]
+agriculture.clm.ls <- all_data[["agriculture_clm"]]
 
 # FAO mean yields (small, deterministic helper)
 fao.crop.indicators.clean.tb <-

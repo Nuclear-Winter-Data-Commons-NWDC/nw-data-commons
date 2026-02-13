@@ -29,13 +29,9 @@ library(magrittr)
     tg
   }
 
-  # Reference config tables from all_data[["0.configs"]]
-  configs <- all_data[["0.configs"]]
-  countries.tb <- configs[["countries"]]
-  fao.crop.indicators.tb <- configs[["fao.crop.indicators"]]
-
-  # The agriculture.agmip tables are in all_data[["4a.agriculture.agmip"]]
-  agriculture.agmip.ls <- all_data[["4a.agriculture.agmip"]]
+  # 3rd-party metadata (countries, fao.crop.indicators) loaded by 00_utils_import.R
+  # The agriculture.agmip tables are in all_data[["agriculture_agmip"]]
+  agriculture.agmip.ls <- all_data[["agriculture_agmip"]]
 
   # Clean FAO crop indicators for mean yield
   fao.crop.indicators.clean.tb <-

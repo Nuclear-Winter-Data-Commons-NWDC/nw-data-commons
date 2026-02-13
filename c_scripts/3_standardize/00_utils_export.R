@@ -365,61 +365,35 @@
   }
 
 # -------------------------------------------------------------------------------
-# Write ODS (Open Document Spreadsheet) format
-# Note: R's readODS is extremely slow for large files. Use ssconvert instead.
+# ODS (Open Document Spreadsheet) format - MANUAL CONVERSION REQUIRED
+#
+# Automated ODS conversion is unreliable for large files (>50MB).
+# ssconvert often hangs or fails, and R's readODS is extremely slow.
+#
+# TO CREATE ODS FILE MANUALLY:
+# 1. Open the Excel file in LibreOffice Calc:
+#    File: {xlsx_path}
+# 2. File > Save As > ODS format
+# 3. Save to same directory with matching filename:
+#    File: {ods_filename}
+# 4. Upload the ODS file to OSF /3_standardized/ directory
+#
+# The ODS file should have the same prefix and date as the Excel file.
+# -------------------------------------------------------------------------------
 
-  # Backup and remove existing ODS files before conversion (remove old backups first)
-  ods_pattern <- "^[0-9]_standardized_data_v.*\\.ods$"
-  existing_ods <- list.files(standardized_root, pattern = ods_pattern, full.names = TRUE)
-  if (length(existing_ods) > 0) {
-    # Remove all old ODS backups first
-    old_ods_backups <- list.files(backup_root, pattern = ods_pattern, full.names = TRUE)
-    if (length(old_ods_backups) > 0) {
-      file.remove(old_ods_backups)
-    }
-
-    # Backup current version
-    for (file in existing_ods) {
-      backup_path <- file.path(backup_root, basename(file))
-      file.copy(file, backup_path, overwrite = TRUE)
-      file.remove(file)
-      if (interactive()) {
-        cat("Backed up and removed:", basename(file), "\n")
-      }
-    }
+  if (interactive()) {
+    ods_filename <- sub("\\.xlsx$", ".ods", xlsx_filename)
+    message("\n", strrep("=", 80))
+    message("MANUAL ODS CONVERSION REQUIRED")
+    message(strrep("=", 80))
+    message("\nAutomated ODS conversion is disabled (unreliable for large files).")
+    message("\nTo create ODS file manually:")
+    message("  1. Open Excel file in LibreOffice Calc:")
+    message("     ", xlsx_path)
+    message("  2. File > Save As > ODS format")
+    message("  3. Save as: ", file.path(standardized_root, ods_filename))
+    message("  4. Upload ODS to OSF /3_standardized/")
+    message("\n", strrep("=", 80), "\n")
   }
 
-  # Use same prefix as Excel filename (extract from xlsx_filename)
-  ods_filename <- sub("\\.xlsx$", ".ods", xlsx_filename)
-  ods_path <- file.path(standardized_root, ods_filename)
-
-  # Check if ssconvert (gnumeric) is available - much faster than R
-  ssconvert_available <- system("command -v ssconvert", ignore.stdout = TRUE) == 0
-
-  if (ssconvert_available) {
-    if (interactive()) {
-      message("Converting to ODS using ssconvert (fast)...")
-    }
-    conversion_script <- file.path(getwd(), "c_scripts/convert_to_ods.sh")
-
-    # NOTE: ODS conversion via ssconvert may not work reliably for large files.
-    # If conversion fails or takes >60 seconds, consider manual conversion:
-    # 1. Open 0_standardized_data.xlsx in LibreOffice Calc
-    # 2. Save As -> ODS format
-    # 3. Upload resulting ODS file to OSF /3_standardized/ directory
-    cmd <- paste0(conversion_script, " '", xlsx_path, "' '", ods_path, "'")
-    result <- system(cmd)
-    if (result == 0 && interactive()) {
-      ods_size <- file.info(ods_path)$size / (1024 * 1024)
-      message("Wrote ODS file: ", ods_path, " (", round(ods_size, 1), " MB)")
-    }
-  } else {
-    if (interactive()) {
-      message("Skipping ODS generation (ssconvert not found)")
-      message("To enable fast ODS conversion: sudo apt install gnumeric")
-      message("Or convert manually: ./convert_to_ods.sh ", xlsx_path)
-    }
-    ods_path <- NULL
-  }
-
-  invisible(list(dir = standardized_root, xlsx = xlsx_path, ods = ods_path, csvs = csv_paths))
+  invisible(list(dir = standardized_root, xlsx = xlsx_path, csvs = csv_paths))

@@ -9,16 +9,18 @@ library(magrittr)
 
 # Import utility functions (including FlagOutliers_IQR)
 source("c_scripts/3_standardize/00_utils_core.R")
+source("c_scripts/3_standardize/00_utils_validate.R")
 
 # Reference config tables from all_data[["0.configs"]]
+# 3rd-party metadata (countries) loaded by 00_utils_import.R
+# Internal metadata from configs
 configs <- all_data[["0.configs"]]
 months.tb <- configs[["months"]]
-countries.tb <- configs[["countries"]]
 
 # source.table.configs.tb is loaded by 00_utils_import.R
 
-# The precipitation tables are in all_data[["2.precipitation"]]
-precipitation.ls <- all_data[["2.precipitation"]]
+# The precipitation tables are in all_data[["precipitation"]]
+precipitation.ls <- all_data[["precipitation"]]
 precipitation.sheet.names <- names(precipitation.ls)
 
 CleanReshape_Precip <- function(source_table, source_table_name) {

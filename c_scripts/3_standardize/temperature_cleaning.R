@@ -10,10 +10,11 @@ library(magrittr)
 
 # Import utility functions (including FlagOutliers_IQR)
 source("c_scripts/3_standardize/00_utils_core.R")
+source("c_scripts/3_standardize/00_utils_validate.R")
 
-# Use the imported list from 01_import_aggregated_data.R
-# The temperature tables are in all_data[["1.temperature"]]
-temperature.ls <- all_data[["1.temperature"]]
+# Use the imported list from 00_utils_import.R
+# The temperature tables are in all_data[["temperature"]]
+temperature.ls <- all_data[["temperature"]]
 temperature.sheet.names <- names(temperature.ls)
 
 CleanReshape_Temp <- function(source_table, source_table_name) {

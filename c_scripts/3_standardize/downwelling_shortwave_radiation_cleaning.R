@@ -96,8 +96,10 @@ downwelling.shortwave.radiation.clean.tb <-
   do.call(rbind, .) %>%
   pivot_wider(
     names_from = indicator,
-    values_from = value
+    values_from = value,
+    values_fn = list
   ) %>%
+  mutate(across(where(is.list), ~ map_dbl(., ~if(is.null(.x) || length(.x) == 0) NA_real_ else as.numeric(.x[[1]])))) %>%
   left_join( # add months metadata (seasons in n & s hemisphere)
     .,
     months.tb,
