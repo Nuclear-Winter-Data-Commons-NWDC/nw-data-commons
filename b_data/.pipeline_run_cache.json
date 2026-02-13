@@ -1,0 +1,14 @@
+{
+  "last_run_time": "2026-02-13T13:20:59.058992",
+  "selected_datasets": [
+    "agriculture_agmip",
+    "agriculture_clm",
+    "downwelling_shortwave_radiation",
+    "fish_catch",
+    "precipitation",
+    "sea_ice",
+    "starvation",
+    "temperature",
+    "uv_radiation"
+  ]
+}

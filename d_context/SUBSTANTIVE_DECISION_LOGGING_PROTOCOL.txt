@@ -1,0 +1,872 @@
+================================================================================
+SUBSTANTIVE DECISION LOGGING PROTOCOL
+Universal Protocol for Transparent Methodological Documentation
+================================================================================
+
+VERSION: 1.0
+CREATED: 2026-02-13
+PURPOSE: Enable rigorous, transparent, and reproducible tracking of substantive
+         methodological decisions in any coding project or research workflow.
+
+This protocol can be integrated into any repository by copying this file and
+the accompanying Python utility (protocol_logger.py) into your project.
+
+================================================================================
+OVERVIEW
+================================================================================
+
+This protocol provides a systematic approach to logging SUBSTANTIVE decisions—
+those methodological choices that affect reproducibility, transparency, or the
+interpretation of your project's results.
+
+KEY PRINCIPLES:
+1. Substantive decisions must be logged prospectively (when made, not retroactively)
+2. Each decision includes: trigger, evidence, options considered, decision, rationale
+3. Decisions are versioned using semantic versioning (major.minor)
+4. All decisions are stored in structured JSON format for programmatic access
+5. Protocol creates its own isolated directory structure within your repository
+
+BENEFITS:
+- Complete audit trail of methodological evolution
+- Justification for all substantive choices
+- Support for PRISMA-S, CONSORT, or other reporting guidelines
+- Reproducibility and transparency for peer review
+- Institutional memory across team members and LLM instances
+
+================================================================================
+WHAT CONSTITUTES A "SUBSTANTIVE" DECISION?
+================================================================================
+
+Log decisions that affect:
+✓ Methodology (algorithms, statistical methods, data collection procedures)
+✓ Data quality (cleaning rules, deduplication, validation criteria)
+✓ Scope (inclusion/exclusion criteria, threshold selection)
+✓ Infrastructure (database changes, file organization, schema design)
+✓ Analysis approach (metric selection, filtering logic, aggregation methods)
+
+DO NOT log:
+✗ Routine bug fixes without methodological impact
+✗ Code refactoring that doesn't change logic
+✗ UI/formatting changes
+✗ Documentation updates (unless protocol documentation)
+✗ Dependency version bumps (unless they change behavior)
+
+RULE OF THUMB: If a peer reviewer or future researcher would ask "why did you
+do it this way?", log it as a substantive decision.
+
+================================================================================
+DIRECTORY STRUCTURE
+================================================================================
+
+The protocol creates an isolated directory structure in your repository:
+
+your_repo/
+├── protocol/                          # Protocol directory (create this)
+│   ├── decision_log.json              # All decisions (auto-generated)
+│   ├── CHANGELOG.md                   # Human-readable changelog (auto-updated)
+│   ├── DEC-001_title.md               # Individual decision docs (optional)
+│   ├── DEC-002_title.md
+│   ├── versions/                      # Archived protocol versions (optional)
+│   │   ├── protocol_v1.0.md
+│   │   └── protocol_v1.1.md
+│   └── protocol.md                    # Your main protocol document (optional)
+│
+├── utils/                             # Utilities directory
+│   └── protocol_logger.py             # Decision logging utility (required)
+│
+└── [your other project directories]
+
+SETUP:
+1. Create protocol/ directory: mkdir -p protocol/versions
+2. Copy protocol_logger.py to utils/protocol_logger.py
+3. Create protocol/CHANGELOG.md (template provided below)
+4. Start logging decisions
+
+================================================================================
+DECISION LOG STRUCTURE (JSON)
+================================================================================
+
+The decision_log.json file has this structure:
+
+{
+  "metadata": {
+    "project": "Your Project Name",
+    "protocol_baseline_version": "1.0",
+    "protocol_current_version": "1.3",
+    "created": "2026-01-01T00:00:00Z",
+    "last_updated": "2026-02-13T12:00:00Z",
+    "total_decisions": 5
+  },
+  "decisions": [
+    {
+      "id": "DEC-001",
+      "timestamp": "2026-01-15T14:30:00Z",
+      "stage": "Data Collection",
+      "trigger": {
+        "description": "Brief description of what prompted this decision",
+        "evidence": {
+          "metric_1": 123,
+          "metric_2": "qualitative observation",
+          "finding": "specific problem or opportunity"
+        }
+      },
+      "options_considered": [
+        {"option": "Option A: Description of first approach"},
+        {"option": "Option B: Description of second approach"},
+        {"option": "Option C: Description of third approach"}
+      ],
+      "decision": "Option B - Short name of chosen approach",
+      "rationale": "Detailed explanation of WHY this option was selected, addressing benefits and trade-offs",
+      "protocol_impact": {
+        "sections_modified": ["Section 3.2: Data Validation"],
+        "version_change": "1.0 → 1.1",
+        "methodology_change": "Brief summary of what changed"
+      },
+      "implementation": {
+        "scripts_created": ["scripts/validate_data.py"],
+        "dependencies_added": ["pandas>=2.0"],
+        "configuration_changes": ["Added validation_rules.yaml"],
+        "database_changes": ["Added validated_flag column to main table"],
+        "testing_required": ["Unit tests for validation rules"]
+      }
+    }
+  ]
+}
+
+================================================================================
+HOW TO LOG A DECISION (STEP-BY-STEP)
+================================================================================
+
+STEP 1: Recognize a substantive decision point
+- You encounter a methodological fork in the road
+- Multiple reasonable approaches exist
+- The choice will affect reproducibility or interpretation
+
+STEP 2: Document the decision context
+- What triggered this decision? (problem, finding, observation)
+- What evidence supports the need for a decision?
+- What are the quantitative metrics or qualitative observations?
+
+STEP 3: Enumerate options
+- List 2-5 reasonable options (don't cherry-pick)
+- For each option, note pros/cons if helpful
+- Include "do nothing" as an option if applicable
+
+STEP 4: Make the decision
+- Select one option based on evidence and project goals
+- Document WHY this option is superior (rationale)
+- Address trade-offs explicitly
+
+STEP 5: Log using protocol_logger.py
+- Use the Python function (see code examples below)
+- Specify protocol sections affected
+- Document implementation details
+- Specify version increment type (major or minor)
+
+STEP 6: Verify logging
+- Check protocol/decision_log.json updated
+- Check protocol/CHANGELOG.md updated (if using)
+- Verify version number incremented correctly
+
+================================================================================
+PYTHON CODE EXAMPLES
+================================================================================
+
+--------------------------------------------------
+EXAMPLE 1: Basic Decision Logging
+--------------------------------------------------
+
+from utils.protocol_logger import log_decision
+
+decision_id = log_decision(
+    stage="Data Cleaning",
+    trigger="Discovered 15% of records have duplicate IDs but different content",
+    evidence={
+        "total_records": 10000,
+        "duplicates_found": 1500,
+        "duplicate_percentage": 15.0,
+        "duplicate_types": "Same ID, different timestamp/content"
+    },
+    options=[
+        "Option A: Keep first occurrence only (chronologically)",
+        "Option B: Keep last occurrence only (most recent)",
+        "Option C: Merge duplicates using conflict resolution rules",
+        "Option D: Flag as errors and exclude from analysis"
+    ],
+    decision="Option C - Merge duplicates with conflict resolution",
+    rationale="Duplicates represent legitimate updates to records. Merging preserves all information while maintaining data integrity. Conflict resolution rules: (1) Keep most recent timestamp, (2) Merge non-conflicting fields, (3) Flag conflicts for manual review if critical fields differ.",
+    protocol_sections=["Section 2.3: Deduplication"],
+    implementation={
+        "scripts_created": ["scripts/deduplicate.py", "scripts/merge_rules.py"],
+        "dependencies_added": ["recordlinkage>=0.15"],
+        "configuration_files": ["config/merge_rules.yaml"],
+        "manual_review_threshold": "Flag if >5 conflicts per record"
+    },
+    change_type="minor"  # "major" or "minor"
+)
+
+print(f"Logged as {decision_id}")  # Output: Logged as DEC-001
+
+--------------------------------------------------
+EXAMPLE 2: Logging with More Complex Evidence
+--------------------------------------------------
+
+from utils.protocol_logger import log_decision
+
+decision_id = log_decision(
+    stage="Feature Engineering",
+    trigger="Initial model performance poor (AUC=0.62). Need to transform skewed features.",
+    evidence={
+        "baseline_auc": 0.62,
+        "target_auc": 0.80,
+        "skewed_features": ["income", "age", "transaction_amount"],
+        "skewness_values": {"income": 3.2, "age": 0.8, "transaction_amount": 4.5},
+        "normality_tests": "Shapiro-Wilk p < 0.001 for income and transaction_amount"
+    },
+    options=[
+        "Option A: Log transformation for all skewed features",
+        "Option B: Box-Cox transformation (requires positive values)",
+        "Option C: Quantile transformation (uniform distribution)",
+        "Option D: Z-score normalization only (doesn't address skew)"
+    ],
+    decision="Option B - Box-Cox transformation for income and transaction_amount, no transformation for age",
+    rationale="Box-Cox provides optimal normalization while preserving interpretability. Income and transaction_amount have extreme skew (>3) requiring transformation. Age skew (0.8) is acceptable. Box-Cox parameter λ will be learned from training data and applied to test data. All values are positive, satisfying Box-Cox requirements.",
+    protocol_sections=["Section 4.2: Feature Transformations", "Section 5.1: Model Training"],
+    implementation={
+        "scripts_modified": ["scripts/preprocess.py"],
+        "dependencies_added": ["scipy>=1.9"],
+        "parameters_learned": ["lambda_income", "lambda_transaction_amount"],
+        "validation": "Cross-validation AUC improved to 0.78 (from 0.62)",
+        "saved_artifacts": ["models/boxcox_params.pkl"]
+    },
+    change_type="minor"
+)
+
+--------------------------------------------------
+EXAMPLE 3: Major Protocol Change
+--------------------------------------------------
+
+from utils.protocol_logger import log_decision
+
+decision_id = log_decision(
+    stage="Data Sources",
+    trigger="Primary API (ServiceA) deprecated. Must switch to alternative data source.",
+    evidence={
+        "deprecation_date": "2026-06-01",
+        "current_data_source": "ServiceA API v2",
+        "records_retrieved_to_date": 50000,
+        "alternative_sources_evaluated": ["ServiceB", "ServiceC", "Web scraping"],
+        "coverage_comparison": {
+            "ServiceA": "100% (baseline)",
+            "ServiceB": "95% overlap",
+            "ServiceC": "78% overlap"
+        }
+    },
+    options=[
+        "Option A: Switch to ServiceB API (95% coverage, similar format)",
+        "Option B: Switch to ServiceC API (78% coverage, requires reformatting)",
+        "Option C: Build web scraper for primary source (100% coverage, fragile)",
+        "Option D: Use multi-source strategy (ServiceB + ServiceC for gaps)"
+    ],
+    decision="Option A - Switch to ServiceB API as primary source",
+    rationale="ServiceB provides best balance of coverage (95%), API stability, and data format similarity. Missing 5% are primarily edge cases (pre-2010 records) that can be manually retrieved if needed. Multi-source strategy (Option D) adds complexity without sufficient benefit. Web scraping (Option C) is fragile and violates terms of service.",
+    protocol_sections=[
+        "Section 1.2: Data Sources",
+        "Section 2.1: Data Retrieval",
+        "Section 7: Limitations"
+    ],
+    implementation={
+        "scripts_created": ["scripts/retrieve_serviceb.py"],
+        "scripts_deprecated": ["scripts/retrieve_servicea.py"],
+        "dependencies_added": ["serviceb-client>=3.0"],
+        "dependencies_removed": ["servicea-sdk"],
+        "configuration_changes": ["Update config/api_keys.yaml with ServiceB credentials"],
+        "data_migration": "Re-retrieve all records from ServiceB for consistency",
+        "validation": "Compare 1000-record sample from ServiceA vs ServiceB for equivalence",
+        "limitations_added": "5% of pre-2010 records not available in ServiceB"
+    },
+    change_type="major"  # This is a fundamental change
+)
+
+================================================================================
+WHEN TO USE change_type="major" vs change_type="minor"
+================================================================================
+
+MAJOR VERSION INCREMENT (1.X → 2.0):
+- Changing primary data sources
+- Fundamental algorithm changes (e.g., switching from regression to neural network)
+- Complete workflow redesign
+- Breaking changes to data schema
+- Changes that make previous results non-comparable
+
+MINOR VERSION INCREMENT (1.2 → 1.3):
+- Adding new features or variables
+- Improving existing algorithms without changing core approach
+- Refining thresholds or parameters
+- Adding validation steps
+- Expanding scope incrementally
+
+RULE: If someone using version 1.2 of your methodology would get substantially
+different results with version 2.0, it's a MAJOR change. If results are
+comparable but refined, it's a MINOR change.
+
+================================================================================
+CHANGELOG.md TEMPLATE
+================================================================================
+
+Copy this template to protocol/CHANGELOG.md:
+
+---BEGIN TEMPLATE---
+# Protocol Changelog
+
+All substantive changes to this project's methodology are documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+---
+
+## [Unreleased]
+
+---
+
+## [1.0] - 2026-01-01
+
+### Added
+- Initial protocol established
+- Core methodology defined
+
+---
+
+## Version Number Scheme
+
+**Major version (X.0):** Fundamental methodological changes (e.g., changing data sources, complete algorithm overhaul)
+
+**Minor version (1.X):** Substantive but incremental changes (e.g., adding features, refining parameters, improving validation)
+
+---
+
+## Change Categories
+
+- **Added:** New sections, methods, or procedures
+- **Changed:** Modifications to existing methods
+- **Deprecated:** Methods marked for future removal
+- **Removed:** Deleted sections or methods
+- **Fixed:** Corrections to errors in the protocol
+
+---
+
+## Decision Log Reference
+
+For detailed rationale and evidence supporting each change, see `decision_log.json`.
+
+---
+
+**Note:** This changelog is automatically updated by `utils/protocol_logger.py`.
+---END TEMPLATE---
+
+================================================================================
+WORKED EXAMPLE: Complete Decision Flow
+================================================================================
+
+SCENARIO: You're building a document classifier and discover that 30% of your
+training documents have missing labels.
+
+STEP 1: Recognize the decision point
+"I need to decide how to handle missing labels - this affects model training
+and reproducibility."
+
+STEP 2: Gather evidence
+- Total documents: 10,000
+- Missing labels: 3,000 (30%)
+- Label distribution in labeled data: Class A (40%), Class B (35%), Class C (25%)
+- Document quality: Missing-label documents appear valid (not corrupted)
+
+STEP 3: Enumerate options
+A. Exclude missing-label documents (reduce to 7,000 documents)
+B. Impute labels using semi-supervised learning
+C. Create "Unknown" class for missing labels
+D. Manual labeling of all 3,000 documents
+
+STEP 4: Make decision
+Selected Option B with constraints.
+
+STEP 5: Log the decision
+
+```python
+from utils.protocol_logger import log_decision
+
+decision_id = log_decision(
+    stage="Training Data Preparation",
+    trigger="Discovered 30% of training documents lack ground-truth labels",
+    evidence={
+        "total_documents": 10000,
+        "missing_labels": 3000,
+        "missing_percentage": 30.0,
+        "labeled_distribution": {"Class A": 0.40, "Class B": 0.35, "Class C": 0.25},
+        "data_quality": "Missing-label documents appear valid (not corrupted)",
+        "manual_inspection": "Sample of 100 missing-label docs reviewed - all legitimate documents"
+    },
+    options=[
+        "Option A: Exclude missing-label documents (train on 7,000 only)",
+        "Option B: Semi-supervised learning - train initial model on labeled data, pseudo-label high-confidence predictions for missing data, retrain",
+        "Option C: Create fourth 'Unknown' class for missing labels",
+        "Option D: Manual labeling of all 3,000 documents"
+    ],
+    decision="Option B - Semi-supervised learning with confidence threshold",
+    rationale="Excluding 30% of data (Option A) wastes valuable training data and may introduce bias if missing labels are non-random. Manual labeling (Option D) is resource-prohibitive (estimated 150 hours). 'Unknown' class (Option C) doesn't align with deployment use case. Semi-supervised approach leverages unlabeled data while maintaining quality control via confidence threshold (≥0.90 for pseudo-labeling). Conservative threshold minimizes label noise.",
+    protocol_sections=[
+        "Section 3: Training Data Preparation",
+        "Section 4: Model Training Procedure"
+    ],
+    implementation={
+        "scripts_created": [
+            "scripts/semi_supervised_labeling.py",
+            "scripts/evaluate_pseudo_labels.py"
+        ],
+        "procedure": [
+            "1. Train initial classifier on 7,000 labeled documents",
+            "2. Generate predictions for 3,000 unlabeled documents",
+            "3. Pseudo-label documents with prediction confidence ≥0.90",
+            "4. Retrain classifier on labeled + pseudo-labeled data",
+            "5. Repeat for max 3 iterations or until convergence"
+        ],
+        "parameters": {
+            "confidence_threshold": 0.90,
+            "max_iterations": 3,
+            "convergence_criterion": "Accuracy change <0.5% between iterations"
+        },
+        "validation": [
+            "Manual review of 100 pseudo-labeled documents",
+            "Track pseudo-label accuracy across iterations",
+            "Compare final model to baseline (7K only) on held-out test set"
+        ],
+        "results": "Pseudo-labeling added 1,847 high-confidence labels (61.6% of missing). Final model accuracy: 0.87 vs 0.82 baseline."
+    },
+    change_type="minor"
+)
+```
+
+STEP 6: Verify
+- Check protocol/decision_log.json contains DEC-001
+- Check protocol/CHANGELOG.md updated
+- Version incremented: 1.0 → 1.1
+
+================================================================================
+INTEGRATION WITH LLM ASSISTANTS
+================================================================================
+
+PROVIDING CONTEXT TO LLMs:
+When working with LLM assistants (like Claude Code), provide this context:
+
+1. "This project uses substantive decision logging. See protocol/SUBSTANTIVE_DECISION_LOGGING_PROTOCOL.txt"
+
+2. "When we make methodological changes, use utils/protocol_logger.py to log decisions"
+
+3. Provide decision_log.json contents for full project history
+
+PROMPTING LLMs TO LOG DECISIONS:
+"We just decided to [X]. Please log this as a substantive decision using the
+protocol_logger. The trigger is [Y], we considered options [A, B, C], and we
+chose [B] because [rationale]."
+
+LLM BEST PRACTICES:
+- LLM should proactively identify decision points during development
+- LLM should enumerate options before implementation
+- LLM should prompt user for rationale if not obvious
+- LLM should verify decision logged successfully
+
+================================================================================
+PROTOCOL_LOGGER.PY INSTALLATION
+================================================================================
+
+REQUIREMENT: Copy the Python utility to your repository.
+
+LOCATION: utils/protocol_logger.py
+
+The protocol_logger.py file contains a ProtocolLogger class and convenience
+function log_decision(). It handles:
+- JSON file management (decision_log.json)
+- Automatic version incrementing
+- Decision ID generation (DEC-001, DEC-002, ...)
+- Timestamp management (ISO 8601 format with UTC timezone)
+- CHANGELOG.md updates (if file exists)
+- Protocol version archiving (optional)
+
+MINIMAL INSTALLATION:
+1. Create utils/ directory: mkdir -p utils
+2. Copy protocol_logger.py to utils/protocol_logger.py
+3. Create empty __init__.py: touch utils/__init__.py
+4. Create protocol/ directory: mkdir -p protocol/versions
+5. Create CHANGELOG.md: copy template above to protocol/CHANGELOG.md
+
+DEPENDENCIES:
+- Python 3.7+
+- Standard library only (json, pathlib, datetime, shutil, typing)
+
+VERIFY INSTALLATION:
+```python
+from utils.protocol_logger import log_decision
+print("Protocol logger installed successfully")
+```
+
+================================================================================
+COMMON PATTERNS AND ANTI-PATTERNS
+================================================================================
+
+PATTERN: "Options Exhausted, Need New Approach"
+Trigger: "Initial approach [X] failed after [Y] attempts. Need alternative."
+Evidence: Specific metrics showing failure, attempts made
+Options: List alternative approaches (not just variations of failed approach)
+Decision: Select fundamentally different approach
+Rationale: Why initial approach failed, why new approach addresses root cause
+
+PATTERN: "Threshold Selection"
+Trigger: "Need to determine threshold for [metric] to balance [tradeoff]"
+Evidence: Threshold sensitivity analysis (performance at multiple values)
+Options: Candidate thresholds with pros/cons
+Decision: Selected threshold with clear justification
+Rationale: How threshold balances competing objectives
+
+PATTERN: "Unexpected Data Quality Issue"
+Trigger: "Discovered [X%] of data has [quality issue]"
+Evidence: Quantitative scope of issue, examples, impact on downstream analysis
+Options: Handling strategies (exclude, impute, flag, manual correction)
+Decision: Selected strategy
+Rationale: Balance of data retention, quality, and resource constraints
+
+ANTI-PATTERN: Retroactive Logging
+❌ "We made several changes last week, let me log them now"
+✓ Log decisions when made, while context is fresh
+
+ANTI-PATTERN: Vague Triggers
+❌ "Data quality issues"
+✓ "15% of records have timestamps in the future (>current date)"
+
+ANTI-PATTERN: Single Option
+❌ "We decided to use approach X" (only option listed)
+✓ List at least 2-3 reasonable alternatives
+
+ANTI-PATTERN: Missing Rationale
+❌ "We chose Option B" (no explanation)
+✓ Explain trade-offs, benefits, and why other options were inferior
+
+ANTI-PATTERN: Implementation-only
+❌ Logging just lists code changes without methodological context
+✓ Focus on WHAT changed and WHY, implementation is secondary
+
+================================================================================
+DECISION LOG QUERYING (OPTIONAL)
+================================================================================
+
+The decision_log.json file is structured JSON, enabling programmatic queries:
+
+```python
+import json
+from pathlib import Path
+
+# Load decision log
+log_path = Path("protocol/decision_log.json")
+with open(log_path) as f:
+    log = json.load(f)
+
+# Query examples
+print(f"Total decisions: {log['metadata']['total_decisions']}")
+print(f"Current version: {log['metadata']['protocol_current_version']}")
+
+# Find decisions by stage
+data_cleaning_decisions = [
+    d for d in log['decisions']
+    if 'Data Cleaning' in d['stage']
+]
+
+# Find recent decisions
+from datetime import datetime, timedelta
+recent = datetime.now() - timedelta(days=30)
+recent_decisions = [
+    d for d in log['decisions']
+    if datetime.fromisoformat(d['timestamp'].replace('Z', '+00:00')) > recent
+]
+
+# Find decisions affecting specific protocol section
+section_decisions = [
+    d for d in log['decisions']
+    if 'Section 3' in str(d['protocol_impact']['sections_modified'])
+]
+```
+
+================================================================================
+MULTI-PERSON TEAM USAGE
+================================================================================
+
+DECISION AUTHORITY:
+Establish clear rules for who can log decisions:
+- Option A: Any team member can log decisions (review in PR)
+- Option B: Only project lead logs decisions
+- Option C: Decisions require team consensus before logging
+
+MERGE CONFLICTS:
+If two people log decisions simultaneously:
+1. Manual merge required in decision_log.json
+2. Person with lower decision ID wins (DEC-005 vs DEC-006)
+3. Re-number second person's decision and increment version accordingly
+4. Document merge in commit message
+
+GIT WORKFLOW:
+1. Create feature branch for work requiring decision
+2. Log decision in feature branch
+3. Submit PR including decision_log.json changes
+4. Review focuses on decision rationale
+5. Merge to main updates protocol version
+
+BEST PRACTICE: Include decision ID in commit messages
+Example: "Implement semi-supervised labeling (DEC-003)"
+
+================================================================================
+REPORTING AND AUDITING
+================================================================================
+
+PRISMA-S COMPLIANCE:
+For systematic reviews, decision log provides complete audit trail:
+- Search strategy evolution (all query refinements)
+- Inclusion/exclusion criteria changes
+- Data extraction modifications
+- Risk of bias assessment updates
+
+REGULATORY COMPLIANCE:
+For regulated domains (medical, financial):
+- Decision log demonstrates due diligence
+- Rationale for all methodological choices documented
+- Complete version history for audit trail
+
+PEER REVIEW:
+Reviewers can:
+- Understand methodological evolution
+- Verify decisions were evidence-based
+- Assess whether alternative approaches were considered
+- Request additional justification for specific decisions
+
+REPRODUCIBILITY:
+Other researchers can:
+- Replicate decision-making process
+- Understand trade-offs and constraints
+- Adapt methodology to their context
+- Identify decision points for sensitivity analysis
+
+================================================================================
+ADVANCED USAGE: INDIVIDUAL DECISION DOCUMENTS
+================================================================================
+
+For complex decisions, create individual Markdown files:
+
+protocol/DEC-001_semi_supervised_labeling.md:
+
+```markdown
+# DEC-001: Semi-Supervised Labeling for Missing Training Labels
+
+**ID:** DEC-001
+**Timestamp:** 2026-01-15T14:30:00Z
+**Stage:** Training Data Preparation
+**Protocol Version Change:** 1.0 → 1.1
+
+## Trigger
+[Full narrative description]
+
+## Evidence
+[Detailed analysis, figures, tables]
+
+## Options Considered
+[In-depth comparison with literature review]
+
+## Decision
+[Selected option]
+
+## Rationale
+[Extended justification with citations]
+
+## Implementation
+[Complete implementation details]
+
+## Validation Results
+[Empirical results demonstrating decision was sound]
+
+## Lessons Learned
+[Reflections for future similar decisions]
+```
+
+Link from decision_log.json:
+```json
+"implementation": {
+  "detailed_documentation": "protocol/DEC-001_semi_supervised_labeling.md"
+}
+```
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+ISSUE: "Version numbers out of sync"
+SOLUTION: Manually edit decision_log.json metadata.protocol_current_version
+
+ISSUE: "Decision ID collision (two DEC-005s)"
+SOLUTION: Manually renumber later decision, update references
+
+ISSUE: "CHANGELOG.md not updating"
+SOLUTION: Verify file exists at protocol/CHANGELOG.md with [Unreleased] section
+
+ISSUE: "Want to undo a logged decision"
+SOLUTION: DO NOT delete. Instead, log a new decision reverting the change:
+  - Trigger: "DEC-003 proved infeasible due to [reason]"
+  - Decision: "Revert to previous approach from v1.2"
+  - This preserves complete history
+
+ISSUE: "Need to log decision after the fact"
+SOLUTION: Log with honest trigger:
+  - "During implementation, realized [issue] not addressed in planning"
+  - Include timestamp when decision was actually made (not logged)
+  - Note in rationale: "Logged retroactively on [date]"
+
+================================================================================
+MINIMAL VIABLE IMPLEMENTATION
+================================================================================
+
+If you want the absolute minimum to start:
+
+1. Create protocol/decision_log.json manually:
+```json
+{
+  "metadata": {
+    "project": "Your Project Name",
+    "protocol_baseline_version": "1.0",
+    "protocol_current_version": "1.0",
+    "created": "2026-02-13T00:00:00Z",
+    "last_updated": "2026-02-13T00:00:00Z",
+    "total_decisions": 0
+  },
+  "decisions": []
+}
+```
+
+2. Create utils/protocol_logger.py (copy from source)
+
+3. Log first decision:
+```python
+from utils.protocol_logger import log_decision
+
+log_decision(
+    stage="Project Initialization",
+    trigger="Establishing decision logging protocol",
+    evidence={"rationale": "Enable transparent methodology tracking"},
+    options=["Option A: No formal logging", "Option B: Implement decision log"],
+    decision="Option B - Implement substantive decision logging protocol",
+    rationale="Transparency, reproducibility, and audit trail for all methodological choices",
+    protocol_sections=["Project Documentation"],
+    implementation={"files_created": ["protocol/decision_log.json"]},
+    change_type="minor"
+)
+```
+
+4. Expand from there as needed.
+
+================================================================================
+FREQUENTLY ASKED QUESTIONS
+================================================================================
+
+Q: How detailed should the "evidence" section be?
+A: Include enough quantitative data for someone to verify the decision was
+   reasonable. Metrics, counts, percentages, specific examples. Avoid vague
+   statements.
+
+Q: What if we're exploring and don't know the options yet?
+A: Log the decision AFTER exploration, when you have clarity. Document what
+   you explored in the "evidence" section.
+
+Q: Do we log decisions during prototyping?
+A: Only if the prototype findings inform a substantive decision. Prototype
+   iterations themselves don't need logging.
+
+Q: How do we handle gradual drift (many small changes)?
+A: When accumulated small changes cross a substantive threshold, log a
+   decision documenting the evolution. Example: "After 10 minor adjustments,
+   threshold changed from X to Y. Logging as substantive decision."
+
+Q: Can we modify a logged decision?
+A: The decision_log.json is append-only. To modify, log a new decision that
+   supersedes or refines the previous one. Reference prior decision by ID.
+
+Q: What if we disagree about whether something is substantive?
+A: Err on the side of logging. Better to have too much documentation than
+   too little. Low-impact decisions can be noted as such in rationale.
+
+================================================================================
+COMPLETE PROTOCOL_LOGGER.PY REFERENCE
+================================================================================
+
+FUNCTION SIGNATURE:
+```python
+log_decision(
+    stage: str,                           # Required
+    trigger: str,                         # Required
+    evidence: Dict[str, Any],             # Required
+    options: List[str],                   # Required
+    decision: str,                        # Required
+    rationale: str,                       # Required
+    protocol_sections: List[str],         # Required
+    implementation: Dict[str, Any] = None, # Optional
+    change_type: str = "minor"            # Optional: "major" or "minor"
+) -> str  # Returns decision ID (e.g., "DEC-001")
+```
+
+PARAMETERS:
+- stage: Which phase/stage of project (e.g., "Data Collection", "Analysis")
+- trigger: What prompted this decision (problem, finding, observation)
+- evidence: Dictionary with metrics, observations, quantitative data
+- options: List of strings describing each option considered
+- decision: The chosen option (short description)
+- rationale: WHY this option was selected (detailed justification)
+- protocol_sections: Which methodology sections are affected
+- implementation: Dict with scripts, dependencies, parameters, etc.
+- change_type: "major" for fundamental changes, "minor" for incremental
+
+RETURNS:
+- Decision ID string (e.g., "DEC-001")
+
+SIDE EFFECTS:
+- Updates protocol/decision_log.json
+- Updates protocol/CHANGELOG.md (if exists)
+- Increments protocol version number
+- Prints confirmation message
+
+================================================================================
+FINAL CHECKLIST: STARTING WITH THIS PROTOCOL
+================================================================================
+
+[ ] Created protocol/ directory
+[ ] Created protocol/versions/ subdirectory
+[ ] Copied protocol_logger.py to utils/protocol_logger.py
+[ ] Created protocol/CHANGELOG.md from template
+[ ] Initialized decision_log.json (manually or via first decision)
+[ ] Tested logging a decision
+[ ] Verified decision_log.json updated correctly
+[ ] Verified CHANGELOG.md updated (if using)
+[ ] Committed protocol infrastructure to version control
+[ ] Documented protocol usage in project README
+[ ] Briefed team members on protocol (if team project)
+[ ] Configured LLM assistant to use protocol (if applicable)
+
+================================================================================
+END OF PROTOCOL
+================================================================================
+
+This protocol is self-contained and can be integrated into any project
+requiring transparent methodological documentation.
+
+For questions or issues, refer to the decision_log.json in the source
+repository where this protocol was developed:
+  https://github.com/[your-username]/[repo-name]/protocol/decision_log.json
+
+Version: 1.0
+Last Updated: 2026-02-13
+License: CC0 1.0 Universal (Public Domain)
+
+================================================================================

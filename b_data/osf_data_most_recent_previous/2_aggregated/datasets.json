@@ -207,8 +207,8 @@
       "notes": "Food security model projecting population unable to meet minimum dietary needs under various trade and adaptation scenarios."
     },
     {
-      "id": "downwelling_solar_flux",
-      "display_name": "Downwelling Solar Flux at Surface",
+      "id": "downwelling_shortwave_radiation",
+      "display_name": "Downwelling Shortwave Radiation at Surface",
       "aspect": "physical_climate",
       "sub_aspect": "solar_radiation",
       "model": "CESM",
@@ -223,11 +223,11 @@
       "format": "csv_multi",
       "scenarios": ["5Tg", "16Tg", "27Tg", "47Tg", "150Tg", "control"],
       "date_added": "2026-02-12",
-      "local_path": "b_data/3_aggregated/downwelling_solar_flux/",
-      "osf_path": "/3_aggregated/downwelling_solar_flux/",
+      "local_path": "b_data/3_aggregated/downwelling_shortwave_radiation/",
+      "osf_path": "/3_aggregated/downwelling_shortwave_radiation/",
       "status": "pending",
       "supersedes": null,
-      "notes": "Downwelling solar flux at surface (FSDS). Multiple CSV files with mean, min, max, stdev by scenario."
+      "notes": "Downwelling shortwave radiation at surface (FSDS). Multiple CSV files with mean, min, max, stdev by scenario."
     }
   ],
   "aspects": {

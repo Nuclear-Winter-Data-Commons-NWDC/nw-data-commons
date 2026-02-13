@@ -1,0 +1,15 @@
+{
+  "generated_at": "2026-02-13T13:20:59.058749",
+  "datasets_selected": [
+    "agriculture_agmip",
+    "agriculture_clm",
+    "downwelling_shortwave_radiation",
+    "fish_catch",
+    "precipitation",
+    "sea_ice",
+    "starvation",
+    "temperature",
+    "uv_radiation"
+  ],
+  "dataset_count": 9
+}

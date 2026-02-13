@@ -79,8 +79,8 @@ This catalog describes all available aggregated datasets in the Nuclear Winter D
 - **Status:** ✅ Active
 - **Notes:** Used for assessing maritime trade route impacts
 
-### Downwelling Solar Flux at Surface
-- **ID:** `downwelling_solar_flux_cesm_harrison`
+### Downwelling Shortwave Radiation at Surface
+- **ID:** `downwelling_shortwave_radiation_cesm_harrison`
 - **Model:** CESM
 - **Contributor:** Harrison et al.
 - **Unit of Analysis:** Country
@@ -90,7 +90,7 @@ This catalog describes all available aggregated datasets in the Nuclear Winter D
   - FSDS minimum
   - FSDS maximum
   - FSDS standard deviation
-- **Location:** `/3_aggregated/downwelling_solar_flux_cesm_harrison/`
+- **Location:** `/3_aggregated/downwelling_shortwave_radiation_cesm_harrison/`
 - **Status:** 🔄 Pending (being processed)
 
 ---
