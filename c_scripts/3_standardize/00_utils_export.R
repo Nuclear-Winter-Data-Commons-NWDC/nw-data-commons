@@ -5,8 +5,6 @@
     library(stringr)
     library(purrr)
     library(tidyr)
-    library(openxlsx)
-    library(readODS)
   })
 
 # Expect: clean.tables.ls already created by 97_final_cleaning_and_consolidation.R
@@ -19,15 +17,6 @@
 
 # -------------------------------------------------------------------------------
 # Helpers
-
-  # Sanitize Excel sheet names (safety; current names are fine)
-  sanitize_sheet_name <- function(x) {
-    x <- gsub("[\\[\\]\\:\\*\\?/\\\\]", "", x)  # invalid chars
-    if (nchar(x) > 31) substr(x, 1, 31) else x
-  }
-
-  # Normalizer for matching column headers by canonical token
-  .norm <- function(x) gsub("[^a-z0-9]", "", tolower(x))
 
   # Compute ranges for variables table
   compute_range_string <- function(x) {
@@ -43,28 +32,17 @@
     if (length(ux) <= 10) paste(sort(ux), collapse = ", ") else paste0("[", length(ux), "] unique values")
   }
 
-  # define excel column letter from column order number
-  excel_col_letter <- function(n) {
-    if (is.na(n) || n < 1) return(NA_character_)
-    out <- character()
-    while (n > 0) { r <- (n - 1) %% 26; out <- c(LETTERS[r + 1], out); n <- (n - 1) %/% 26 }
-    paste0(out, collapse = "")
-  }
-
 # -------------------------------------------------------------------------------
 # Build VARIABLES sheet aligned to actual exports
-
-# --- Build VARIABLES sheet aligned to actual exports --------------------------
 
   # Build an ordered grid for ONE dataset: one row per column in the sheet, in sheet order
   build_sheet_grid <- function(df, ds) {
     tibble::tibble(
       dataset         = ds,
-      variable.name = names(df),
-      excel.column    = openxlsx::int2col(seq_along(df)),  # vectorised -> no length error
+      variable.name   = names(df),
       range           = purrr::map_chr(names(df), ~ compute_range_string(df[[.x]]))
     )
-}
+  }
 
   # 1) Build the full, ordered grid from the actual exported tables
   ordered_grid <- purrr::imap_dfr(clean.tables.ls, build_sheet_grid)
@@ -85,19 +63,13 @@
     warning("Variables not found in variables_src (will be appended in variables_out):\n", msg)
   }
 
-  # 3) Merge metadata from variables_src onto the ordered grid (variables_src stays the base for metadata)
-  vars_cols <- names(variables_src)
-
-  # Build updated variables for current datasets
+  # 3) Merge metadata from variables_src onto the ordered grid
   variables_updated <-
     ordered_grid %>%
-    # keep computed columns separate so we can coalesce cleanly
-    dplyr::rename(excel.column.computed = excel.column,
-                  range.computed        = range) %>%
+    dplyr::rename(range.computed = range) %>%
     dplyr::left_join(
       variables_src,
-      by = c("dataset","variable.name"),
-      suffix = c(".computed", ".src")
+      by = c("dataset","variable.name")
     ) %>%
     dplyr::mutate(
       range.final = dplyr::case_when(
@@ -112,8 +84,7 @@
       format,
       range.or.unique.values = range.final,
       unit,
-      definition,
-      excel.column = dplyr::coalesce(excel.column.computed, excel.column)  # prefer computed if present
+      definition
     )
 
   # Preserve variables for datasets NOT being updated
@@ -125,191 +96,38 @@
   variables_out <- dplyr::bind_rows(variables_preserved, variables_updated) %>%
     dplyr::arrange(dataset, variable.name)
 
-
-  # 4) (Optional) Write back to configs workbook ----------------------------------
-  write_back <- FALSE  # << set to TRUE to overwrite the 'variables' sheet
-
-  if (write_back) {
-    # Updated path to OSF configs directory
-    configs_path <- "b_data/osf_data_current/0_configs/configs_v2026-01-21.xlsx"
-    if(!file.exists(configs_path)) {
-      warning("Could not find configs workbook at: ", configs_path)
-    } else {
-      wb <- loadWorkbook(configs_path)
-      if (!"variables" %in% sheets(wb)) addWorksheet(wb, "variables")
-      # clear existing 'variables' sheet contents
-      removeWorksheet(wb, "variables"); addWorksheet(wb, "variables")
-      writeData(wb, sheet = "variables", x = variables_out)
-      saveWorkbook(wb, configs_path, overwrite = TRUE)
-      message("Updated 'variables' sheet written to: ", configs_path)
-    }
-  }
-
 # -------------------------------------------------------------------------------
 # Output paths: OSF-mirrored structure in osf_data_current/3_standardized/
 
   version_date <- format(Sys.Date(), "%Y-%m-%d")  # YYYY-MM-DD for file suffixes
 
-  # Use OSF mirror structure for standardized outputs
   standardized_root <- file.path("b_data", "osf_data_current", "3_standardized")
   dir.create(standardized_root, recursive = TRUE, showWarnings = FALSE)
 
-  # Consolidated Excel/ODS workbooks in root of 3_standardized/
-  # Will be set after determining which existing workbook to load
-  xlsx_filename <- NULL
-  xlsx_path <- NULL
+  backup_root <- file.path("b_data", "osf_data_most_recent_previous", "3_standardized")
+  dir.create(backup_root, recursive = TRUE, showWarnings = FALSE)
 
-  # Data sheets to export - derive from what was actually created
-  # (supports dynamic addition/removal of datasets)
+  # Data sheets to export
   data_sheets <- names(clean.tables.ls)
 
 # -------------------------------------------------------------------------------
-# Write Excel - ADD/UPDATE approach (preserve existing sheets)
-
-  # Try to load existing standardized workbook, fallback to configs if not found
-  # Look for any numbered standardized data workbook (0_, 1_, 2_, etc.)
-  # Prioritize files starting with higher numbers (1_ > 0_) as they are likely more complete
-  existing_xlsx <- list.files(standardized_root, pattern = "^[0-9]_standardized_data_v.*\\.xlsx$", full.names = TRUE)
-
-  source_workbook_path <- NULL  # Track which workbook we loaded from
-
-  if (length(existing_xlsx) > 0) {
-    # If multiple exist, prefer files with higher number prefixes (1_ over 0_)
-    # Extract number prefix and sort descending
-    if (length(existing_xlsx) > 1) {
-      prefixes <- as.integer(sub("^.*/([0-9])_.*", "\\1", existing_xlsx))
-      existing_xlsx <- existing_xlsx[order(prefixes, decreasing = TRUE)]
-    }
-    # Load existing standardized workbook to preserve other sheets
-    source_workbook_path <- existing_xlsx[1]
-    wb <- loadWorkbook(source_workbook_path)
-
-    # Extract prefix from source workbook (e.g., "1" from "1_standardized_data_v2026-01-26.xlsx")
-    source_prefix <- sub("^.*/([0-9])_.*", "\\1", source_workbook_path)
-    xlsx_filename <- paste0(source_prefix, "_standardized_data_v", version_date, ".xlsx")
-    xlsx_path <- file.path(standardized_root, xlsx_filename)
-
-    if (interactive()) {
-      message("Loaded existing standardized workbook: ", basename(source_workbook_path))
-    }
-  } else {
-    # No existing workbook - start from configs to copy readme sheet
-    configs_path <- "b_data/osf_data_current/0_configs/configs_v2026-01-21.xlsx"
-    if (!file.exists(configs_path)) {
-      stop("Configs workbook not found at: ", configs_path)
-    }
-    wb <- loadWorkbook(configs_path)
-
-    # Remove all sheets except readme
-    all_sheets <- sheets(wb)
-    sheets_to_remove <- all_sheets[all_sheets != "readme"]
-    for (sheet_name in sheets_to_remove) {
-      removeWorksheet(wb, sheet_name)
-    }
-
-    # Remove all named ranges to prevent Excel repair issues
-    named_regions <- tryCatch(getNamedRegions(wb), error = function(e) NULL)
-    if (!is.null(named_regions) && length(named_regions) > 0) {
-      for (name in named_regions) {
-        tryCatch(deleteNamedRegion(wb, name), error = function(e) NULL)
-      }
-    }
-
-    # Use prefix "0" for new workbooks created from configs
-    xlsx_filename <- paste0("0_standardized_data_v", version_date, ".xlsx")
-    xlsx_path <- file.path(standardized_root, xlsx_filename)
-
-    if (interactive()) {
-      message("Created new standardized workbook from configs")
-    }
-  }
-
-  # Update or add variables sheet
-  # Remove existing variables data for datasets being updated, keep others
-  if ("variables" %in% sheets(wb)) {
-    removeWorksheet(wb, "variables")
-  }
-  addWorksheet(wb, "variables")
-  writeData(wb, sheet = "variables", variables_out, keepNA = FALSE)
-
-  # Update or add data sheets (using underscores for sheet names)
-  for (sn in data_sheets) {
-    if (!sn %in% names(clean.tables.ls)) next
-
-    # Convert dots to underscores for sheet names
-    sheet_name <- gsub("\\.", "_", sn)
-    sheet_name <- sanitize_sheet_name(sheet_name)
-
-    # Remove existing sheet if it exists (updating)
-    if (sheet_name %in% sheets(wb)) {
-      removeWorksheet(wb, sheet_name)
-      if (interactive()) {
-        message("Updating existing sheet: ", sheet_name)
-      }
-    } else {
-      if (interactive()) {
-        message("Adding new sheet: ", sheet_name)
-      }
-    }
-
-    # Add the sheet with data
-    addWorksheet(wb, sheet_name)
-    writeData(wb, sheet = sheet_name, clean.tables.ls[[sn]], keepNA = FALSE)
-  }
-
-  # Backup and remove ALL existing Excel workbooks before saving new one
-  backup_root <- file.path("b_data", "osf_data_most_recent_previous", "3_standardized")
-  dir.create(backup_root, recursive = TRUE, showWarnings = FALSE)
-
-  # Backup ALL standardized workbooks (with any number prefix)
-  xlsx_pattern <- "^[0-9]_standardized_data_v.*\\.xlsx$"
-  all_existing_xlsx <- list.files(standardized_root, pattern = xlsx_pattern, full.names = TRUE)
-
-  if (length(all_existing_xlsx) > 0) {
-    # Remove all old Excel backups first (keep only most recent)
-    old_backups <- list.files(backup_root, pattern = xlsx_pattern, full.names = TRUE)
-    if (length(old_backups) > 0) {
-      file.remove(old_backups)
-    }
-
-    # Backup and remove all existing workbooks
-    for (file in all_existing_xlsx) {
-      backup_path <- file.path(backup_root, basename(file))
-      file.copy(file, backup_path, overwrite = TRUE)
-      file.remove(file)
-      if (interactive()) {
-        cat("Backed up and removed:", basename(file), "\n")
-      }
-    }
-  }
-
-  saveWorkbook(wb, xlsx_path, overwrite = TRUE)
-
-# -------------------------------------------------------------------------------
-# BACKUP & REPLACE WORKFLOW: Backup existing files, then write new versions
-# Only backs up files that are being replaced (dataset-specific)
-# Keeps only the most recent backup (removes older backups of same dataset)
-# -------------------------------------------------------------------------------
-
-  backup_root <- file.path("b_data", "osf_data_most_recent_previous", "3_standardized")
-  dir.create(backup_root, recursive = TRUE, showWarnings = FALSE)
+# BACKUP & REPLACE WORKFLOW
 
   # Helper: Backup and remove existing file matching pattern
   # Removes old backups of the same pattern before creating new backup
   backup_and_remove <- function(pattern, current_dir, backup_dir) {
     existing_files <- list.files(current_dir, pattern = pattern, full.names = TRUE)
     if (length(existing_files) > 0) {
-      # First, remove all old backups matching this pattern (keep only most recent)
+      # Remove all old backups matching this pattern (keep only most recent)
       old_backups <- list.files(backup_dir, pattern = pattern, full.names = TRUE)
       if (length(old_backups) > 0) {
         file.remove(old_backups)
       }
-
-      # Then backup current version and remove from current
+      # Backup current version and remove from current
       for (file in existing_files) {
         backup_path <- file.path(backup_dir, basename(file))
         file.copy(file, backup_path, overwrite = TRUE)
-        file.remove(file)  # Remove from current
+        file.remove(file)
         if (interactive()) {
           cat("Backed up and removed:", basename(file), "\n")
         }
@@ -337,12 +155,15 @@
     csv_path <- file.path(standardized_root, paste0(filename_safe, "_v", version_date, ".csv"))
     write.csv(clean.tables.ls[[sn]], csv_path, row.names = FALSE, na = "", fileEncoding = "UTF-8")
     csv_paths[sn] <- csv_path
+    if (interactive()) {
+      message("Wrote: ", basename(csv_path))
+    }
   }
 
   # Backup and remove existing variables files
   backup_and_remove("^variables_v.*\\.csv$", standardized_root, backup_root)
 
-  # Export variables table with version-date suffix (in root)
+  # Export variables table with version-date suffix
   variables_csv_path <- file.path(standardized_root, paste0("variables_v", version_date, ".csv"))
   write.csv(variables_out, variables_csv_path, row.names = FALSE, na = "", fileEncoding = "UTF-8")
   csv_paths["variables"] <- variables_csv_path
@@ -350,7 +171,7 @@
   # Backup and remove existing readme files
   backup_and_remove("^0_readme_v.*\\.md$", standardized_root, backup_root)
 
-  # Export readme as markdown with version-date suffix (in root)
+  # Export readme as markdown with version-date suffix
   readme_template_path <- "d_context/readme_template.md"
   if (file.exists(readme_template_path)) {
     readme_md_path <- file.path(standardized_root, paste0("0_readme_v", version_date, ".md"))
@@ -361,39 +182,7 @@
   }
 
   if (interactive()) {
-    message("Wrote ", length(csv_paths), " CSVs and workbook: ", xlsx_path, "\nOutput folder: ", standardized_root)
+    message("Exported ", length(csv_paths), " files to: ", standardized_root)
   }
 
-# -------------------------------------------------------------------------------
-# ODS (Open Document Spreadsheet) format - MANUAL CONVERSION REQUIRED
-#
-# Automated ODS conversion is unreliable for large files (>50MB).
-# ssconvert often hangs or fails, and R's readODS is extremely slow.
-#
-# TO CREATE ODS FILE MANUALLY:
-# 1. Open the Excel file in LibreOffice Calc:
-#    File: {xlsx_path}
-# 2. File > Save As > ODS format
-# 3. Save to same directory with matching filename:
-#    File: {ods_filename}
-# 4. Upload the ODS file to OSF /3_standardized/ directory
-#
-# The ODS file should have the same prefix and date as the Excel file.
-# -------------------------------------------------------------------------------
-
-  if (interactive()) {
-    ods_filename <- sub("\\.xlsx$", ".ods", xlsx_filename)
-    message("\n", strrep("=", 80))
-    message("MANUAL ODS CONVERSION REQUIRED")
-    message(strrep("=", 80))
-    message("\nAutomated ODS conversion is disabled (unreliable for large files).")
-    message("\nTo create ODS file manually:")
-    message("  1. Open Excel file in LibreOffice Calc:")
-    message("     ", xlsx_path)
-    message("  2. File > Save As > ODS format")
-    message("  3. Save as: ", file.path(standardized_root, ods_filename))
-    message("  4. Upload ODS to OSF /3_standardized/")
-    message("\n", strrep("=", 80), "\n")
-  }
-
-  invisible(list(dir = standardized_root, xlsx = xlsx_path, csvs = csv_paths))
+  invisible(list(dir = standardized_root, csvs = csv_paths))

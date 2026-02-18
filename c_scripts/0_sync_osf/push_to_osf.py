@@ -80,7 +80,9 @@ def push_changes(manager: OSFManager, selections: Dict, local_dir: Path, remote_
             local_file = local_dir / file_path
             remote_path = f"{remote_base}/{file_path}"
 
-            if manager.upload_file(local_file, remote_path, dry_run=dry_run):
+            # Always replace old versions: prevents stale dated files accumulating on OSF
+            if manager.upload_file(local_file, remote_path, dry_run=dry_run,
+                                   replace_old_versions=True):
                 success_count += 1
             else:
                 fail_count += 1
@@ -94,7 +96,9 @@ def push_changes(manager: OSFManager, selections: Dict, local_dir: Path, remote_
             local_file = local_dir / file_path
             remote_path = f"{remote_base}/{file_path}"
 
-            if manager.upload_file(local_file, remote_path, dry_run=dry_run):
+            # Always replace old versions: prevents stale dated files accumulating on OSF
+            if manager.upload_file(local_file, remote_path, dry_run=dry_run,
+                                   replace_old_versions=True):
                 success_count += 1
             else:
                 fail_count += 1

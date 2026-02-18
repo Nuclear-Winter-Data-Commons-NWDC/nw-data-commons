@@ -152,14 +152,82 @@ class OSFManager:
             logger.error(f"Download failed: {e}")
             return False
 
-    def upload_file(self, local_path: Path, remote_path: str, dry_run: bool = False) -> bool:
+    def delete_old_versions(self, remote_path: str, dry_run: bool = False) -> int:
         """
-        Upload a single file to OSF
+        Before uploading a versioned file, delete all existing files on OSF that
+        share the same basename (minus version date) in the same directory.
+
+        Versioned filenames follow: {basename}_v{YYYY-MM-DD}.{ext}
+        This method deletes any file matching {basename}_v*.{ext} at the same remote dir.
+
+        Args:
+            remote_path: Full remote path of the file about to be uploaded
+                         e.g. /3_standardized/temperature_v2026-02-18.csv
+            dry_run: If True, log what would be deleted but don't delete
+
+        Returns:
+            Number of old versions deleted
+        """
+        import re
+
+        remote_path = remote_path.lstrip("/")
+        remote_dir = "/".join(remote_path.split("/")[:-1])
+        filename = remote_path.split("/")[-1]
+
+        # Strip version date to get base pattern: temperature_v2026-02-18.csv -> temperature
+        match = re.match(r'^(.+?)_v\d{4}-\d{2}-\d{2}(\.\w+)$', filename)
+        if not match:
+            # Not a versioned file; skip
+            logger.debug(f"Not a versioned filename, skipping old-version cleanup: {filename}")
+            return 0
+
+        base = match.group(1)
+        ext = match.group(2)
+        pattern = re.compile(rf'^{re.escape(base)}_v\d{{4}}-\d{{2}}-\d{{2}}{re.escape(ext)}$')
+
+        # List all files in the same OSF directory
+        try:
+            files_attr = getattr(self.storage, "files", None)
+            files_iter = files_attr() if callable(files_attr) else files_attr
+            all_files = list(files_iter)
+        except Exception as e:
+            logger.error(f"Failed to list files for old-version cleanup: {e}")
+            return 0
+
+        deleted = 0
+        for f in all_files:
+            f_path = f.path.lstrip("/")
+            f_dir = "/".join(f_path.split("/")[:-1])
+            f_name = f_path.split("/")[-1]
+
+            if f_dir == remote_dir and pattern.match(f_name) and f_path != remote_path:
+                if dry_run:
+                    logger.info(f"[DRY RUN] Would delete old version: /{f_path}")
+                else:
+                    logger.info(f"Deleting old version: /{f_path}")
+                    try:
+                        f.remove()
+                        logger.info(f"✓ Deleted old version: /{f_path}")
+                        deleted += 1
+                    except Exception as e:
+                        logger.error(f"Failed to delete old version /{f_path}: {e}")
+
+        return deleted
+
+    def upload_file(self, local_path: Path, remote_path: str, dry_run: bool = False, replace_old_versions: bool = False) -> bool:
+        """
+        Upload a single file to OSF.
+
+        If replace_old_versions=True and the filename follows the versioned naming
+        convention ({basename}_v{YYYY-MM-DD}.{ext}), all prior versions of that
+        file in the same OSF directory are deleted before the upload. This prevents
+        accumulation of stale dated files on OSF.
 
         Args:
             local_path: Local file path
             remote_path: Destination path on OSF
-            dry_run: If True, only simulate the upload
+            dry_run: If True, only simulate the upload (and version cleanup)
+            replace_old_versions: If True, delete prior dated versions before upload
 
         Returns:
             True if successful
@@ -172,7 +240,15 @@ class OSFManager:
 
         if dry_run:
             logger.info(f"[DRY RUN] Would upload {local_path} -> {remote_path}")
+            if replace_old_versions:
+                self.delete_old_versions(remote_path, dry_run=True)
             return True
+
+        # Delete old versions before uploading new one
+        if replace_old_versions:
+            n_deleted = self.delete_old_versions(remote_path, dry_run=False)
+            if n_deleted:
+                logger.info(f"Removed {n_deleted} old version(s) of {remote_path.split('/')[-1]}")
 
         logger.info(f"Uploading {local_path} -> {remote_path}")
 
@@ -230,7 +306,7 @@ class OSFManager:
             logger.error(f"Delete failed: {e}")
             return False
 
-    def upload_directory(self, local_dir: Path, remote_base: str, dry_run: bool = False) -> Tuple[int, int]:
+    def upload_directory(self, local_dir: Path, remote_base: str, dry_run: bool = False, replace_old_versions: bool = False) -> Tuple[int, int]:
         """
         Upload all files in a directory to OSF
 
@@ -238,6 +314,7 @@ class OSFManager:
             local_dir: Local directory path
             remote_base: Base path on OSF
             dry_run: If True, only simulate uploads
+            replace_old_versions: If True, delete prior dated versions before each upload
 
         Returns:
             Tuple of (successful_count, failed_count)
@@ -262,7 +339,8 @@ class OSFManager:
             relative = file_path.relative_to(local_dir)
             remote_path = f"{remote_base.rstrip('/')}/{relative}"
 
-            if self.upload_file(file_path, remote_path, dry_run=dry_run):
+            if self.upload_file(file_path, remote_path, dry_run=dry_run,
+                                replace_old_versions=replace_old_versions):
                 success_count += 1
             else:
                 fail_count += 1
@@ -360,11 +438,14 @@ def cmd_download(args, manager: OSFManager):
 def cmd_upload(args, manager: OSFManager):
     """Upload file or directory to OSF"""
     local_path = Path(args.local)
+    replace_old = getattr(args, 'replace_old_versions', False)
 
     if local_path.is_dir():
-        manager.upload_directory(local_path, args.remote, dry_run=args.dry_run)
+        manager.upload_directory(local_path, args.remote, dry_run=args.dry_run,
+                                 replace_old_versions=replace_old)
     else:
-        manager.upload_file(local_path, args.remote, dry_run=args.dry_run)
+        manager.upload_file(local_path, args.remote, dry_run=args.dry_run,
+                            replace_old_versions=replace_old)
 
 
 def cmd_delete(args, manager: OSFManager):
@@ -444,6 +525,10 @@ def main():
     upload_parser.add_argument('--local', required=True, help='Local file or directory')
     upload_parser.add_argument('--remote', required=True, help='Remote OSF path')
     upload_parser.add_argument('--dry-run', action='store_true', help='Simulate upload without executing')
+    upload_parser.add_argument('--replace-old-versions', action='store_true',
+                               help='Delete prior dated versions of the file before uploading. '
+                                    'Applies to files named {basename}_v{YYYY-MM-DD}.{ext}. '
+                                    'Use this flag for all standardized output uploads.')
 
     # Delete command
     delete_parser = subparsers.add_parser('delete', help='Delete from OSF')
