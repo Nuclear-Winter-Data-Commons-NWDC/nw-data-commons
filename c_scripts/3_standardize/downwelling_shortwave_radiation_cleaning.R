@@ -46,7 +46,7 @@ CleanReshape_DSR <- function(source_table, source_table_name) {
     grepl("mean_max", source_table_name) ~ "surface.radiation.max",
     grepl("mean_min", source_table_name) ~ "surface.radiation.min",
     grepl("mean_stdev", source_table_name) ~ "surface.radiation.stdev",
-    grepl("mean_v", source_table_name) & !grepl("mean_(max|min|stdev)", source_table_name) ~ "surface.radiation.mean",
+    grepl("_mean$", source_table_name) ~ "surface.radiation.mean",  # matches after version suffix stripped by ImportCSVsFromDirectory
     TRUE ~ NA_character_
   )
 
