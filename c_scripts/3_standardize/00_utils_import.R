@@ -15,7 +15,19 @@ library(magrittr)   # for %<>%
 # ---------------------------------------------------------------------------
 # Load configs workbook (single source of truth for metadata)
 # ---------------------------------------------------------------------------
-configs_wb_path <- "b_data/osf_data_current/0_configs/configs_v2026-01-21.xlsx"
+# Find most recent configs file (pattern: configs_v*.xlsx)
+configs_dir <- "b_data/osf_data_current/0_configs"
+configs_files <- list.files(configs_dir, pattern = "^configs_v.*\\.xlsx$", full.names = TRUE)
+
+if (length(configs_files) == 0) {
+  stop("No configs workbook found in: ", configs_dir)
+} else if (length(configs_files) > 1) {
+  # Sort by modification time, use most recent
+  configs_files <- configs_files[order(file.info(configs_files)$mtime, decreasing = TRUE)]
+  message("Multiple configs files found. Using most recent: ", basename(configs_files[1]))
+}
+
+configs_wb_path <- configs_files[1]
 if (!file.exists(configs_wb_path)) {
   stop("Expected configs workbook not found at: ", configs_wb_path)
 }

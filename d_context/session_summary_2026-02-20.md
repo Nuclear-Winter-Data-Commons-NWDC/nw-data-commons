@@ -299,6 +299,135 @@ The "47 Tg anomaly" reported on 2026-02-18 was a **labeling bug, not a data issu
 
 ---
 
+## Task 7: Complete Source Citations and Documentation
+**Status:** COMPLETE
+
+**Background:** User manually edited `0_readme_v2026-02-20.md` and `configs_v2026-02-20.xlsx` (deleted 'readme' sheet). Task was to complete the manual updates and integrate them into the pipeline workflow.
+
+**Changes implemented:**
+
+### 7a. Readme Updates
+**File:** `b_data/osf_data_current/3_standardized/0_readme_v2026-02-20.md`
+
+1. **Added Table S1** from draft paper with complete caption
+   - Placed at top of "Datasets Included" section
+   - Shows Earth System Simulation Reference vs. Analysis & Discussion Publication for each dataset
+   - Clarifies which scenarios are available for each theme
+
+2. **Added explanatory note** about source citations:
+   - Clearly states that **Source** fields refer to Analysis & Discussion publications
+   - Explains distinction from Earth System Simulation references
+   - Critical for proper attribution in derivative works
+
+3. **Updated all Source entries** with complete, consistently formatted citations:
+   - Full author lists (not "et al." in Source field)
+   - Complete journal names (not abbreviations)
+   - Volume (Issue): Pages format
+   - DOI included for every citation
+
+**Citations updated:**
+- **Jägermeyr et al. (2020)** - agriculture_agmip: Added full 19-author list, complete PNAS citation
+- **Xia et al. (2022)** - agriculture_clm, starvation: Added full 8-author list, Nature Food citation
+- **Scherrer et al. (2020)** - fish_catch: Added full 15-author list, PNAS citation
+- **Toon et al. (2019)** - temperature, precipitation, surface_solar_radiation: Complete Science Advances citation
+- **Harrison et al. (2022)** - sea_ice: Added full 9-author list, AGU Advances citation
+- **Bardeen et al. (2021)** - uv_radiation: Added full 13-author list, JGR: Atmospheres citation
+
+4. **Added Earth System Simulation References section**:
+   - Mills et al. (2014) - Earth's Future (for agriculture_agmip ESM)
+   - Rosenzweig et al. (2017) - PNAS (for AgMIP framework reference)
+
+5. **Enhanced agriculture_agmip description** with text from draft paper explaining multi-model ensemble approach
+
+### 7b. Pipeline Integration
+**File:** `c_scripts/3_standardize/00_utils_import.R` (lines 18-33)
+
+Changed from hardcoded path to dynamic config file detection:
+
+```r
+# Before:
+configs_wb_path <- "b_data/osf_data_current/0_configs/configs_v2026-01-21.xlsx"
+
+# After:
+configs_dir <- "b_data/osf_data_current/0_configs"
+configs_files <- list.files(configs_dir, pattern = "^configs_v.*\\.xlsx$", full.names = TRUE)
+
+if (length(configs_files) == 0) {
+  stop("No configs workbook found in: ", configs_dir)
+} else if (length(configs_files) > 1) {
+  # Sort by modification time, use most recent
+  configs_files <- configs_files[order(file.info(configs_files)$mtime, decreasing = TRUE)]
+  message("Multiple configs files found. Using most recent: ", basename(configs_files[1]))
+}
+
+configs_wb_path <- configs_files[1]
+```
+
+**Benefits:**
+- Automatically finds most recent `configs_v*.xlsx` file
+- Handles multiple configs files gracefully (uses most recent by mtime)
+- Shows informative message if multiple found
+- Future-proof for date-versioned configs updates
+
+### 7c. Template Update
+**File:** `d_context/readme_template.md`
+
+Copied all manual edits from `3_standardized/0_readme_v2026-02-20.md` to template:
+- Table S1 with caption
+- All updated source citations
+- Explanatory notes about Analysis & Discussion publications
+- Enhanced dataset descriptions
+
+**Result:** Future pipeline runs will automatically use the updated template with all improvements.
+
+### 7d. Configs File
+**File:** `b_data/osf_data_current/0_configs/configs_v2026-02-20.xlsx`
+
+- Renamed from `configs_v2026-01-21.xlsx` (user manually updated)
+- Deleted 'readme' sheet (user manually updated)
+- All 7 remaining sheets intact: standardization, scenarios, months, fish.catch.indicators, fish.catch.eez, polar.class, variables
+- Contains surface.solar.radiation variables with wavelength range and unit definitions
+
+### 7e. OSF Upload
+**Status:** COMPLETE
+
+1. Uploaded `0_readme_v2026-02-20.md` to OSF `3_standardized/` directory
+2. Uploaded `configs_v2026-02-20.xlsx` to OSF `0_configs/` directory
+
+### 7f. Pipeline Testing
+**Status:** VERIFIED
+
+Tested `00_utils_import.R` with new dynamic config detection:
+- Successfully finds `configs_v2026-02-20.xlsx`
+- Loads all 7 sheets correctly
+- Variables table contains 155 rows including 4 surface.solar.radiation variables
+- All variable names, units, and definitions load properly
+
+---
+
+## Files Changed This Session (Final List)
+
+| File | Action | Status |
+|---|---|---|
+| `c_scripts/3_standardize/downwelling_shortwave_radiation_cleaning.R` | Renamed to `surface_solar_radiation_cleaning.R` | ✓ |
+| `c_scripts/3_standardize/surface_solar_radiation_cleaning.R` | Updated all internal references, indicator names, variable names | ✓ |
+| `c_scripts/3_standardize/test_downwelling_shortwave_radiation.R` | Renamed to `test_surface_solar_radiation.R` | ✓ |
+| `c_scripts/3_standardize/00_utils_import.R` | Updated to dynamically find most recent configs file | ✓ |
+| `c_scripts/1_download_or_extract/osf_delete_file.py` | Created OSF file deletion utility | ✓ |
+| `b_data/osf_data_current/0_configs/configs_v2026-01-21.xlsx` | Renamed to `configs_v2026-02-20.xlsx`, deleted 'readme' sheet | ✓ |
+| `b_data/osf_data_current/0_configs/configs_v2026-02-20.xlsx` | Uploaded to OSF | ✓ |
+| `b_data/osf_data_current/2_aggregated/downwelling_shortwave_radiation/` | Renamed to `surface_solar_radiation/` | ✓ |
+| `b_data/osf_data_current/2_aggregated/surface_solar_radiation/` | Added recovered min/stdev files for 16 Tg | ✓ |
+| `b_data/osf_data_most_recent_previous/2_aggregated/downwelling_shortwave_radiation/` | Renamed to `surface_solar_radiation/` | ✓ |
+| `b_data/osf_data_most_recent_previous/2_aggregated/surface_solar_radiation/` | Cleaned up 24 duplicate files | ✓ |
+| `b_data/osf_data_current/3_standardized/downwelling_shortwave_radiation_v2026-02-20.csv` | Renamed to `surface_solar_radiation_v2026-02-20.csv` | ✓ |
+| `b_data/osf_data_current/3_standardized/surface_solar_radiation_v2026-02-20.csv` | Regenerated with new names and complete data (51.3 MB), uploaded to OSF | ✓ |
+| `b_data/osf_data_current/3_standardized/0_readme_v2026-02-20.md` | Updated with Table S1, complete citations, explanatory notes; uploaded to OSF | ✓ |
+| `d_context/readme_template.md` | Updated with all readme improvements | ✓ |
+| `d_context/session_summary_2026-02-20.md` | Updated comprehensively with Task 7 details | ✓ |
+
+---
+
 ## Session Status
 
 **Status:** COMPLETE
@@ -312,9 +441,13 @@ All tasks successfully completed:
 - ✓ Updated all scripts, directories, configs, and variable definitions
 - ✓ Re-ran full pipeline with new names and complete data
 - ✓ Uploaded corrected dataset to OSF (51.3 MB)
-- ✓ Removed old file from OSF
-- ✓ Ready to commit and push to GitHub
+- ✓ Removed old downwelling file from OSF
+- ✓ Completed all source citations with full author lists and DOIs
+- ✓ Added Table S1 from draft paper to readme
+- ✓ Integrated manual edits into pipeline workflow (dynamic config detection, updated template)
+- ✓ Uploaded updated readme and configs to OSF
+- ✓ Committed and pushed all changes to GitHub
 
 ---
 
-**Last Updated:** 2026-02-20 (extended session complete)
+**Last Updated:** 2026-02-20 (extended session complete - all documentation and citations finalized)
