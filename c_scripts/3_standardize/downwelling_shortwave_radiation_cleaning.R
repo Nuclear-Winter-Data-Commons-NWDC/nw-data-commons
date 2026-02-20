@@ -29,17 +29,21 @@ dsr.sheet.names <- names(downwelling.shortwave.radiation.ls)
 
 # Function to clean and reshape a single downwelling shortwave radiation table
 CleanReshape_DSR <- function(source_table, source_table_name) {
-  # Parse scenario from filename
-  # Patterns: nw_targets_01 = 5Tg, 02 = 16Tg, 03 = 27Tg, 04 = 47Tg, nw_ur_150 = 150Tg, nw_cntrl = 0Tg
-  scenario <- dplyr::case_when(
-    grepl("targets_01", source_table_name) ~ 5,
-    grepl("targets_02", source_table_name) ~ 16,
-    grepl("targets_03", source_table_name) ~ 27,
-    grepl("targets_04", source_table_name) ~ 47,
-    grepl("ur_150", source_table_name) ~ 150,
-    grepl("cntrl", source_table_name) ~ 0,
-    TRUE ~ NA_real_
-  )
+  # Parse scenario from filename using scenarios.tb config table
+  # Match file prefix patterns in source_table_name to scenarios.tb$file.prefix
+  # scenarios.tb loaded by 00_utils_import.R from configs workbook
+
+  # Find matching scenario from config table
+  matched_row <- scenarios.tb %>%
+    filter(stringr::str_detect(source_table_name, stringr::str_remove(file.prefix, "^nw_"))) %>%
+    slice(1)  # take first match if multiple
+
+  scenario <- if (nrow(matched_row) > 0) {
+    matched_row$soot.injection.scenario
+  } else {
+    warning("No matching scenario found in scenarios.tb for: ", source_table_name)
+    NA_real_
+  }
 
   # Parse indicator from filename (mean, min, max, stdev)
   indicator <- dplyr::case_when(
