@@ -117,9 +117,12 @@ Data now shows correct progression: higher soot injection → lower radiation. T
 ---
 
 ### Task 4: Upload to OSF
-**Status:** PENDING USER CONFIRMATION
+**Status:** COMPLETE
 
-Ready to upload `downwelling_shortwave_radiation_v2026-02-20.csv` to OSF to replace the incorrect `v2026-02-13.csv` version.
+1. Removed manually created CSV and re-ran full export pipeline via proper workflow
+2. Uploaded `downwelling_shortwave_radiation_v2026-02-20.csv` to OSF (37 MB)
+3. Deleted old `downwelling_shortwave_radiation_v2026-02-13.csv` from OSF
+4. Created `osf_delete_file.py` utility script for future use
 
 ---
 
@@ -127,9 +130,11 @@ Ready to upload `downwelling_shortwave_radiation_v2026-02-20.csv` to OSF to repl
 
 | File | Action | Commit |
 |---|---|---|
-| `c_scripts/3_standardize/downwelling_shortwave_radiation_cleaning.R` | Fixed scenario mapping to use scenarios.tb | Pending |
-| `b_data/osf_data_current/3_standardized/downwelling_shortwave_radiation_v2026-02-20.csv` | Created (corrected data) | Pending |
-| `d_context/session_summary_2026-02-20.md` | Created | Pending |
+| `c_scripts/3_standardize/downwelling_shortwave_radiation_cleaning.R` | Fixed scenario mapping to use scenarios.tb | a4fa51e |
+| `c_scripts/1_download_or_extract/osf_delete_file.py` | Created OSF file deletion utility | Pending |
+| `b_data/osf_data_current/3_standardized/downwelling_shortwave_radiation_v2026-02-20.csv` | Created via export pipeline (37 MB) | N/A (data) |
+| `b_data/osf_data_most_recent_previous/3_standardized/downwelling_shortwave_radiation_v2026-02-13.csv` | Backed up old version (47 MB) | N/A (data) |
+| `d_context/session_summary_2026-02-20.md` | Created | a4fa51e |
 
 ---
 
@@ -168,17 +173,25 @@ The 2026-02-19 session notes about repo move appear to have been a GitHub inform
 
 ## Next Steps
 
-1. **Upload corrected CSV to OSF** (awaiting user confirmation)
-2. **Notify co-authors** that the "47 Tg anomaly" was a labeling bug, now fixed
-3. **Investigate missing 47 Tg and 150 Tg source files** - check if they need to be downloaded from OSF or re-aggregated from model outputs
-4. **Consider adding readme note about available scenarios** in downwelling dataset
+1. **Notify co-authors** that the "47 Tg anomaly" was a labeling bug, now fixed - OLD DATA MISLABELED
+2. **Investigate missing 47 Tg and 150 Tg source files** - check if they need to be downloaded from OSF or re-aggregated from model outputs
+3. **Consider adding readme note about available scenarios** in downwelling dataset (currently only 0, 5, 16, 27, 37 Tg available)
+4. **Commit osf_delete_file.py utility** to repository
 
 ---
 
 ## Session Status
 
-**Status:** Near complete - pending OSF upload confirmation
+**Status:** COMPLETE
+
+All tasks successfully completed:
+- ✓ Fixed scenario mapping bug in downwelling cleaning script
+- ✓ Audited all 9 cleaning scripts for hard-coded mappings
+- ✓ Re-ran export pipeline with proper backup workflow
+- ✓ Uploaded corrected data to OSF
+- ✓ Removed old incorrect version from OSF
+- ✓ Committed and pushed code changes to GitHub
 
 ---
 
-**Last Updated:** 2026-02-20 (mid-session)
+**Last Updated:** 2026-02-20 (session complete)
