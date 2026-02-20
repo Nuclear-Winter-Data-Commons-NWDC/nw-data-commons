@@ -4,8 +4,8 @@
 
 **Date:** 2026-02-20
 **Starting Commit:** 3bdbc0c (minor changes)
-**Estimated Session Length:** 1 hour
-**Session Goal:** Fix downwelling shortwave radiation scenario mapping, regenerate dataset, upload to OSF
+**Estimated Session Length:** Extended session (~3 hours)
+**Session Goal:** Fix downwelling shortwave radiation scenario mapping, recover missing data, rename dataset to surface_solar_radiation, regenerate and upload to OSF
 
 ---
 
@@ -60,9 +60,9 @@ Reviewed all 9 cleaning scripts for scenario mapping methodology:
 
 ---
 
-### Task 2: Fix Downwelling Script to Use Config Table
+### Task 2: Fix Scenario Mapping to Use Config Table
 **Status:** COMPLETE
-**File:** `c_scripts/3_standardize/downwelling_shortwave_radiation_cleaning.R`
+**File:** `c_scripts/3_standardize/downwelling_shortwave_radiation_cleaning.R` (later renamed)
 
 Replaced hard-coded `case_when` with lookup against `scenarios.tb`:
 
@@ -93,90 +93,209 @@ scenario <- if (nrow(matched_row) > 0) {
 
 ---
 
-### Task 3: Re-run Downwelling Pipeline
+### Task 3: Recover Missing 16 Tg Min/Stdev Data
 **Status:** COMPLETE
-**Output:** `b_data/osf_data_current/3_standardized/downwelling_shortwave_radiation_v2026-02-20.csv`
 
-- Scenarios in output: 0, 5, 16, 27, 37 (5 scenarios)
-- Missing scenarios: 47 Tg, 150 Tg (source files not present in aggregated data)
-- Total rows: 229,392
-- File size: 44 MB
-- Includes `surface.radiation.mean` column ✓ (previously missing, fixed in 2026-02-18b)
+**Issue:** After initial pipeline run, 16 Tg scenario was missing `surface.radiation.min` and `surface.radiation.stdev` values.
 
-**Verification (Afghanistan, year 1, month 7):**
-| Scenario | surface.radiation.mean | surface.radiation.max |
-|---|---|---|
-| 0 Tg | 354.5 | 369.9 |
-| 5 Tg | 347.3 | 360.4 |
-| **16 Tg** | **312.0** | **322.9** |
-| **27 Tg** | **287.8** | **293.2** |
-| **37 Tg** | **265.6** | **274.4** |
+**Root cause:** Source files `nw_targets_04_FSDS_country_mean_min_v*.csv` and `nw_targets_04_FSDS_country_mean_stdev_v*.csv` were missing from `osf_data_current/2_aggregated/downwelling_shortwave_radiation/`.
 
-Data now shows correct progression: higher soot injection → lower radiation. The 16 Tg scenario now correctly shows values between 5 Tg and 27 Tg (previously mislabeled as 47 Tg).
+**Resolution:**
+1. Located files in `osf_data_most_recent_previous/2_aggregated/downwelling_shortwave_radiation/`
+2. Found 48 files (24 duplicate pairs): dot-separated non-versioned vs. underscore-separated versioned
+3. Compared all pairs using MD5 hashing - all 24 pairs had identical contents
+4. Cleaned up directory:
+   - Removed all 24 versioned files (`*_v2026-02-12.csv`)
+   - Renamed all 24 non-versioned files to append `_v2026-02-10.csv`
+5. Copied cleaned files to `osf_data_current/2_aggregated/downwelling_shortwave_radiation/`
+6. Re-ran pipeline - all 4 indicators now present for all scenarios including 16 Tg
+
+**Final output with recovered data:**
+- File size: 52 MB (up from 37 MB)
+- Rows: 257,076 (up from 229,392)
+- Scenarios: 0, 5, 16, 27, 37, 150 Tg (6 scenarios - gained 150 Tg)
+- All 4 indicators complete with 0 NAs across all scenarios
 
 ---
 
-### Task 4: Upload to OSF
+### Task 4: Dataset Renaming - downwelling_shortwave_radiation → surface_solar_radiation
 **Status:** COMPLETE
 
-1. Removed manually created CSV and re-ran full export pipeline via proper workflow
-2. Uploaded `downwelling_shortwave_radiation_v2026-02-20.csv` to OSF (37 MB)
-3. Deleted old `downwelling_shortwave_radiation_v2026-02-13.csv` from OSF
-4. Created `osf_delete_file.py` utility script for future use
+**Background:** Co-author clarification on variable definition:
+> "The variable FSDS (units: Watts per meter squared) is technically all incoming solar flux but it has often just been called shortwave radiation because a significant portion of the radiation is within the shortwave (like >90%). However, when it is calculated in the model RRTMG within CESM1-WACCM4 it is actually integrating across all radiation bounded by wavelengths of 200 nm and 12,200 nm. SO, there is longwave radiation in this variable. To be totally accurate, it could be called either solar flux, insolation, or incoming solar radiation."
+
+**Changes implemented:**
+
+#### 4a. Scripts Renamed
+- `c_scripts/3_standardize/downwelling_shortwave_radiation_cleaning.R` → `surface_solar_radiation_cleaning.R`
+- `c_scripts/3_standardize/test_downwelling_shortwave_radiation.R` → `test_surface_solar_radiation.R`
+
+#### 4b. Script Internal References Updated
+**File:** `surface_solar_radiation_cleaning.R`
+
+Header comments:
+```r
+# SURFACE SOLAR RADIATION ----
+# Clean and reshape surface solar radiation data imported from CSV files
+# Variable: FSDS (incoming solar flux / insolation / incoming solar radiation)
+# Wavelength range: 200-12,200 nm (>90% shortwave + small longwave component)
+# Units: Watts per meter squared (W/m²)
+```
+
+All internal variable names updated:
+- `downwelling.shortwave.radiation.ls` → `surface.solar.radiation.ls`
+- `downwelling.shortwave.radiation.clean.tb` → `surface.solar.radiation.clean.tb`
+- `CleanReshape_DSR()` → `CleanReshape_SSR()`
+- `downwelling_shortwave_radiation_dir` → `surface_solar_radiation_dir`
+
+All indicator names updated:
+- `surface.radiation.mean` → `surface.solar.radiation.mean`
+- `surface.radiation.min` → `surface.solar.radiation.min`
+- `surface.radiation.max` → `surface.solar.radiation.max`
+- `surface.radiation.stdev` → `surface.solar.radiation.stdev`
+
+#### 4c. Directories Renamed
+- `b_data/osf_data_current/2_aggregated/downwelling_shortwave_radiation/` → `surface_solar_radiation/`
+- `b_data/osf_data_most_recent_previous/2_aggregated/downwelling_shortwave_radiation/` → `surface_solar_radiation/`
+
+#### 4d. Data Files Renamed
+- `b_data/osf_data_current/3_standardized/downwelling_shortwave_radiation_v2026-02-20.csv` → `surface_solar_radiation_v2026-02-20.csv`
+
+#### 4e. Configs Updated
+**File:** `b_data/osf_data_current/0_configs/configs_v2026-01-21.xlsx`
+
+**Standardization sheet:**
+- `theme.name`: `downwelling_shortwave_radiation` → `surface_solar_radiation`
+- `object.name`: `downwelling.shortwave.radiation` → `surface.solar.radiation`
+- `indicators.of.concern`: `surface.radiation.*` → `surface.solar.radiation.*`
+
+**Variables sheet (4 new rows added):**
+
+| variable.name | unit | definition |
+|---|---|---|
+| surface.solar.radiation.mean | W/m² (Watts per meter squared) | Mean incoming solar radiation at surface across all wavelengths (200-12,200 nm). Includes >90% shortwave plus small longwave component. Also called solar flux or insolation. |
+| surface.solar.radiation.min | W/m² (Watts per meter squared) | Minimum incoming solar radiation at surface across all wavelengths (200-12,200 nm). Includes >90% shortwave plus small longwave component. Also called solar flux or insolation. |
+| surface.solar.radiation.max | W/m² (Watts per meter squared) | Maximum incoming solar radiation at surface across all wavelengths (200-12,200 nm). Includes >90% shortwave plus small longwave component. Also called solar flux or insolation. |
+| surface.solar.radiation.stdev | W/m² (Watts per meter squared) | Standard deviation of incoming solar radiation at surface across all wavelengths (200-12,200 nm). Includes >90% shortwave plus small longwave component. Also called solar flux or insolation. |
+
+---
+
+### Task 5: Pipeline Verification and Final Export
+**Status:** COMPLETE
+
+Re-ran full pipeline with all new names and recovered data:
+
+**Output:** `surface_solar_radiation_v2026-02-20.csv`
+- File size: 51.3 MB
+- Rows: 257,076
+- Columns: 22
+- Scenarios: 0, 5, 16, 27, 37, 150 Tg (6 scenarios - all present)
+
+**Data completeness:** All scenarios have 0 NAs for all 4 indicators:
+- ✓ `surface.solar.radiation.mean`
+- ✓ `surface.solar.radiation.min`
+- ✓ `surface.solar.radiation.max`
+- ✓ `surface.solar.radiation.stdev`
+
+**Verification (Afghanistan, year 1, month 7):**
+| Scenario | mean (W/m²) | min (W/m²) | max (W/m²) | stdev (W/m²) |
+|---|---|---|---|---|
+| 0 Tg | 354.5 | 325.6 | 369.9 | 11.9 |
+| 5 Tg | 347.3 | 324.4 | 360.4 | 11.7 |
+| **16 Tg** | **312.0** | **287.5** | **322.9** | **10.5** |
+| **27 Tg** | **287.8** | **271.0** | **293.2** | **9.7** |
+| **37 Tg** | **265.6** | **248.2** | **274.4** | **8.9** |
+| **150 Tg** | **72.7** | **59.0** | **100.5** | **2.5** |
+
+Data progression confirmed: higher soot injection → lower surface radiation (correct physical relationship).
+
+---
+
+### Task 6: Upload to OSF
+**Status:** COMPLETE
+
+1. Uploaded `surface_solar_radiation_v2026-02-20.csv` to OSF `3_standardized/` directory (51 MB)
+2. Deleted old `downwelling_shortwave_radiation_v2026-02-20.csv` from OSF using `osf_delete_file.py`
+3. Verified OSF contains only new file: `surface_solar_radiation_v2026-02-20.csv`
 
 ---
 
 ## Files Changed This Session
 
-| File | Action | Commit |
+| File | Action | Status |
 |---|---|---|
-| `c_scripts/3_standardize/downwelling_shortwave_radiation_cleaning.R` | Fixed scenario mapping to use scenarios.tb | a4fa51e |
-| `c_scripts/1_download_or_extract/osf_delete_file.py` | Created OSF file deletion utility | Pending |
-| `b_data/osf_data_current/3_standardized/downwelling_shortwave_radiation_v2026-02-20.csv` | Created via export pipeline (37 MB) | N/A (data) |
-| `b_data/osf_data_most_recent_previous/3_standardized/downwelling_shortwave_radiation_v2026-02-13.csv` | Backed up old version (47 MB) | N/A (data) |
-| `d_context/session_summary_2026-02-20.md` | Created | a4fa51e |
+| `c_scripts/3_standardize/downwelling_shortwave_radiation_cleaning.R` | Renamed to `surface_solar_radiation_cleaning.R` | ✓ |
+| `c_scripts/3_standardize/surface_solar_radiation_cleaning.R` | Updated all internal references, indicator names, variable names | ✓ |
+| `c_scripts/3_standardize/test_downwelling_shortwave_radiation.R` | Renamed to `test_surface_solar_radiation.R` | ✓ |
+| `c_scripts/1_download_or_extract/osf_delete_file.py` | Created OSF file deletion utility | ✓ |
+| `b_data/osf_data_current/0_configs/configs_v2026-01-21.xlsx` | Updated standardization + variables sheets | ✓ |
+| `b_data/osf_data_current/2_aggregated/downwelling_shortwave_radiation/` | Renamed to `surface_solar_radiation/` | ✓ |
+| `b_data/osf_data_current/2_aggregated/surface_solar_radiation/` | Added recovered min/stdev files for 16 Tg | ✓ |
+| `b_data/osf_data_most_recent_previous/2_aggregated/downwelling_shortwave_radiation/` | Renamed to `surface_solar_radiation/` | ✓ |
+| `b_data/osf_data_most_recent_previous/2_aggregated/surface_solar_radiation/` | Cleaned up 24 duplicate files | ✓ |
+| `b_data/osf_data_current/3_standardized/downwelling_shortwave_radiation_v2026-02-20.csv` | Renamed to `surface_solar_radiation_v2026-02-20.csv` | ✓ |
+| `b_data/osf_data_current/3_standardized/surface_solar_radiation_v2026-02-20.csv` | Regenerated with new names and complete data (51.3 MB) | ✓ |
+| `d_context/session_summary_2026-02-20.md` | Updated comprehensively | ✓ |
 
 ---
 
 ## Impact Assessment
 
 ### Previous Impact (Incorrect Mapping)
-Files labeled as 47 Tg in OSF repository actually contain 16 Tg data. Any analysis using "47 Tg" data has been analyzing the 16 Tg scenario.
+Files labeled as 47 Tg in OSF repository actually contained 16 Tg data. Any analysis using "47 Tg" data prior to 2026-02-20 was analyzing the 16 Tg scenario.
 
-### After Fix
-- 16 Tg, 27 Tg, and 37 Tg scenarios now correctly labeled
-- `surface.radiation.mean` column included
-- Data progression matches expected physical relationship (more soot → less radiation)
+### After Session Fixes
+1. **Scenario mapping corrected:** 16 Tg, 27 Tg, and 37 Tg scenarios now correctly labeled
+2. **Missing data recovered:** 16 Tg min/stdev indicators now included (previously 0 values in output)
+3. **150 Tg scenario added:** Source files recovered from backup, now included in output
+4. **Dataset renamed for accuracy:** `downwelling_shortwave_radiation` → `surface_solar_radiation` per co-author guidance
+5. **Variable definitions improved:** Configs now specify wavelength range (200-12,200 nm) and accurate physical description
+6. **Data progression verified:** All scenarios show correct physical relationship (more soot → less radiation)
 
-### Missing Scenarios
-47 Tg and 150 Tg scenarios are not available in the aggregated source data (`b_data/osf_data_current/2_aggregated/downwelling_shortwave_radiation/`). Files exist only for:
-- `nw_cntrl_03` (0 Tg)
-- `nw_targets_01` (5 Tg)
-- `nw_targets_02` (27 Tg)
-- `nw_targets_03` (37 Tg)
-- `nw_targets_04` (16 Tg)
-
-Missing files:
-- `nw_targets_05*` (47 Tg)
-- `nw_ur_150*` (150 Tg)
+### Co-Author Notification Required
+The "47 Tg anomaly" reported on 2026-02-18 was a **labeling bug, not a data issue**. Corrected data now available on OSF as `surface_solar_radiation_v2026-02-20.csv`.
 
 ---
 
-## Git Remote URL Check
-**Status:** NO ISSUE
+## Available Scenarios in Final Dataset
 
-Remote URL is correct: `https://github.com/wnfaulkner/nw-data-commons`
+**Complete (6 scenarios):**
+- 0 Tg (control) - `nw_cntrl_03`
+- 5 Tg - `nw_targets_01`
+- 16 Tg - `nw_targets_04` (now with all 4 indicators)
+- 27 Tg - `nw_targets_02`
+- 37 Tg - `nw_targets_03`
+- 150 Tg - `nw_ur_150_07`
 
-The 2026-02-19 session notes about repo move appear to have been a GitHub informational message, not an actual problem requiring action.
+**Missing (1 scenario):**
+- 47 Tg - `nw_targets_05` (source files not found in aggregated data or backups)
+
+---
+
+## Technical Notes
+
+### Duplicate File Cleanup Process
+- Found 48 files in backup directory = 24 duplicate pairs
+- Pattern: dot-separated names (e.g., `nw_targets_04.FSDS.country_mean.min.csv`) vs. underscore-separated with version suffix (e.g., `nw_targets_04_FSDS_country_mean_min_v2026-02-12.csv`)
+- MD5 hash comparison confirmed all pairs had identical contents
+- Removed all versioned duplicates, renamed non-versioned to `*_v2026-02-10.csv`
+- Process automated via Python script using `hashlib.md5()` and `os.path.normalize()`
+
+### Pipeline Behavior
+- Export utilities (`00_utils_export.R`, `97_final_cleaning_and_consolidation.R`) do not contain hard-coded dataset names
+- Automatically detected new `surface.solar.radiation` object name from config table
+- Outlier detection flagged 62 outliers for `surface.solar.radiation.stdev` only
+- No outliers detected for mean, min, or max indicators
 
 ---
 
 ## Next Steps
 
-1. **Notify co-authors** that the "47 Tg anomaly" was a labeling bug, now fixed - OLD DATA MISLABELED
-2. **Investigate missing 47 Tg and 150 Tg source files** - check if they need to be downloaded from OSF or re-aggregated from model outputs
-3. **Consider adding readme note about available scenarios** in downwelling dataset (currently only 0, 5, 16, 27, 37 Tg available)
-4. **Commit osf_delete_file.py utility** to repository
+1. **Notify co-authors** that the "47 Tg anomaly" was a labeling bug (now fixed) and dataset has been renamed to `surface_solar_radiation`
+2. **Update any existing analyses** to use new variable names (`surface.solar.radiation.*`)
+3. **Investigate missing 47 Tg source files** - check if `nw_targets_05` needs to be downloaded from OSF model outputs
+4. **Update country report dashboards** to use new `surface_solar_radiation` variable names (deferred to future session)
+5. **Consider updating FAS meeting materials** if they reference "downwelling shortwave radiation" terminology
 
 ---
 
@@ -185,13 +304,17 @@ The 2026-02-19 session notes about repo move appear to have been a GitHub inform
 **Status:** COMPLETE
 
 All tasks successfully completed:
-- ✓ Fixed scenario mapping bug in downwelling cleaning script
+- ✓ Fixed scenario mapping bug using config table lookup
 - ✓ Audited all 9 cleaning scripts for hard-coded mappings
-- ✓ Re-ran export pipeline with proper backup workflow
-- ✓ Uploaded corrected data to OSF
-- ✓ Removed old incorrect version from OSF
-- ✓ Committed and pushed code changes to GitHub
+- ✓ Recovered missing 16 Tg min/stdev data from backups
+- ✓ Cleaned up 24 duplicate files in backup directory
+- ✓ Renamed dataset from downwelling_shortwave_radiation to surface_solar_radiation
+- ✓ Updated all scripts, directories, configs, and variable definitions
+- ✓ Re-ran full pipeline with new names and complete data
+- ✓ Uploaded corrected dataset to OSF (51.3 MB)
+- ✓ Removed old file from OSF
+- ✓ Ready to commit and push to GitHub
 
 ---
 
-**Last Updated:** 2026-02-20 (session complete)
+**Last Updated:** 2026-02-20 (extended session complete)
