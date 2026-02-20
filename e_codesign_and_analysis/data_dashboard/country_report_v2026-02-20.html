@@ -275,7 +275,7 @@
   <div class="grid-1">
     <div class="card">
       <h3 id="p-starv-title">Population Starving (%) by Scenario</h3>
-      <div class="chart-wrap"><canvas id="p-starv-chart" height="180"></canvas></div>
+      <div class="chart-wrap"><canvas id="p-starv-chart" height="360"></canvas></div>
     </div>
   </div>
 
@@ -309,6 +309,70 @@
     <div class="collapse-content" id="p-scen-desc-content">
       <div style="margin-top:12px; display:grid; grid-template-columns:1fr 1fr; gap:10px" id="p-scen-desc-list"></div>
     </div>
+
+  <!-- DATA DOCUMENTATION -->
+  <div class="card" style="margin-bottom:16px">
+    <button class="collapsible-btn" onclick="toggleCollapse('p-data-doc-content')">
+      &#9654; Data Documentation
+    </button>
+    <div class="collapse-content" id="p-data-doc-content">
+      <div style="margin-top:12px; line-height:1.6">
+        
+        <h4 style="color:#8b949e; margin-top:12px">Overview</h4>
+        <p>This dashboard visualizes the impacts of nuclear winter scenarios on global climate, agriculture, and food security. All data are derived from climate model simulations and agricultural impact assessments based on stratospheric soot injection scenarios.</p>
+        
+        <h4 style="color:#8b949e; margin-top:16px">Data Sources</h4>
+        <ul style="margin-left:20px">
+          <li><strong>Temperature & Precipitation:</strong> Climate model outputs from WACCM6 (Whole Atmosphere Community Climate Model version 6) simulations</li>
+          <li><strong>Agriculture:</strong> CLM crop yield projections (wheat, corn, rice, soy, pasture grass) based on climate disruption</li>
+          <li><strong>Fisheries:</strong> Marine catch data from global fishery models under altered ocean conditions</li>
+          <li><strong>Starvation:</strong> Food availability calculations based on Xia et al. (2022) methodology</li>
+        </ul>
+        
+        <h4 style="color:#8b949e; margin-top:16px">Nuclear Winter Scenarios</h4>
+        <p>Scenarios defined by mass of black carbon (soot) injected into stratosphere:</p>
+        <ul style="margin-left:20px">
+          <li><strong>0 Tg:</strong> Control scenario (no nuclear conflict)</li>
+          <li><strong>5, 16, 27, 37, 47 Tg:</strong> India-Pakistan regional conflict scenarios with varying weapon counts and yields</li>
+          <li><strong>150 Tg:</strong> U.S.-Russia superpower conflict scenario (4400 weapons × 100 kt each)</li>
+        </ul>
+        
+        <h4 style="color:#8b949e; margin-top:16px">Starvation Methodology</h4>
+        <p><strong>Source:</strong> Xia, L., Robock, A., Scherrer, K. et al. "Global food insecurity and famine from reduced crop, marine fishery and livestock production due to climate disruption from nuclear war soot injection." <em>Nature Food</em> 3, 586–596 (2022). DOI: 10.1038/s43016-022-00573-0</p>
+        
+        <p><strong>Key Assumptions:</strong></p>
+        <ul style="margin-left:20px">
+          <li>All stored food consumed within months post-war</li>
+          <li>Available food distributed to provide minimum calories for regular physical activity</li>
+          <li>Once food exhausted, no food provided to predicted deaths</li>
+          <li>Three sub-scenario dimensions: Trade (trade vs. no trade), Livestock (livestock/partial/none), Waste reduction (0%, 25%, 50%, 100%)</li>
+        </ul>
+        
+        <p><strong>Outputs:</strong></p>
+        <ul style="margin-left:20px">
+          <li><strong>Percent starving (%):</strong> Percentage of country population unable to obtain minimum caloric requirements</li>
+          <li><strong>Number starving:</strong> Absolute number of people (millions) facing starvation in each scenario</li>
+        </ul>
+        
+        <p style="background:#1c2128; padding:8px; border-left:3px solid #58a6ff; margin-top:8px">
+          <strong>Note:</strong> The specific caloric threshold (kcal/day) used to define "starving" is not specified in publicly accessible sources. Methodology references "minimum number of calories needed to support regular physical activity" but exact values may be country-specific. Consult supplementary materials or contact study authors for precise thresholds.
+        </p>
+        
+        <h4 style="color:#8b949e; margin-top:16px">Data Interpretation Notes</h4>
+        <ul style="margin-left:20px">
+          <li><strong>Years elapsed:</strong> Time since nuclear detonation (year 0 = conflict year, years 1-10 = post-war period)</li>
+          <li><strong>Crop yield changes:</strong> Percent change relative to control (0 Tg) scenario for same time period</li>
+          <li><strong>Missing data:</strong> Some countries/scenarios may have incomplete data due to model limitations or negligible impacts</li>
+          <li><strong>Uncertainties:</strong> All projections subject to model uncertainties, climate variability, and assumptions about post-war human behavior</li>
+        </ul>
+        
+        <h4 style="color:#8b949e; margin-top:16px">Version & Updates</h4>
+        <p>Dashboard version: 2026-02-20 | Data last updated: 2026-01-21 | For questions or corrections, contact study authors.</p>
+        
+      </div>
+    </div>
+  </div>
+
   </div>
 
 </div>
@@ -496,13 +560,13 @@ const NWDC = {"countries":["Afghanistan","Albania","Algeria","Angola","Antigua a
 // ============================================================
 const SCENARIO_IDS   = [0, 5, 16, 27, 37, 47, 150];
 const SCENARIO_COLORS = {
-  0:   '#a0a8b0',
-  5:   '#3fb950',
-  16:  '#58a6ff',
-  27:  '#d29922',
-  37:  '#e89a3a',
-  47:  '#e05c2d',
-  150: '#f85149'
+  0:   '#a0a8b0',  // neutral gray for control scenario
+  5:   '#FC9D8D',  // light red/salmon
+  16:  '#D86CA1',  // pink
+  27:  '#B43BB5',  // magenta
+  37:  '#900AC9',  // purple
+  47:  '#6C00CD',  // deep purple
+  150: '#3F00D1'   // vibrant purple-blue
 };
 const SCENARIO_LABELS = {
   0:   '0 Tg \u2014 No war (control)',
@@ -513,20 +577,29 @@ const SCENARIO_LABELS = {
   47:  '47 Tg \u2014 Large US-Russia exchange',
   150: '150 Tg \u2014 Full-scale US-Russia war'
 };
+const SCENARIO_SHORT_LABELS = {
+  0:   '0 Tg',
+  5:   '5 Tg',
+  16:  '16 Tg',
+  27:  '27 Tg',
+  37:  '37 Tg',
+  47:  '47 Tg',
+  150: '150 Tg'
+};
 const SCENARIO_DESC = {
   0:   'Control scenario: no nuclear conflict. Baseline climate conditions for comparison.',
-  5:   'A limited regional nuclear exchange between India and Pakistan, injecting approximately 5 Tg of black carbon into the stratosphere.',
-  16:  'A larger regional conflict, injecting approximately 16 Tg of soot. Substantial reductions in temperature and precipitation globally.',
-  27:  'Escalation of a regional conflict to a larger scale, injecting approximately 27 Tg of black carbon.',
-  37:  'A medium-scale exchange between the United States and Russia, injecting approximately 37 Tg of soot.',
-  47:  'A large exchange between the United States and Russia, injecting approximately 47 Tg of soot. Severe global agricultural disruption.',
-  150: 'A full-scale nuclear war between the United States and Russia, injecting approximately 150 Tg of black carbon. Catastrophic and prolonged impacts on global climate and food systems.'
+  5:   'India and Pakistan conflict. 100 weapons of 15 kt explosive power. Maximum radiation anomaly: -10.9 W/m².',
+  16:  'India and Pakistan conflict. 250 weapons of 15 kt explosive power. Maximum radiation anomaly: -31.1 W/m².',
+  27:  'India and Pakistan conflict. 250 weapons of 50 kt explosive power. Maximum radiation anomaly: -46.9 W/m².',
+  37:  'India and Pakistan conflict. 250 weapons of 100 kt explosive power. Maximum radiation anomaly: -57.8 W/m².',
+  47:  'India and Pakistan conflict. 500 weapons of 100 kt explosive power. Maximum radiation anomaly: -68.7 W/m².',
+  150: 'Russia and U.S. nuclear superpower conflict. 4400 weapons of 100 kt explosive power. Maximum radiation anomaly: -115.3 W/m².'
 };
-const CROP_COLORS = { wheat: '#d29922', corn: '#3fb950', rice: '#58a6ff', soy: '#e05c2d', grass: '#a0a8b0' };
+const CROP_COLORS = { wheat: '#FFB347', corn: '#77DD77', rice: '#AEC6CF', soy: '#F49AC2', grass: '#a0a8b0' };
 const CROP_LABELS = { wheat: 'Wheat', corn: 'Corn', rice: 'Rice', soy: 'Soy', grass: 'Pasture Grass' };
 
-// Default selected scenarios (all except 37)
-const DEFAULT_SELECTED = [0, 5, 16, 27, 47, 150];
+// Default selected scenarios (all scenarios - full data coverage)
+const DEFAULT_SELECTED = [0, 5, 16, 27, 37, 47, 150];
 
 // ============================================================
 // CHART REGISTRY
@@ -549,11 +622,30 @@ function makeLineOptions(yLabel, extraOpts) {
     maintainAspectRatio: false,
     animation: false,
     plugins: {
-      legend: { position: 'top', labels: { color: '#8b949e', font: { size: 11 }, boxWidth: 12, padding: 10 } }
+      legend: { position: 'right', labels: { color: '#8b949e', font: { size: 9 }, boxWidth: 10, padding: 8 } }
     },
     scales: {
       x: { type: 'linear', grid: { color: '#21262d' }, ticks: { color: '#8b949e', font: { size: 10 } }, title: { display: true, text: 'Years after conflict', color: '#8b949e', font: { size: 10 } } },
-      y: { grid: { color: '#21262d' }, ticks: { color: '#8b949e', font: { size: 10 } }, title: { display: !!yLabel, text: yLabel || '', color: '#8b949e', font: { size: 10 } } }
+      y: { 
+        grid: { 
+          color: (context) => {
+            // Thicker and brighter line at y=0
+            if (context.tick.value === 0) {
+              return '#58a6ff';
+            }
+            return '#21262d';
+          },
+          lineWidth: (context) => {
+            // Thicker line at y=0
+            if (context.tick.value === 0) {
+              return 2;
+            }
+            return 1;
+          }
+        }, 
+        ticks: { color: '#8b949e', font: { size: 10 } }, 
+        title: { display: !!yLabel, text: yLabel || '', color: '#8b949e', font: { size: 10 } } 
+      }
     }
   }, extraOpts || {});
 }
@@ -564,7 +656,7 @@ function makeBarOptions(yLabel, extraOpts) {
     maintainAspectRatio: false,
     animation: false,
     plugins: {
-      legend: { position: 'top', labels: { color: '#8b949e', font: { size: 11 }, boxWidth: 12, padding: 10 } }
+      legend: { position: 'right', labels: { color: '#8b949e', font: { size: 9 }, boxWidth: 10, padding: 8 } }
     },
     scales: {
       x: { grid: { color: '#21262d' }, ticks: { color: '#8b949e', font: { size: 10 } } },
@@ -758,6 +850,16 @@ function pOnChange() {
 }
 
 function pYearChange() {
+  const startEl = document.getElementById('p-year-start');
+  const endEl = document.getElementById('p-year-end');
+  const startVal = parseInt(startEl.value);
+  const endVal = parseInt(endEl.value);
+  
+  // Prevent start from exceeding end
+  if (startVal > endVal) {
+    startEl.value = endVal;
+  }
+  
   updateYearLabel('p');
   renderPolicy();
 }
@@ -786,6 +888,7 @@ function renderPolicy() {
     if (tempDiffs.length) {
       const avg = tempDiffs.reduce((a,x) => a+x, 0) / tempDiffs.length;
       document.getElementById('p-stat-temp').textContent = (avg >= 0 ? '+' : '') + avg.toFixed(2) + '\u00b0C';
+      document.getElementById('p-stat-temp').style.color = SCENARIO_COLORS[sev] || '#8b949e';
       document.getElementById('p-stat-temp-label').textContent = 'Temp Change (' + sev + ' Tg, avg yrs ' + startY + '\u2013' + endY + ')';
       setCardClass('p-stat-temp-card', tempCardClass(avg));
     } else {
@@ -804,6 +907,7 @@ function renderPolicy() {
     if (precipDiffs.length) {
       const avg = precipDiffs.reduce((a,x) => a+x, 0) / precipDiffs.length;
       document.getElementById('p-stat-precip').textContent = (avg >= 0 ? '+' : '') + avg.toFixed(1) + '%';
+      document.getElementById('p-stat-precip').style.color = SCENARIO_COLORS[sev] || '#8b949e';
       document.getElementById('p-stat-precip-label').textContent = 'Precip Change (' + sev + ' Tg, avg yrs ' + startY + '\u2013' + endY + ')';
       setCardClass('p-stat-precip-card', tempCardClass(avg < 0 ? -Math.abs(avg)/20 : avg/20));
     } else {
@@ -816,6 +920,7 @@ function renderPolicy() {
       const pct = stv.pct;
       const num = stv.num;
       document.getElementById('p-stat-starvpct').textContent = pct.toFixed(1) + '%';
+      document.getElementById('p-stat-starvpct').style.color = SCENARIO_COLORS[sev] || '#8b949e';
       document.getElementById('p-stat-starvpct-label').textContent = '% Starving (' + sev + ' Tg)';
       setCardClass('p-stat-starvpct-card', starvCardClass(pct));
       document.getElementById('p-stat-starvnum').textContent = num.toLocaleString();
@@ -823,6 +928,7 @@ function renderPolicy() {
       setCardClass('p-stat-starvnum-card', starvCardClass(pct));
     } else {
       document.getElementById('p-stat-starvpct').textContent = 'N/A';
+      document.getElementById('p-stat-starvpct').style.color = SCENARIO_COLORS[sev] || '#8b949e';
       document.getElementById('p-stat-starvnum').textContent = 'N/A';
     }
   }
@@ -843,7 +949,7 @@ function renderPolicy() {
         .sort((a,b) => a-b)
         .map(y => ({ x: y, y: tempData[String(y)] }));
       datasets.push({
-        label: SCENARIO_LABELS[s],
+        label: SCENARIO_SHORT_LABELS[s],
         data: pts,
         borderColor: s === 0 ? '#e0e8f0' : SCENARIO_COLORS[s],
         backgroundColor: 'transparent',
@@ -868,7 +974,7 @@ function renderPolicy() {
     selScens.filter(s => s !== 0).forEach(s => {
       const pts = precipPctChange(country, s, [startY, endY]);
       datasets.push({
-        label: SCENARIO_LABELS[s],
+        label: SCENARIO_SHORT_LABELS[s],
         data: pts,
         borderColor: SCENARIO_COLORS[s],
         backgroundColor: 'transparent',
@@ -889,17 +995,63 @@ function renderPolicy() {
   {
     destroyChart('p-starv');
     const nonZeroScens = selScens.filter(s => s !== 0);
-    const labels = nonZeroScens.map(s => SCENARIO_LABELS[s]);
+    const labels = nonZeroScens.map(s => SCENARIO_SHORT_LABELS[s]);
     const vals = nonZeroScens.map(s => {
       const sv = getStarv(country, s, trade, livestock, waste);
       return sv ? sv.pct : null;
     });
-    const colors = nonZeroScens.map(s => SCENARIO_COLORS[s]);
+    const rawNums = nonZeroScens.map(s => {
+      const sv = getStarv(country, s, trade, livestock, waste);
+      return sv ? sv.num : null;
+    });
+    // Reverse order so highest soot scenario is at bottom
+    const reversedLabels = [...labels].reverse();
+    const reversedVals = [...vals].reverse();
+    const reversedRawNums = [...rawNums].reverse();
+    const reversedScens = [...nonZeroScens].reverse();
+    const colors = reversedScens.map(s => SCENARIO_COLORS[s]);
+    
     const ctx = document.getElementById('p-starv-chart').getContext('2d');
     charts['p-starv'] = new Chart(ctx, {
       type: 'bar',
-      data: { labels, datasets: [{ label: '% Population Starving', data: vals, backgroundColor: colors, borderWidth: 0 }] },
-      options: makeBarOptions('% starving', { plugins: { legend: { display: false } } })
+      data: { 
+        labels: reversedLabels, 
+        datasets: [
+          { 
+            label: '% Population Starving', 
+            data: reversedVals, 
+            backgroundColor: colors, 
+            borderWidth: 0,
+            xAxisID: 'x'
+          }
+        ] 
+      },
+      options: makeBarOptions('% starving', { 
+        indexAxis: 'y',
+        plugins: { 
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                const pct = context.parsed.x;
+                return 'Percent starving: ' + pct.toFixed(2) + '%';
+              }
+            }
+          }
+        },
+        scales: {
+          x: { 
+            grid: { color: '#21262d' }, 
+            ticks: { color: '#8b949e', font: { size: 10 } }, 
+            title: { display: true, text: '% starving', color: '#8b949e', font: { size: 10 } },
+            position: 'top'
+          },
+          y: { 
+            grid: { color: '#21262d' }, 
+            ticks: { color: '#8b949e', font: { size: 10 } }
+          }
+        }
+      })
     });
     document.getElementById('p-starv-title').textContent = 'Population Starving (%) by Scenario [' + trade + ', ' + livestock + ', ' + waste + ']';
   }
@@ -908,7 +1060,7 @@ function renderPolicy() {
   {
     destroyChart('p-cropbar');
     const nonZeroScens = selScens.filter(s => s !== 0);
-    const crops = ['wheat', 'corn', 'rice', 'soy'];
+    const crops = ['wheat', 'corn', 'rice', 'soy', 'grass'];
     const cropDatasets = crops.map(crop => {
       const vals = nonZeroScens.map(s => {
         const clmData = NWDC.agriculture_clm[country]?.[String(s)];
@@ -956,7 +1108,7 @@ function renderPolicyCropLine() {
       .map(y => ({ x: y, y: clmData[String(y)]?.[crop] ?? null }))
       .filter(p => p.y != null);
     return pts.length ? {
-      label: SCENARIO_LABELS[s],
+      label: SCENARIO_SHORT_LABELS[s],
       data: pts,
       borderColor: SCENARIO_COLORS[s],
       backgroundColor: 'transparent',
@@ -995,6 +1147,16 @@ function aOnChange() {
 }
 
 function aYearChange() {
+  const startEl = document.getElementById('a-year-start');
+  const endEl = document.getElementById('a-year-end');
+  const startVal = parseInt(startEl.value);
+  const endVal = parseInt(endEl.value);
+  
+  // Prevent start from exceeding end
+  if (startVal > endVal) {
+    startEl.value = endVal;
+  }
+  
   updateYearLabel('a');
   renderAnalyst();
 }
@@ -1023,7 +1185,7 @@ function renderAnalyst() {
         .sort((a,b) => a-b)
         .map(y => ({ x: y, y: tempData[String(y)] }));
       return {
-        label: SCENARIO_LABELS[s],
+        label: SCENARIO_SHORT_LABELS[s],
         data: pts,
         borderColor: s === 0 ? '#e0e8f0' : SCENARIO_COLORS[s],
         backgroundColor: 'transparent',
@@ -1047,7 +1209,7 @@ function renderAnalyst() {
     const datasets = selScens.filter(s => s !== 0).map(s => {
       const pts = precipPctChange(country, s, [startY, endY]);
       return {
-        label: SCENARIO_LABELS[s],
+        label: SCENARIO_SHORT_LABELS[s],
         data: pts,
         borderColor: SCENARIO_COLORS[s],
         backgroundColor: 'transparent',
@@ -1096,7 +1258,7 @@ function renderAnalyst() {
         .map(y => ({ x: y, y: clmData[String(y)]?.[crop] ?? null }))
         .filter(p => p.y != null);
       return pts.length ? {
-        label: SCENARIO_LABELS[s],
+        label: SCENARIO_SHORT_LABELS[s],
         data: pts,
         borderColor: SCENARIO_COLORS[s],
         backgroundColor: 'transparent',
