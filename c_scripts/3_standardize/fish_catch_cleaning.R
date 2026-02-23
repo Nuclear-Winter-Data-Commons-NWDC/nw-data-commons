@@ -46,32 +46,67 @@ CleanReshape_FishCatch <- function(source_table, source_table_name) {
     TRUE ~ scenario
   )
 
-  long <-
-    source_table %>%
-    select(names(.)[!str_detect(names(.), "(?i)ctrl")]) %>%
-    ReplaceNames(., names(.), tolower(names(.))) %>%
-    ReplaceNames(., "eez_no", "eez.num") %>%
-    mutate(across(where(is.list), ~ suppressWarnings(as.numeric(unlist(.))))) %>%
-    reshape2::melt(id = "eez.num") %>%
-    mutate(
-      soot.injection.scenario = readr::parse_number(scenario),
-      years.elapsed = dplyr::coalesce(
-        stringr::str_match(variable, "(?i)_\\s*yr(\\d+)")[,2],
-        stringr::str_match(variable, "_\\s*(\\d+)\\s*$")[,2],
-        stringr::str_match(variable, "(\\d+)\\s*$")[,2]
-      ) %>% as.numeric(),
-      indicator.raw = str_extract(variable, "(?<=_).*?(?=_[^_]*$)"),
-      value = suppressWarnings(as.numeric(value)) / 1e9
-    ) %>%
-    mutate(
-      indicator = IndexMatchToVectorFromTibble(
-        indicator.raw,
-        fish.catch.indicators.tb,
-        "extracted.indicator.name.raw",
-        "indicator.name.clean",
-        mult.replacements.per.cell = FALSE
+  # Detect format: LONG format has "Variable" and "Value" columns
+  # WIDE format has columns like "catch_diff_mean_yr1", "catch_diff_mean_yr2", etc.
+  is_long_format <- all(c("Variable", "Value") %in% names(source_table))
+
+  if (is_long_format) {
+    # LONG FORMAT PATH (new data format from Ryan, Feb 2026)
+    long <-
+      source_table %>%
+      ReplaceNames(., names(.), tolower(names(.))) %>%
+      ReplaceNames(., "eez_number", "eez.num") %>%
+      ReplaceNames(., "eez_no", "eez.num") %>%
+      mutate(across(where(is.list), ~ suppressWarnings(as.numeric(unlist(.))))) %>%
+      # Filter rows: keep diff and ctrl variables, exclude NW_scenario
+      filter(!str_detect(variable, "(?i)_scenario")) %>%
+      mutate(
+        soot.injection.scenario = readr::parse_number(scenario),
+        years.elapsed = as.numeric(year),
+        # Strip "catch_" prefix from Variable to match config table
+        # Replace "ctrl" with "control" to match config
+        indicator.raw = str_replace(variable, "^catch_", "") %>%
+          str_replace("^ctrl_", "control_"),
+        value = suppressWarnings(as.numeric(value)) / 1e9
+      ) %>%
+      mutate(
+        indicator = IndexMatchToVectorFromTibble(
+          indicator.raw,
+          fish.catch.indicators.tb,
+          "extracted.indicator.name.raw",
+          "indicator.name.clean",
+          mult.replacements.per.cell = FALSE
+        )
       )
-    )
+  } else {
+    # WIDE FORMAT PATH (old data format, pre-2026)
+    long <-
+      source_table %>%
+      select(names(.)[!str_detect(names(.), "(?i)ctrl")]) %>%
+      ReplaceNames(., names(.), tolower(names(.))) %>%
+      ReplaceNames(., "eez_no", "eez.num") %>%
+      mutate(across(where(is.list), ~ suppressWarnings(as.numeric(unlist(.))))) %>%
+      reshape2::melt(id = "eez.num") %>%
+      mutate(
+        soot.injection.scenario = readr::parse_number(scenario),
+        years.elapsed = dplyr::coalesce(
+          stringr::str_match(variable, "(?i)_\\s*yr(\\d+)")[,2],
+          stringr::str_match(variable, "_\\s*(\\d+)\\s*$")[,2],
+          stringr::str_match(variable, "(\\d+)\\s*$")[,2]
+        ) %>% as.numeric(),
+        indicator.raw = str_extract(variable, "(?<=_).*?(?=_[^_]*$)"),
+        value = suppressWarnings(as.numeric(value)) / 1e9
+      ) %>%
+      mutate(
+        indicator = IndexMatchToVectorFromTibble(
+          indicator.raw,
+          fish.catch.indicators.tb,
+          "extracted.indicator.name.raw",
+          "indicator.name.clean",
+          mult.replacements.per.cell = FALSE
+        )
+      )
+  }
 
   # Collapse duplicates before widening
   collapsed <-

@@ -169,7 +169,8 @@ ImportCSVsFromDirectory <- function(dir_path) {
   # Create clean names from filenames (remove .csv and version suffixes)
   names(csv_data) <- basename(csv_files) %>%
     gsub("\\.csv$", "", .) %>%
-    gsub("_v\\d{4}-\\d{2}-\\d{2}$", "", .)
+    gsub("_v\\d{4}-\\d{2}-\\d{2}$", "", .) %>%
+    gsub("^output_v\\d+_BAU_", "", .)  # Remove fish catch prefix pattern
 
   return(csv_data)
 }

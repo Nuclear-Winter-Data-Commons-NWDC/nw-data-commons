@@ -19,7 +19,7 @@ source("c_scripts/3_standardize/precipitation_cleaning.R")
 source("c_scripts/3_standardize/uv_radiation_cleaning.R")
 source("c_scripts/3_standardize/agriculture_agmip_cleaning.R")
 source("c_scripts/3_standardize/agriculture_clm_cleaning.R")
-# source("c_scripts/3_standardize/fish_catch_cleaning.R")  # Skipping - already processed
+source("c_scripts/3_standardize/fish_catch_cleaning.R")
 source("c_scripts/3_standardize/sea_ice_cleaning.R")
 source("c_scripts/3_standardize/starvation_cleaning.R")
 
