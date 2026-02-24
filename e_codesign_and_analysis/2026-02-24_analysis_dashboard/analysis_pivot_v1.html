@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NWDC Analysis — Pivot Table</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0d1117;
+    --bg2: #161b22;
+    --bg3: #21262d;
+    --border: #30363d;
+    --text: #e6edf3;
+    --text2: #8b949e;
+    --accent: #e05c2d;
+    --accent2: #f0a070;
+    --blue: #58a6ff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; font-size: 14px; }
+
+  /* HEADER */
+  .header { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 16px 24px; }
+  .header h1 { font-size: 18px; font-weight: 600; }
+  .header .subtitle { font-size: 12px; color: var(--text2); margin-top: 2px; }
+
+  /* MAIN */
+  .main { padding: 20px 24px; }
+
+  /* CONTROLS */
+  .controls { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-bottom: 20px; }
+  .controls h3 { font-size: 13px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 12px; }
+  .control-row { display: flex; gap: 16px; margin-bottom: 12px; flex-wrap: wrap; }
+  .control-group { flex: 1; min-width: 200px; }
+  .control-group label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text2); margin-bottom: 6px; }
+  select, input[type=text] { width: 100%; background: var(--bg3); border: 1px solid var(--border); color: var(--text); padding: 8px 10px; border-radius: 6px; font-size: 13px; }
+  select:focus, input:focus { outline: none; border-color: var(--accent); }
+  select[multiple] { height: 150px; }
+
+  /* BUTTON */
+  .btn { background: var(--accent); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; transition: background 0.2s; }
+  .btn:hover { background: #c04d1f; }
+
+  /* RESULTS */
+  .results { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
+  .results h3 { font-size: 13px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 12px; }
+
+  /* TABLE */
+  .table-container { overflow-x: auto; overflow-y: auto; max-height: 600px; border: 1px solid var(--border); border-radius: 6px; margin-bottom: 20px; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th { background: var(--bg3); color: var(--text2); padding: 10px 12px; text-align: left; font-weight: 600; position: sticky; top: 0; z-index: 10; border-bottom: 2px solid var(--border); }
+  td { padding: 8px 12px; border-bottom: 1px solid var(--border); }
+  tr:hover { background: var(--bg3); }
+  td.number { text-align: right; font-family: 'Courier New', monospace; }
+
+  /* INFO */
+  .info { background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; padding: 12px; font-size: 12px; color: var(--text2); margin-top: 12px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🔬 Nuclear Winter Data Commons — Analysis Dashboard</h1>
+  <div class="subtitle">Interactive Pivot Table for Starvation Data</div>
+</div>
+
+<div class="main">
+
+  <!-- CONTROLS -->
+  <div class="controls">
+    <h3>Pivot Table Configuration</h3>
+
+    <div class="control-row">
+      <div class="control-group">
+        <label>Rows (select multiple with Ctrl/Cmd)</label>
+        <select id="rows-select" multiple>
+          <option value="country.name">Country Name</option>
+          <option value="country.region">Region</option>
+          <option value="country.nato.member.2024">NATO Member</option>
+          <option value="soot.injection.scenario" selected>Scenario (Tg)</option>
+          <option value="trade.status">Trade Status</option>
+          <option value="livestock.type">Livestock Type</option>
+          <option value="food.waste.reduction.scenario">Food Waste Reduction</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label>Columns (select multiple with Ctrl/Cmd)</label>
+        <select id="cols-select" multiple>
+          <option value="country.name">Country Name</option>
+          <option value="country.region" selected>Region</option>
+          <option value="country.nato.member.2024">NATO Member</option>
+          <option value="soot.injection.scenario">Scenario (Tg)</option>
+          <option value="trade.status">Trade Status</option>
+          <option value="livestock.type">Livestock Type</option>
+          <option value="food.waste.reduction.scenario">Food Waste Reduction</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="control-row">
+      <div class="control-group">
+        <label>Values (metric to analyze)</label>
+        <select id="values-select">
+          <option value="num.starving">Number Starving</option>
+          <option value="pct.population.starving.2010">% Population Starving</option>
+          <option value="country.population.2010">Population 2010</option>
+          <option value="country.land.area.sq.km">Land Area (sq km)</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label>Aggregation Function</label>
+        <select id="agg-select">
+          <option value="mean" selected>Mean</option>
+          <option value="weighted_mean">Weighted Mean</option>
+          <option value="sum">Sum</option>
+          <option value="count">Count</option>
+        </select>
+      </div>
+
+      <div class="control-group" id="weight-group" style="display:none;">
+        <label>Weight By</label>
+        <select id="weight-select">
+          <option value="country.population.2010" selected>Population</option>
+          <option value="country.land.area.sq.km">Land Area</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="control-row">
+      <div class="control-group">
+        <label>Filter By Field</label>
+        <select id="filter-field">
+          <option value="">-- No Filter --</option>
+          <option value="country.nato.member.2024">NATO Member</option>
+          <option value="country.region">Region</option>
+          <option value="soot.injection.scenario">Scenario</option>
+          <option value="trade.status">Trade Status</option>
+          <option value="livestock.type">Livestock Type</option>
+        </select>
+      </div>
+
+      <div class="control-group" id="filter-value-group" style="display:none;">
+        <label>Filter Value (exact match)</label>
+        <input type="text" id="filter-value" placeholder="e.g., nato, Asia, 5">
+      </div>
+    </div>
+
+    <div class="control-row">
+      <button class="btn" onclick="generatePivot()">Generate Pivot Table</button>
+    </div>
+
+    <div class="info">
+      <strong>Note:</strong> Weighted Mean requires selecting a weight variable (population or land area).
+      The table is limited to 200 columns × 2000 rows for performance.
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="results">
+    <h3>Pivot Table Results</h3>
+    <div class="table-container">
+      <table id="pivot-table">
+        <thead id="pivot-thead"></thead>
+        <tbody id="pivot-tbody"></tbody>
+      </table>
+    </div>
+    <div class="info" id="result-info">Configure options above and click "Generate Pivot Table" to see results.</div>
+  </div>
+
+</div>
+
+<script>
+// Load starvation data
+let STARV_DATA = null;
+
+fetch('starvation_data.json')
+  .then(r => r.json())
+  .then(data => {
+    STARV_DATA = data;
+    console.log(`Loaded ${data.length} rows of starvation data`);
+  })
+  .catch(err => {
+    console.error('Error loading data:', err);
+    document.getElementById('result-info').textContent = 'Error loading data. Make sure starvation_data.json is in the same directory.';
+  });
+
+// Show/hide weight selector
+document.getElementById('agg-select').addEventListener('change', function() {
+  const weightGroup = document.getElementById('weight-group');
+  weightGroup.style.display = (this.value === 'weighted_mean') ? 'block' : 'none';
+});
+
+// Show/hide filter value input
+document.getElementById('filter-field').addEventListener('change', function() {
+  const filterValueGroup = document.getElementById('filter-value-group');
+  filterValueGroup.style.display = (this.value) ? 'block' : 'none';
+});
+
+// Generate pivot table
+function generatePivot() {
+  if (!STARV_DATA) {
+    alert('Data not loaded yet. Please wait a moment and try again.');
+    return;
+  }
+
+  // Get selections
+  const rowFields = Array.from(document.getElementById('rows-select').selectedOptions).map(o => o.value);
+  const colFields = Array.from(document.getElementById('cols-select').selectedOptions).map(o => o.value);
+  const valueField = document.getElementById('values-select').value;
+  const aggFunc = document.getElementById('agg-select').value;
+  const weightField = document.getElementById('weight-select').value;
+  const filterField = document.getElementById('filter-field').value;
+  const filterValue = document.getElementById('filter-value').value.trim();
+
+  // Validation
+  if (rowFields.length === 0 || colFields.length === 0) {
+    alert('Please select at least one row field and one column field.');
+    return;
+  }
+
+  // Apply filter
+  let filteredData = STARV_DATA;
+  if (filterField && filterValue) {
+    filteredData = STARV_DATA.filter(row => {
+      const val = row[filterField];
+      return String(val).toLowerCase() === filterValue.toLowerCase();
+    });
+    console.log(`Filtered to ${filteredData.length} rows where ${filterField} = ${filterValue}`);
+  }
+
+  if (filteredData.length === 0) {
+    document.getElementById('result-info').textContent = 'No data matches the filter criteria.';
+    document.getElementById('pivot-thead').innerHTML = '';
+    document.getElementById('pivot-tbody').innerHTML = '';
+    return;
+  }
+
+  // Build pivot table
+  const pivot = buildPivot(filteredData, rowFields, colFields, valueField, aggFunc, weightField);
+  renderPivot(pivot, rowFields, colFields, valueField, aggFunc);
+}
+
+// Build pivot data structure
+function buildPivot(data, rowFields, colFields, valueField, aggFunc, weightField) {
+  const pivot = {};
+  const colKeys = new Set();
+
+  // Group data
+  data.forEach(row => {
+    // Build row key
+    const rowKey = rowFields.map(f => row[f] ?? '(blank)').join(' | ');
+
+    // Build col key
+    const colKey = colFields.map(f => row[f] ?? '(blank)').join(' | ');
+    colKeys.add(colKey);
+
+    // Initialize
+    if (!pivot[rowKey]) pivot[rowKey] = {};
+    if (!pivot[rowKey][colKey]) pivot[rowKey][colKey] = { values: [], weights: [] };
+
+    // Collect values
+    const val = row[valueField];
+    if (val !== null && val !== undefined && val !== '') {
+      pivot[rowKey][colKey].values.push(parseFloat(val));
+      if (aggFunc === 'weighted_mean') {
+        const weight = row[weightField];
+        pivot[rowKey][colKey].weights.push(parseFloat(weight) || 0);
+      }
+    }
+  });
+
+  // Aggregate
+  Object.keys(pivot).forEach(rowKey => {
+    Object.keys(pivot[rowKey]).forEach(colKey => {
+      const cell = pivot[rowKey][colKey];
+      cell.result = aggregate(cell.values, cell.weights, aggFunc);
+    });
+  });
+
+  return { data: pivot, colKeys: Array.from(colKeys).sort() };
+}
+
+// Aggregation functions
+function aggregate(values, weights, func) {
+  if (values.length === 0) return null;
+
+  switch(func) {
+    case 'mean':
+      return values.reduce((a,b) => a+b, 0) / values.length;
+
+    case 'weighted_mean':
+      if (weights.length === 0) return null;
+      const totalWeight = weights.reduce((a,b) => a+b, 0);
+      if (totalWeight === 0) return null;
+      const weightedSum = values.reduce((sum, val, i) => sum + (val * weights[i]), 0);
+      return weightedSum / totalWeight;
+
+    case 'sum':
+      return values.reduce((a,b) => a+b, 0);
+
+    case 'count':
+      return values.length;
+
+    default:
+      return null;
+  }
+}
+
+// Render pivot table
+function renderPivot(pivot, rowFields, colFields, valueField, aggFunc) {
+  const { data, colKeys } = pivot;
+  const rowKeys = Object.keys(data).sort();
+
+  // Check limits
+  if (colKeys.length > 200) {
+    alert(`Too many columns (${colKeys.length}). Limiting to first 200.`);
+    colKeys.splice(200);
+  }
+  if (rowKeys.length > 2000) {
+    alert(`Too many rows (${rowKeys.length}). Limiting to first 2000.`);
+    rowKeys.splice(2000);
+  }
+
+  // Build header
+  const thead = document.getElementById('pivot-thead');
+  let headerHtml = '<tr><th>' + rowFields.join('<br>') + '</th>';
+  colKeys.forEach(colKey => {
+    headerHtml += `<th>${colKey.replace(/\|/g, '<br>')}</th>`;
+  });
+  headerHtml += '</tr>';
+  thead.innerHTML = headerHtml;
+
+  // Build body
+  const tbody = document.getElementById('pivot-tbody');
+  let bodyHtml = '';
+  rowKeys.forEach(rowKey => {
+    bodyHtml += `<tr><td><strong>${rowKey.replace(/\|/g, ' | ')}</strong></td>`;
+    colKeys.forEach(colKey => {
+      const cell = data[rowKey][colKey];
+      if (cell && cell.result !== null) {
+        const formatted = formatNumber(cell.result);
+        bodyHtml += `<td class="number">${formatted}</td>`;
+      } else {
+        bodyHtml += `<td class="number">—</td>`;
+      }
+    });
+    bodyHtml += '</tr>';
+  });
+  tbody.innerHTML = bodyHtml;
+
+  // Update info
+  const filterField = document.getElementById('filter-field').value;
+  const filterValue = document.getElementById('filter-value').value;
+  const filterText = filterField ? ` (filtered by ${filterField} = ${filterValue})` : '';
+  document.getElementById('result-info').textContent =
+    `Table: ${rowKeys.length} rows × ${colKeys.length} columns. Aggregation: ${aggFunc}. Value: ${valueField}${filterText}.`;
+}
+
+// Format numbers
+function formatNumber(num) {
+  if (num === null || num === undefined) return '—';
+  if (Number.isInteger(num)) return num.toLocaleString();
+  if (Math.abs(num) < 0.01) return num.toExponential(2);
+  if (Math.abs(num) < 1) return num.toFixed(4);
+  if (Math.abs(num) < 100) return num.toFixed(2);
+  return num.toFixed(1);
+}
+
+</script>
+
+</body>
+</html>

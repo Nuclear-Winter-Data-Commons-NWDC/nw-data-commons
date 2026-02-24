@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<parameter name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NWDC Analysis — Pivot Table</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0d1117;
+    --bg2: #161b22;
+    --bg3: #21262d;
+    --border: #30363d;
+    --text: #e6edf3;
+    --text2: #8b949e;
+    --accent: #e05c2d;
+    --accent2: #f0a070;
+    --blue: #58a6ff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; font-size: 14px; }
+
+  /* HEADER */
+  .header { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 16px 24px; }
+  .header h1 { font-size: 18px; font-weight: 600; }
+  .header .subtitle { font-size: 12px; color: var(--text2); margin-top: 2px; }
+
+  /* MAIN */
+  .main { padding: 20px 24px; }
+
+  /* CONTROLS */
+  .controls { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-bottom: 20px; }
+  .controls h3 { font-size: 13px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 12px; }
+
+  /* Drag and Drop Layout */
+  .pivot-builder { display: grid; grid-template-columns: 200px 1fr; gap: 16px; margin-bottom: 16px; }
+
+  /* Field List */
+  .field-list { background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; padding: 12px; }
+  .field-list h4 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text2); margin-bottom: 8px; }
+  .field-item { background: var(--bg2); border: 1px solid var(--border); border-radius: 4px; padding: 6px 8px; margin-bottom: 6px; font-size: 12px; cursor: move; user-select: none; }
+  .field-item:hover { background: var(--bg); border-color: var(--accent); }
+  .field-item.dragging { opacity: 0.5; }
+
+  /* Drop Zones */
+  .drop-zones { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto auto; gap: 12px; }
+  .drop-zone { background: var(--bg3); border: 2px dashed var(--border); border-radius: 6px; padding: 12px; min-height: 80px; }
+  .drop-zone h4 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text2); margin-bottom: 8px; }
+  .drop-zone.drag-over { border-color: var(--accent); background: rgba(224, 92, 45, 0.1); }
+  .drop-zone.filters { grid-column: 1 / -1; }
+
+  .zone-item { background: var(--bg2); border: 1px solid var(--border); border-radius: 4px; padding: 6px 8px; margin-bottom: 6px; font-size: 12px; display: flex; align-items: center; justify-content: space-between; cursor: move; }
+  .zone-item:hover { background: var(--bg); }
+  .zone-item .remove-btn { color: var(--text2); cursor: pointer; padding: 0 4px; }
+  .zone-item .remove-btn:hover { color: var(--accent); }
+
+  /* Filter Values */
+  .filter-values { background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 8px; margin-top: 4px; max-height: 200px; overflow-y: auto; }
+  .filter-value-item { font-size: 11px; padding: 4px; cursor: pointer; user-select: none; border-radius: 3px; }
+  .filter-value-item:hover { background: var(--bg3); }
+  .filter-value-item.selected { background: var(--accent); color: white; }
+  .filter-controls { display: flex; gap: 8px; margin-bottom: 6px; }
+  .filter-controls button { background: var(--bg2); border: 1px solid var(--border); color: var(--text2); padding: 3px 8px; border-radius: 3px; font-size: 10px; cursor: pointer; }
+  .filter-controls button:hover { background: var(--bg); color: var(--text); }
+
+  /* Aggregation Controls */
+  .agg-controls { display: flex; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+  .control-group { flex: 1; min-width: 150px; }
+  .control-group label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text2); margin-bottom: 6px; }
+  select, input[type=text] { width: 100%; background: var(--bg3); border: 1px solid var(--border); color: var(--text); padding: 8px 10px; border-radius: 6px; font-size: 13px; }
+  select:focus, input:focus { outline: none; border-color: var(--accent); }
+
+  /* BUTTON */
+  .btn { background: var(--accent); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; transition: background 0.2s; }
+  .btn:hover { background: #c04d1f; }
+
+  /* RESULTS */
+  .results { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
+  .results h3 { font-size: 13px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 12px; }
+
+  /* TABLE with vertical gridlines */
+  .table-container { overflow-x: auto; overflow-y: auto; max-height: 600px; border: 1px solid var(--border); border-radius: 6px; margin-bottom: 20px; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th, td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    text-align: center;
+    vertical-align: middle;
+  }
+  th:last-child, td:last-child { border-right: none; }
+  th {
+    background: var(--bg3);
+    color: var(--text2);
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  th:first-child, td:first-child { text-align: left; }
+  tr:hover { background: var(--bg3); }
+
+  /* INFO */
+  .info { background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; padding: 12px; font-size: 12px; color: var(--text2); margin-top: 12px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🔬 Nuclear Winter Data Commons — Analysis Dashboard</h1>
+  <div class="subtitle">Interactive Pivot Table for Starvation Data</div>
+</div>
+
+<div class="main">
+
+  <!-- CONTROLS -->
+  <div class="controls">
+    <h3>Pivot Table Configuration</h3>
+
+    <!-- Drag and Drop Interface -->
+    <div class="pivot-builder">
+      <!-- Field List -->
+      <div class="field-list">
+        <h4>Available Fields</h4>
+        <div id="field-list-container"></div>
+      </div>
+
+      <!-- Drop Zones -->
+      <div class="drop-zones">
+        <div class="drop-zone" id="rows-zone" data-zone="rows">
+          <h4>Rows</h4>
+          <div class="zone-content" id="rows-content"></div>
+        </div>
+
+        <div class="drop-zone" id="columns-zone" data-zone="columns">
+          <h4>Columns</h4>
+          <div class="zone-content" id="columns-content"></div>
+        </div>
+
+        <div class="drop-zone filters" id="filters-zone" data-zone="filters">
+          <h4>Filters</h4>
+          <div class="zone-content" id="filters-content"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Aggregation Controls -->
+    <div class="agg-controls">
+      <div class="control-group">
+        <label>Values (metric to analyze)</label>
+        <select id="values-select">
+          <!-- Will be populated from data -->
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label>Aggregation Function</label>
+        <select id="agg-select">
+          <option value="mean" selected>Mean</option>
+          <option value="weighted_mean">Weighted Mean</option>
+          <option value="sum">Sum</option>
+          <option value="count">Count</option>
+        </select>
+      </div>
+
+      <div class="control-group" id="weight-group" style="display:none;">
+        <label>Weight By</label>
+        <select id="weight-select">
+          <!-- Will be populated from data -->
+        </select>
+      </div>
+    </div>
+
+    <div class="agg-controls">
+      <button class="btn" onclick="generatePivot()">Generate Pivot Table</button>
+    </div>
+
+    <div class="info">
+      <strong>Tip:</strong> Drag fields from the left to Rows, Columns, or Filters.
+      Weighted Mean requires numeric weight variables (e.g., population, area).
+      Table limited to 200 columns × 2000 rows for performance.
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="results">
+    <h3>Pivot Table Results</h3>
+    <div class="table-container">
+      <table id="pivot-table">
+        <thead id="pivot-thead"></thead>
+        <tbody id="pivot-tbody"></tbody>
+      </table>
+    </div>
+    <div class="info" id="result-info">Configure options above and click "Generate Pivot Table" to see results.</div>
+  </div>
+
+</div>
+
+<script>
+// Load starvation data
+let STARV_DATA = null;
+let ALL_FIELDS = [];
+
+fetch('starvation_data.json')
+  .then(r => r.json())
+  .then(data => {
+    STARV_DATA = data;
+    console.log(`Loaded ${data.length} rows of starvation data`);
+
+    // Extract all field names
+    if (data.length > 0) {
+      ALL_FIELDS = Object.keys(data[0]);
+      initializeInterface();
+    }
+  })
+  .catch(err => {
+    console.error('Error loading data:', err);
+    document.getElementById('result-info').textContent = 'Error loading data. Make sure starvation_data.json is in the same directory.';
+  });
+
+// Pivot configuration state
+const pivotConfig = {
+  rows: [],
+  columns: [],
+  filters: {}  // Changed to object: { fieldName: Set of selected values }
+};
+
+// Initialize drag-and-drop interface
+function initializeInterface() {
+  // Populate field list
+  const fieldList = document.getElementById('field-list-container');
+  ALL_FIELDS.forEach(field => {
+    const fieldItem = document.createElement('div');
+    fieldItem.className = 'field-item';
+    fieldItem.textContent = field;
+    fieldItem.draggable = true;
+    fieldItem.dataset.field = field;
+
+    fieldItem.addEventListener('dragstart', handleDragStart);
+    fieldItem.addEventListener('dragend', handleDragEnd);
+
+    fieldList.appendChild(fieldItem);
+  });
+
+  // Populate values select
+  const valuesSelect = document.getElementById('values-select');
+  ALL_FIELDS.forEach(field => {
+    const option = document.createElement('option');
+    option.value = field;
+    option.textContent = field;
+    if (field === 'pct.population.starving.2010') option.selected = true;
+    valuesSelect.appendChild(option);
+  });
+
+  // Populate weight select
+  const weightSelect = document.getElementById('weight-select');
+  ALL_FIELDS.forEach(field => {
+    const option = document.createElement('option');
+    option.value = field;
+    option.textContent = field;
+    if (field === 'country.population.2010') option.selected = true;
+    weightSelect.appendChild(option);
+  });
+
+  // Setup drop zones
+  document.querySelectorAll('.drop-zone').forEach(zone => {
+    zone.addEventListener('dragover', handleDragOver);
+    zone.addEventListener('drop', handleDrop);
+    zone.addEventListener('dragleave', handleDragLeave);
+  });
+
+  // Show/hide weight selector
+  document.getElementById('agg-select').addEventListener('change', function() {
+    const weightGroup = document.getElementById('weight-group');
+    weightGroup.style.display = (this.value === 'weighted_mean') ? 'block' : 'none';
+  });
+
+  // No default fields - user must configure
+}
+
+// Drag and drop handlers
+function handleDragStart(e) {
+  e.target.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'copy';
+  e.dataTransfer.setData('field', e.target.dataset.field);
+}
+
+function handleDragEnd(e) {
+  e.target.classList.remove('dragging');
+}
+
+function handleDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'copy';
+  e.currentTarget.classList.add('drag-over');
+}
+
+function handleDragLeave(e) {
+  if (e.currentTarget === e.target) {
+    e.currentTarget.classList.remove('drag-over');
+  }
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+
+  const field = e.dataTransfer.getData('field');
+  const zone = e.currentTarget.dataset.zone;
+
+  if (field && zone) {
+    addFieldToZone(field, zone);
+  }
+}
+
+// Add field to zone
+function addFieldToZone(field, zone) {
+  if (zone === 'filters') {
+    // Filters use object structure
+    if (pivotConfig.filters[field]) return; // Already exists
+
+    // Initialize filter with all unique values selected
+    const uniqueValues = new Set();
+    STARV_DATA.forEach(row => {
+      const val = String(row[field] || '');
+      uniqueValues.add(val);
+    });
+    pivotConfig.filters[field] = uniqueValues;
+  } else {
+    // Rows/Columns use array structure
+    if (pivotConfig[zone].includes(field)) return;
+    pivotConfig[zone].push(field);
+  }
+
+  renderZone(zone);
+}
+
+// Remove field from zone
+function removeFieldFromZone(field, zone) {
+  if (zone === 'filters') {
+    delete pivotConfig.filters[field];
+  } else {
+    pivotConfig[zone] = pivotConfig[zone].filter(f => f !== field);
+  }
+  renderZone(zone);
+}
+
+// Render a zone's contents
+function renderZone(zone) {
+  const container = document.getElementById(`${zone}-content`);
+  container.innerHTML = '';
+
+  if (zone === 'filters') {
+    // Render filters with value selection UI
+    Object.keys(pivotConfig.filters).forEach(field => {
+      const fieldContainer = document.createElement('div');
+      fieldContainer.style.marginBottom = '12px';
+
+      // Field name header with remove button
+      const fieldHeader = document.createElement('div');
+      fieldHeader.className = 'zone-item';
+      fieldHeader.innerHTML = `
+        <span><strong>${field}</strong></span>
+        <span class="remove-btn" onclick="removeFieldFromZone('${field}', '${zone}')">×</span>
+      `;
+      fieldContainer.appendChild(fieldHeader);
+
+      // Get all unique values for this field
+      const allValues = new Set();
+      STARV_DATA.forEach(row => {
+        allValues.add(String(row[field] || ''));
+      });
+      const sortedValues = Array.from(allValues).sort((a, b) => {
+        const aNum = parseFloat(a);
+        const bNum = parseFloat(b);
+        if (!isNaN(aNum) && !isNaN(bNum)) return aNum - bNum;
+        return a.localeCompare(b);
+      });
+
+      // Filter controls (Select All / Deselect All)
+      const filterControls = document.createElement('div');
+      filterControls.className = 'filter-controls';
+      filterControls.innerHTML = `
+        <button onclick="selectAllFilterValues('${field}')">Select All</button>
+        <button onclick="deselectAllFilterValues('${field}')">Deselect All</button>
+      `;
+      fieldContainer.appendChild(filterControls);
+
+      // Value list
+      const valuesList = document.createElement('div');
+      valuesList.className = 'filter-values';
+      valuesList.dataset.field = field;
+
+      sortedValues.forEach(value => {
+        const valueItem = document.createElement('div');
+        valueItem.className = 'filter-value-item';
+        valueItem.textContent = value;
+        valueItem.dataset.value = value;
+
+        // Check if selected
+        if (pivotConfig.filters[field].has(value)) {
+          valueItem.classList.add('selected');
+        }
+
+        // Click handler (single click to toggle)
+        valueItem.addEventListener('click', function(e) {
+          if (!e.ctrlKey && !e.shiftKey) {
+            // Simple click - toggle
+            toggleFilterValue(field, value);
+          } else if (e.ctrlKey) {
+            // Ctrl+click - add to selection
+            toggleFilterValue(field, value);
+          } else if (e.shiftKey) {
+            // Shift+click - select range (implement later)
+            toggleFilterValue(field, value);
+          }
+        });
+
+        valuesList.appendChild(valueItem);
+      });
+
+      fieldContainer.appendChild(valuesList);
+      container.appendChild(fieldContainer);
+    });
+  } else {
+    // Render rows/columns normally
+    pivotConfig[zone].forEach((field, index) => {
+      const zoneItem = document.createElement('div');
+      zoneItem.className = 'zone-item';
+      zoneItem.innerHTML = `
+        <span>${field}</span>
+        <span class="remove-btn" onclick="removeFieldFromZone('${field}', '${zone}')">×</span>
+      `;
+      zoneItem.draggable = true;
+      zoneItem.dataset.field = field;
+      zoneItem.dataset.zone = zone;
+
+      // Enable reordering within zone
+      zoneItem.addEventListener('dragstart', handleZoneDragStart);
+      zoneItem.addEventListener('dragover', handleZoneDragOver);
+      zoneItem.addEventListener('drop', handleZoneDrop);
+
+      container.appendChild(zoneItem);
+    });
+  }
+}
+
+// Toggle filter value selection
+function toggleFilterValue(field, value) {
+  const selectedValues = pivotConfig.filters[field];
+  if (selectedValues.has(value)) {
+    selectedValues.delete(value);
+  } else {
+    selectedValues.add(value);
+  }
+  renderZone('filters');
+}
+
+// Select all filter values
+function selectAllFilterValues(field) {
+  const allValues = new Set();
+  STARV_DATA.forEach(row => {
+    allValues.add(String(row[field] || ''));
+  });
+  pivotConfig.filters[field] = allValues;
+  renderZone('filters');
+}
+
+// Deselect all filter values
+function deselectAllFilterValues(field) {
+  pivotConfig.filters[field] = new Set();
+  renderZone('filters');
+}
+
+// Zone item reordering
+function handleZoneDragStart(e) {
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('zone-field', e.currentTarget.dataset.field);
+  e.dataTransfer.setData('zone-source', e.currentTarget.dataset.zone);
+}
+
+function handleZoneDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+}
+
+function handleZoneDrop(e) {
+  e.preventDefault();
+  e.stopPropagation();
+
+  const field = e.dataTransfer.getData('zone-field');
+  const sourceZone = e.dataTransfer.getData('zone-source');
+  const targetField = e.currentTarget.dataset.field;
+  const targetZone = e.currentTarget.dataset.zone;
+
+  if (sourceZone === targetZone && field !== targetField) {
+    // Reorder within same zone
+    const fieldIndex = pivotConfig[sourceZone].indexOf(field);
+    const targetIndex = pivotConfig[targetZone].indexOf(targetField);
+
+    pivotConfig[sourceZone].splice(fieldIndex, 1);
+    pivotConfig[targetZone].splice(targetIndex, 0, field);
+
+    renderZone(sourceZone);
+  }
+}
+
+// Generate pivot table
+function generatePivot() {
+  if (!STARV_DATA) {
+    alert('Data not loaded yet. Please wait a moment and try again.');
+    return;
+  }
+
+  const rowFields = pivotConfig.rows;
+  const colFields = pivotConfig.columns;
+  const valueField = document.getElementById('values-select').value;
+  const aggFunc = document.getElementById('agg-select').value;
+  const weightField = document.getElementById('weight-select').value;
+  const filterFields = pivotConfig.filters;
+
+  // Validation - require at least rows OR columns
+  if (rowFields.length === 0 && colFields.length === 0) {
+    alert('Please add at least one field to Rows or Columns.');
+    return;
+  }
+
+  // Apply filters
+  let filteredData = STARV_DATA;
+  Object.keys(pivotConfig.filters).forEach(field => {
+    const selectedValues = pivotConfig.filters[field];
+    if (selectedValues.size > 0) {
+      filteredData = filteredData.filter(row => {
+        const val = String(row[field] || '');
+        return selectedValues.has(val);
+      });
+    }
+  });
+
+  // Build pivot table
+  const pivot = buildPivot(filteredData, rowFields, colFields, valueField, aggFunc, weightField);
+  renderPivot(pivot, rowFields, colFields, valueField, aggFunc);
+}
+
+// Build pivot data structure
+function buildPivot(data, rowFields, colFields, valueField, aggFunc, weightField) {
+  const pivot = {};
+  const colKeys = new Set();
+
+  // Handle case where rows or columns are empty
+  const hasRows = rowFields.length > 0;
+  const hasCols = colFields.length > 0;
+
+  // Group data
+  data.forEach(row => {
+    // Build row key - use '(Total)' if no row fields
+    const rowKey = hasRows
+      ? rowFields.map(f => {
+          const val = row[f];
+          return (val === null || val === undefined || val === '') ? '(blank)' : String(val);
+        }).join(' | ')
+      : '(Total)';
+
+    // Build col key - use '(Value)' if no col fields
+    const colKey = hasCols
+      ? colFields.map(f => {
+          const val = row[f];
+          return (val === null || val === undefined || val === '') ? '(blank)' : String(val);
+        }).join(' | ')
+      : '(Value)';
+
+    colKeys.add(colKey);
+
+    // Initialize
+    if (!pivot[rowKey]) pivot[rowKey] = {};
+    if (!pivot[rowKey][colKey]) pivot[rowKey][colKey] = { values: [], weights: [] };
+
+    // Collect values
+    const val = row[valueField];
+    if (val !== null && val !== undefined && val !== '') {
+      pivot[rowKey][colKey].values.push(parseFloat(val));
+      if (aggFunc === 'weighted_mean') {
+        const weight = row[weightField];
+        pivot[rowKey][colKey].weights.push(parseFloat(weight) || 0);
+      }
+    }
+  });
+
+  // Aggregate
+  Object.keys(pivot).forEach(rowKey => {
+    Object.keys(pivot[rowKey]).forEach(colKey => {
+      const cell = pivot[rowKey][colKey];
+      cell.result = aggregate(cell.values, cell.weights, aggFunc);
+    });
+  });
+
+  // Sort column keys numerically if possible
+  const colKeysArray = Array.from(colKeys);
+  colKeysArray.sort((a, b) => {
+    // Try to parse as numbers for first segment
+    const aFirst = a.split(' | ')[0];
+    const bFirst = b.split(' | ')[0];
+    const aNum = parseFloat(aFirst);
+    const bNum = parseFloat(bFirst);
+
+    if (!isNaN(aNum) && !isNaN(bNum)) {
+      return aNum - bNum;  // Numeric sort
+    }
+    return a.localeCompare(b);  // String sort
+  });
+
+  return { data: pivot, colKeys: colKeysArray };
+}
+
+// Aggregation functions
+function aggregate(values, weights, func) {
+  if (values.length === 0) return null;
+
+  switch(func) {
+    case 'mean':
+      return values.reduce((a,b) => a+b, 0) / values.length;
+
+    case 'weighted_mean':
+      if (weights.length === 0) return null;
+      const totalWeight = weights.reduce((a,b) => a+b, 0);
+      if (totalWeight === 0) return null;
+      const weightedSum = values.reduce((sum, val, i) => sum + (val * weights[i]), 0);
+      return weightedSum / totalWeight;
+
+    case 'sum':
+      return values.reduce((a,b) => a+b, 0);
+
+    case 'count':
+      return values.length;
+
+    default:
+      return null;
+  }
+}
+
+// Render pivot table
+function renderPivot(pivot, rowFields, colFields, valueField, aggFunc) {
+  const { data, colKeys } = pivot;
+  const rowKeys = Object.keys(data);
+
+  // Sort row keys numerically if possible
+  rowKeys.sort((a, b) => {
+    const aFirst = a.split(' | ')[0];
+    const bFirst = b.split(' | ')[0];
+    const aNum = parseFloat(aFirst);
+    const bNum = parseFloat(bFirst);
+
+    if (!isNaN(aNum) && !isNaN(bNum)) {
+      return aNum - bNum;
+    }
+    return a.localeCompare(b);
+  });
+
+  // Check limits
+  if (colKeys.length > 200) {
+    alert(`Too many columns (${colKeys.length}). Limiting to first 200.`);
+    colKeys.splice(200);
+  }
+  if (rowKeys.length > 2000) {
+    alert(`Too many rows (${rowKeys.length}). Limiting to first 2000.`);
+    rowKeys.splice(2000);
+  }
+
+  // Build header
+  const thead = document.getElementById('pivot-thead');
+  let headerHtml = '<tr><th>' + rowFields.join('<br>') + '</th>';
+  colKeys.forEach(colKey => {
+    headerHtml += `<th>${colKey.replace(/\|/g, '<br>')}</th>`;
+  });
+  headerHtml += '</tr>';
+  thead.innerHTML = headerHtml;
+
+  // Build body
+  const tbody = document.getElementById('pivot-tbody');
+  let bodyHtml = '';
+  rowKeys.forEach(rowKey => {
+    bodyHtml += `<tr><td><strong>${rowKey.replace(/\|/g, ' | ')}</strong></td>`;
+    colKeys.forEach(colKey => {
+      const cell = data[rowKey][colKey];
+      if (cell && cell.result !== null) {
+        const formatted = formatNumber(cell.result);
+        bodyHtml += `<td>${formatted}</td>`;
+      } else {
+        bodyHtml += `<td>—</td>`;
+      }
+    });
+    bodyHtml += '</tr>';
+  });
+  tbody.innerHTML = bodyHtml;
+
+  // Update info
+  document.getElementById('result-info').textContent =
+    `Table: ${rowKeys.length} rows × ${colKeys.length} columns. Aggregation: ${aggFunc}. Value: ${valueField}.`;
+}
+
+// Format numbers
+function formatNumber(num) {
+  if (num === null || num === undefined) return '—';
+  if (Number.isInteger(num)) return num.toLocaleString();
+  if (Math.abs(num) < 0.01) return num.toExponential(2);
+  if (Math.abs(num) < 1) return num.toFixed(4);
+  if (Math.abs(num) < 100) return num.toFixed(2);
+  return num.toFixed(1);
+}
+
+</script>
+
+</body>
+</html>
