@@ -8,6 +8,7 @@
 *.ods
 *.tar.gz
 *.rtf
+*.json
 
 # Dotenv files with secrets/tokens (example is committed separately)
 .env
