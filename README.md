@@ -5,6 +5,8 @@
 
 This repository contains scripts, data, and documentation for the Nuclear Winter simulation dataset and analysis workflow.
 
+Data README File on OSF: https://osf.io/e28gq/files/7dmwt
+
 ## Citation
 
 If you use this code or data in your research, please cite:
