@@ -30,8 +30,6 @@ The preprint is also included in this repository as /d_docs/`NW_Data_Harrison_pr
 
 The primary data source for this project is hosted on the Open Science Framework (OSF) at https://osf.io/e28gq/.
 
-**Note:** Access to the data requires submitting an application to OSF with a description of your intended use. Some model outputs are currently available; all outputs will be available by the time of publication.
-
 ## Current Status
 
 - **Data download, extraction, and aggregation workflows are works-in-progress.**
