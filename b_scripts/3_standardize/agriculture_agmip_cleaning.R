@@ -8,7 +8,7 @@ library(readr)
 library(magrittr)
 
 # Import utility functions
-  source("c_scripts/3_standardize/00_utils_core.R")
+  source("b_scripts/3_standardize/00_utils_core.R")
 
 # --- helpers (small & focused) ------------------------------------------------
   normalize_crop <- function(x) {

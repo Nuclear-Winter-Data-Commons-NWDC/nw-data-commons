@@ -9,7 +9,7 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 cd "$REPO_ROOT"
 
 PYTHON=".venv/bin/python3"
-OSF_MGR="c_scripts/1_download_or_extract/osf_manager.py"
+OSF_MGR="b_scripts/1_download_or_extract/osf_manager.py"
 
 echo "Syncing aggregated data from OSF..."
 
@@ -28,7 +28,7 @@ echo "Syncing aggregated data from OSF..."
 # Download new fisheries CSVs
 mkdir -p b_data/3_aggregated/fisheries
 for scenario in 5tg 16tg 27tg 47tg 150tg; do
-  "$PYTHON" "$OSF_MGR" download --remote "/3_aggregated/fisheries/output_v2_BAU_${scenario}.csv" --local "b_data/3_aggregated/fisheries/output_v2_BAU_${scenario}.csv" --overwrite
+  "$PYTHON" "$OSF_MGR" download --remote "/3_aggregated/fisheries/output_v2_BAU_${scenario}.csv" --local "a_data/3_aggregated/fisheries/output_v2_BAU_${scenario}.csv" --overwrite
 done
 
 echo "✓ Sync complete"

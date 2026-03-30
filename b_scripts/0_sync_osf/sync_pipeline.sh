@@ -16,7 +16,7 @@
 set -e
 
 # Configuration
-LOCAL_DIR="b_data/osf_data_current"
+LOCAL_DIR="a_data/osf_data_current"
 REMOTE_PATH="/"
 TEMP_DIR=".sync_temp"
 DIFF_REPORT="$TEMP_DIR/diff_report.json"
@@ -75,7 +75,7 @@ echo ""
 # Step 1: Compare OSF vs Local
 echo "STEP 1/7: Comparing OSF vs Local Repository"
 echo "================================================================================"
-.venv/bin/python3 c_scripts/0_sync_osf/compare_osf_local.py \
+.venv/bin/python3 b_scripts/0_sync_osf/compare_osf_local.py \
     --local "$LOCAL_DIR" \
     --remote "$REMOTE_PATH" \
     --json "$DIFF_REPORT"
@@ -113,12 +113,12 @@ echo "STEP 2/7: File Selection"
 echo "================================================================================"
 
 if [ "$NON_INTERACTIVE" = true ]; then
-    .venv/bin/python3 c_scripts/0_sync_osf/interactive_selector.py \
+    .venv/bin/python3 b_scripts/0_sync_osf/interactive_selector.py \
         --input "$DIFF_REPORT" \
         --output "$SELECTIONS" \
         --non-interactive
 else
-    .venv/bin/python3 c_scripts/0_sync_osf/interactive_selector.py \
+    .venv/bin/python3 b_scripts/0_sync_osf/interactive_selector.py \
         --input "$DIFF_REPORT" \
         --output "$SELECTIONS"
 fi
@@ -131,7 +131,7 @@ fi
 # Step 4: Backup before update
 echo "STEP 3/7: Backing Up Files Before Update"
 echo "================================================================================"
-bash c_scripts/0_sync_osf/backup_before_update.sh "$SELECTIONS"
+bash b_scripts/0_sync_osf/backup_before_update.sh "$SELECTIONS"
 
 if [ $? -ne 0 ]; then
     echo "ERROR: Backup failed"
@@ -158,7 +158,7 @@ with open('$SELECTIONS') as f:
         download_count=0
         while IFS= read -r file; do
             echo "Downloading: $file"
-            .venv/bin/python3 c_scripts/1_download_or_extract/osf_manager.py download \
+            .venv/bin/python3 b_scripts/1_download_or_extract/osf_manager.py download \
                 --remote "/$file" \
                 --local "$LOCAL_DIR/$file" \
                 --overwrite
@@ -215,10 +215,10 @@ echo "New and updated aggregated data files have been downloaded."
 echo "You must now run the appropriate standardization scripts to process them:"
 echo ""
 echo "  For all datasets:"
-echo "    Rscript c_scripts/3_standardize/00_run_all.R"
+echo "    Rscript b_scripts/3_standardize/00_run_all.R"
 echo ""
 echo "  For specific dataset:"
-echo "    Rscript c_scripts/3_standardize/test_<dataset_name>.R"
+echo "    Rscript b_scripts/3_standardize/test_<dataset_name>.R"
 echo ""
 echo "After processing completes, the standardized outputs will be ready to push."
 echo ""
@@ -231,13 +231,13 @@ if [ "$SKIP_PUSH" = false ]; then
     echo "================================================================================"
 
     if [ "$DRY_RUN" = true ]; then
-        .venv/bin/python3 c_scripts/0_sync_osf/push_to_osf.py \
+        .venv/bin/python3 b_scripts/0_sync_osf/push_to_osf.py \
             --selections "$SELECTIONS" \
             --local "$LOCAL_DIR" \
             --remote "$REMOTE_PATH" \
             --dry-run
     else
-        .venv/bin/python3 c_scripts/0_sync_osf/push_to_osf.py \
+        .venv/bin/python3 b_scripts/0_sync_osf/push_to_osf.py \
             --selections "$SELECTIONS" \
             --local "$LOCAL_DIR" \
             --remote "$REMOTE_PATH"

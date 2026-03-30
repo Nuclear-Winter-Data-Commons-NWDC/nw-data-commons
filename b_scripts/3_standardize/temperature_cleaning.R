@@ -9,8 +9,8 @@ library(reshape2)
 library(magrittr)
 
 # Import utility functions (including FlagOutliers_IQR)
-source("c_scripts/3_standardize/00_utils_core.R")
-source("c_scripts/3_standardize/00_utils_validate.R")
+source("b_scripts/3_standardize/00_utils_core.R")
+source("b_scripts/3_standardize/00_utils_validate.R")
 
 # Use the imported list from 00_utils_import.R
 # The temperature tables are in all_data[["temperature"]]

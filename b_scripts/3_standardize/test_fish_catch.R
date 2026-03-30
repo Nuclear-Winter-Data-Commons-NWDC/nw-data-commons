@@ -3,14 +3,14 @@
 # Tests the abstracted import functions and produces standardized output
 
 # 1. Load utility functions
-source("c_scripts/3_standardize/00_utils_core.R")
-source("c_scripts/3_standardize/00_utils_validate.R")
+source("b_scripts/3_standardize/00_utils_core.R")
+source("b_scripts/3_standardize/00_utils_validate.R")
 
 # 2. Import aggregated data and configs
-source("c_scripts/3_standardize/00_utils_import.R")
+source("b_scripts/3_standardize/00_utils_import.R")
 
 # 3. Clean fish_catch dataset
-source("c_scripts/3_standardize/fish_catch_cleaning.R")
+source("b_scripts/3_standardize/fish_catch_cleaning.R")
 
 # 4. Create clean.tables.ls for export
 source.table.configs.tb <- configs[["standardization"]]
@@ -85,7 +85,7 @@ clean.tables.ls[["fish.catch"]] <- filter_by_indicators_of_concern(
 )
 
 # 6. Export standardized data
-export_result <- source("c_scripts/3_standardize/00_utils_export.R")
+export_result <- source("b_scripts/3_standardize/00_utils_export.R")
 
 cat("\n\nExport complete!\n")
 cat("Output directory:", export_result$value$dir, "\n")

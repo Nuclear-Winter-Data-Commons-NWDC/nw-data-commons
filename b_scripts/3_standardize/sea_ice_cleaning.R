@@ -8,7 +8,7 @@ library(readr)
 library(magrittr)
 
 # utils
-source("c_scripts/3_standardize/00_utils_core.R")
+source("b_scripts/3_standardize/00_utils_core.R")
 
 # configs & inputs
 # 3rd-party metadata (ports) loaded by 00_utils_import.R

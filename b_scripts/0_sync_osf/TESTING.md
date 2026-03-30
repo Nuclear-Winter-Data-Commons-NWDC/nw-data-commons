@@ -18,8 +18,8 @@ OSF_TOKEN=your_token_here
 
 **Just see what would change:**
 ```bash
-.venv/bin/python3 c_scripts/0_sync_osf/compare_osf_local.py \
-    --local b_data/osf_data_current \
+.venv/bin/python3 b_scripts/0_sync_osf/compare_osf_local.py \
+    --local a_data/osf_data_current \
     --remote /
 ```
 
@@ -29,8 +29,8 @@ This shows you new, updated, and deleted files WITHOUT making any changes.
 
 ### Test 1: Comparison
 ```bash
-.venv/bin/python3 c_scripts/0_sync_osf/compare_osf_local.py \
-    --local b_data/osf_data_current \
+.venv/bin/python3 b_scripts/0_sync_osf/compare_osf_local.py \
+    --local a_data/osf_data_current \
     --remote / \
     --json test_diff_report.json
 ```
@@ -42,7 +42,7 @@ cat test_diff_report.json | head -50
 
 ### Test 2: File Selection
 ```bash
-.venv/bin/python3 c_scripts/0_sync_osf/interactive_selector.py \
+.venv/bin/python3 b_scripts/0_sync_osf/interactive_selector.py \
     --input test_diff_report.json \
     --output test_selections.json
 ```
@@ -56,19 +56,19 @@ cat test_selections.json
 
 ### Test 3: Backup
 ```bash
-bash c_scripts/0_sync_osf/backup_before_update.sh test_selections.json
+bash b_scripts/0_sync_osf/backup_before_update.sh test_selections.json
 ```
 
 **Verify:**
 ```bash
-ls -lh b_data/osf_data_most_recent_previous/
+ls -lh a_data/osf_data_most_recent_previous/
 ```
 
 ### Test 4: Push (Dry Run)
 ```bash
-.venv/bin/python3 c_scripts/0_sync_osf/push_to_osf.py \
+.venv/bin/python3 b_scripts/0_sync_osf/push_to_osf.py \
     --selections test_selections.json \
-    --local b_data/osf_data_current \
+    --local a_data/osf_data_current \
     --remote / \
     --dry-run
 ```
@@ -79,7 +79,7 @@ This shows what WOULD be uploaded/deleted without actually doing it.
 
 ### Option 1: Dry Run (Safe - No Changes Made)
 ```bash
-bash c_scripts/0_sync_osf/sync_pipeline.sh --dry-run
+bash b_scripts/0_sync_osf/sync_pipeline.sh --dry-run
 ```
 
 **What happens:**
@@ -93,7 +93,7 @@ bash c_scripts/0_sync_osf/sync_pipeline.sh --dry-run
 
 ### Option 2: Skip Push (Download Only)
 ```bash
-bash c_scripts/0_sync_osf/sync_pipeline.sh --skip-push
+bash b_scripts/0_sync_osf/sync_pipeline.sh --skip-push
 ```
 
 **What happens:**
@@ -103,7 +103,7 @@ bash c_scripts/0_sync_osf/sync_pipeline.sh --skip-push
 
 ### Option 3: Non-Interactive
 ```bash
-bash c_scripts/0_sync_osf/sync_pipeline.sh --non-interactive --dry-run
+bash b_scripts/0_sync_osf/sync_pipeline.sh --non-interactive --dry-run
 ```
 
 **What happens:**
@@ -113,7 +113,7 @@ bash c_scripts/0_sync_osf/sync_pipeline.sh --non-interactive --dry-run
 
 ### Option 4: Full Live Run
 ```bash
-bash c_scripts/0_sync_osf/sync_pipeline.sh
+bash b_scripts/0_sync_osf/sync_pipeline.sh
 ```
 
 **⚠️ WARNING:** This WILL push changes to OSF! Only use after testing above options.
@@ -131,8 +131,8 @@ export OSF_TOKEN=your_token_here
 
 ### "Permission denied"
 ```bash
-chmod +x c_scripts/0_sync_osf/*.sh
-chmod +x c_scripts/0_sync_osf/*.py
+chmod +x b_scripts/0_sync_osf/*.sh
+chmod +x b_scripts/0_sync_osf/*.py
 ```
 
 ### Python import errors
@@ -198,7 +198,7 @@ BACKING UP FILES BEFORE UPDATE
 ================================================================================
 BACKUP COMPLETE
   Total files backed up: 2
-  Backup location: b_data/osf_data_most_recent_previous
+  Backup location: a_data/osf_data_most_recent_previous
 ================================================================================
 ```
 
@@ -216,22 +216,22 @@ rm -rf .sync_temp
 
 1. **First:** Comparison only (see what would change)
    ```bash
-   .venv/bin/python3 c_scripts/0_sync_osf/compare_osf_local.py --local b_data/osf_data_current --remote /
+   .venv/bin/python3 b_scripts/0_sync_osf/compare_osf_local.py --local a_data/osf_data_current --remote /
    ```
 
 2. **Second:** Dry run (preview all actions)
    ```bash
-   bash c_scripts/0_sync_osf/sync_pipeline.sh --dry-run
+   bash b_scripts/0_sync_osf/sync_pipeline.sh --dry-run
    ```
 
 3. **Third:** Skip push (test downloads)
    ```bash
-   bash c_scripts/0_sync_osf/sync_pipeline.sh --skip-push
+   bash b_scripts/0_sync_osf/sync_pipeline.sh --skip-push
    ```
 
 4. **Finally:** Full live run
    ```bash
-   bash c_scripts/0_sync_osf/sync_pipeline.sh
+   bash b_scripts/0_sync_osf/sync_pipeline.sh
    ```
 
 ## One-Off Manual Push (Special Cases)
@@ -241,15 +241,15 @@ For pushing specific files to OSF that aren't part of normal sync (e.g., new dir
 ### Option 1: Interactive Selection from Deleted Files
 ```bash
 # First, run comparison to get deleted files list
-.venv/bin/python3 c_scripts/0_sync_osf/compare_osf_local.py \
-    --local b_data/osf_data_current \
+.venv/bin/python3 b_scripts/0_sync_osf/compare_osf_local.py \
+    --local a_data/osf_data_current \
     --remote / \
     --json diff_report.json
 
 # Then interactively select which "deleted" files to actually push to OSF
-.venv/bin/python3 c_scripts/0_sync_osf/manual_push.py \
+.venv/bin/python3 b_scripts/0_sync_osf/manual_push.py \
     --from-comparison diff_report.json \
-    --local b_data/osf_data_current \
+    --local a_data/osf_data_current \
     --remote /
 ```
 
@@ -260,9 +260,9 @@ For pushing specific files to OSF that aren't part of normal sync (e.g., new dir
 
 ### Option 2: Push Specific Files Directly
 ```bash
-.venv/bin/python3 c_scripts/0_sync_osf/manual_push.py \
+.venv/bin/python3 b_scripts/0_sync_osf/manual_push.py \
     --files "4_3rd_party_metadata/countries.csv" "4_3rd_party_metadata/ports.csv" \
-    --local b_data/osf_data_current \
+    --local a_data/osf_data_current \
     --remote /
 ```
 
@@ -276,18 +276,18 @@ cat > files_to_push.txt << EOF
 EOF
 
 # Push all files in the list
-.venv/bin/python3 c_scripts/0_sync_osf/manual_push.py \
+.venv/bin/python3 b_scripts/0_sync_osf/manual_push.py \
     --file-list files_to_push.txt \
-    --local b_data/osf_data_current \
+    --local a_data/osf_data_current \
     --remote /
 ```
 
 ### Dry Run First (Recommended)
 ```bash
 # Preview what would be pushed
-.venv/bin/python3 c_scripts/0_sync_osf/manual_push.py \
+.venv/bin/python3 b_scripts/0_sync_osf/manual_push.py \
     --from-comparison diff_report.json \
-    --local b_data/osf_data_current \
+    --local a_data/osf_data_current \
     --remote / \
     --dry-run
 ```
@@ -296,20 +296,20 @@ EOF
 
 ```bash
 # Just compare (no changes)
-.venv/bin/python3 c_scripts/0_sync_osf/compare_osf_local.py --local b_data/osf_data_current --remote /
+.venv/bin/python3 b_scripts/0_sync_osf/compare_osf_local.py --local a_data/osf_data_current --remote /
 
 # Dry run full pipeline
-bash c_scripts/0_sync_osf/sync_pipeline.sh --dry-run
+bash b_scripts/0_sync_osf/sync_pipeline.sh --dry-run
 
 # Download but don't push
-bash c_scripts/0_sync_osf/sync_pipeline.sh --skip-push
+bash b_scripts/0_sync_osf/sync_pipeline.sh --skip-push
 
 # Full sync
-bash c_scripts/0_sync_osf/sync_pipeline.sh
+bash b_scripts/0_sync_osf/sync_pipeline.sh
 
 # Non-interactive with defaults
-bash c_scripts/0_sync_osf/sync_pipeline.sh --non-interactive
+bash b_scripts/0_sync_osf/sync_pipeline.sh --non-interactive
 
 # One-off push (interactive selection)
-.venv/bin/python3 c_scripts/0_sync_osf/manual_push.py --from-comparison diff_report.json --local b_data/osf_data_current --remote /
+.venv/bin/python3 b_scripts/0_sync_osf/manual_push.py --from-comparison diff_report.json --local a_data/osf_data_current --remote /
 ```

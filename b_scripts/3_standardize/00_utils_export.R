@@ -101,10 +101,10 @@
 
   version_date <- format(Sys.Date(), "%Y-%m-%d")  # YYYY-MM-DD for file suffixes
 
-  standardized_root <- file.path("b_data", "osf_data_current", "3_standardized")
+  standardized_root <- file.path("a_data", "osf_data_current", "3_standardized")
   dir.create(standardized_root, recursive = TRUE, showWarnings = FALSE)
 
-  backup_root <- file.path("b_data", "osf_data_most_recent_previous", "3_standardized")
+  backup_root <- file.path("a_data", "osf_data_most_recent_previous", "3_standardized")
   dir.create(backup_root, recursive = TRUE, showWarnings = FALSE)
 
   # Data sheets to export
@@ -172,7 +172,7 @@
   backup_and_remove("^0_readme_v.*\\.md$", standardized_root, backup_root)
 
   # Export readme as markdown with version-date suffix
-  readme_template_path <- "d_context/readme_template.md"
+  readme_template_path <- "c_context/readme_template.md"
   if (file.exists(readme_template_path)) {
     readme_md_path <- file.path(standardized_root, paste0("0_readme_v", version_date, ".md"))
     file.copy(readme_template_path, readme_md_path, overwrite = TRUE)

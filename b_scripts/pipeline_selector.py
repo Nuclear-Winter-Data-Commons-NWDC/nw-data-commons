@@ -30,9 +30,9 @@ except ImportError:
 class PipelineSelector:
     """Manage dataset selection for pipeline execution"""
 
-    def __init__(self, osf_mirror_dir: str = "b_data/osf_data_current/2_aggregated"):
+    def __init__(self, osf_mirror_dir: str = "a_data/osf_data_current/2_aggregated"):
         self.osf_mirror_dir = Path(osf_mirror_dir)
-        self.cache_file = Path("b_data/.pipeline_run_cache.json")
+        self.cache_file = Path("a_data/.pipeline_run_cache.json")
         self.last_run_time = self._load_last_run_time()
 
     def _load_last_run_time(self) -> datetime:
@@ -300,7 +300,7 @@ class PipelineSelector:
 
         print("-" * 105)
 
-    def save_manifest(self, selected_datasets: List[str], output_file: str = "b_data/.pipeline_manifest.json"):
+    def save_manifest(self, selected_datasets: List[str], output_file: str = "a_data/.pipeline_manifest.json"):
         """
         Save selected datasets to manifest file for pipeline consumption
 
@@ -364,7 +364,7 @@ def main():
     print("Next step: Run the pipeline with selected datasets")
     print("="*80)
     print("\nCommand:")
-    print("  Rscript -e \"source('c_scripts/3_standardize/00_run_all.R')\"")
+    print("  Rscript -e \"source('b_scripts/3_standardize/00_run_all.R')\"")
     print()
 
 

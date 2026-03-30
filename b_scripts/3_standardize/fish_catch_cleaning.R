@@ -7,8 +7,8 @@ library(reshape2)
 library(readr)
 library(magrittr)
 
-source("c_scripts/3_standardize/00_utils_core.R")
-source("c_scripts/3_standardize/00_utils_validate.R")
+source("b_scripts/3_standardize/00_utils_core.R")
+source("b_scripts/3_standardize/00_utils_validate.R")
 
 # ---------------------------------------------------------------------------
 # IMPORT fish_catch data using abstracted import functions
@@ -18,7 +18,7 @@ source("c_scripts/3_standardize/00_utils_validate.R")
 # - Single/multiple Excel files with multiple sheets
 # Both structures are normalized to a named list for downstream processing
 
-fish_catch_dir <- "b_data/osf_data_current/2_aggregated/fish_catch"
+fish_catch_dir <- "a_data/osf_data_current/2_aggregated/fish_catch"
 fish_catch_import <- DetectAndImportData(fish_catch_dir)
 
 if (fish_catch_import$file_type == "mixed") {

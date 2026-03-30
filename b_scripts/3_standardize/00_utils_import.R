@@ -16,7 +16,7 @@ library(magrittr)   # for %<>%
 # Load configs workbook (single source of truth for metadata)
 # ---------------------------------------------------------------------------
 # Find most recent configs file (pattern: configs_v*.xlsx)
-configs_dir <- "b_data/osf_data_current/0_configs"
+configs_dir <- "a_data/osf_data_current/0_configs"
 configs_files <- list.files(configs_dir, pattern = "^configs_v.*\\.xlsx$", full.names = TRUE)
 
 if (length(configs_files) == 0) {
@@ -43,7 +43,7 @@ names(configs_data) <- configs_sheets
 # Import aggregated data files from OSF mirror directory
 # ---------------------------------------------------------------------------
 # Single source of truth: OSF mirror directory
-xlsx_dir <- "b_data/osf_data_current/2_aggregated/"
+xlsx_dir <- "a_data/osf_data_current/2_aggregated/"
 
 # List all .xlsx files in the directory (recursive to catch subdirectories)
 xlsx_files <- list.files(xlsx_dir, pattern = "\\.xlsx$", full.names = TRUE, recursive = TRUE)
@@ -120,7 +120,7 @@ if (is.null(source.table.configs.tb)) {
 # Load 3rd-party metadata from CSV files
 # ---------------------------------------------------------------------------
 # 3rd-party metadata is stored separately from internal configs for easier updates
-third_party_dir <- "b_data/osf_data_current/4_3rd_party_metadata"
+third_party_dir <- "a_data/osf_data_current/4_3rd_party_metadata"
 
 if (!dir.exists(third_party_dir)) {
   stop("3rd-party metadata directory not found: ", third_party_dir)

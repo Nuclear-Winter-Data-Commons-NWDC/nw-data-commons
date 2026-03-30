@@ -9,7 +9,7 @@ library(readr)
 library(magrittr)
 
 # utils
-source("c_scripts/3_standardize/00_utils_core.R")
+source("b_scripts/3_standardize/00_utils_core.R")
 
 # 3rd-party metadata (countries, fao.crop.indicators) loaded by 00_utils_import.R
 

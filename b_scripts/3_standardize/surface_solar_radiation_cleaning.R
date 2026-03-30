@@ -13,13 +13,13 @@ library(magrittr)
 
 # Import aggregated data using abstracted import function
 # (This sources 00_utils_core internally)
-source("c_scripts/3_standardize/00_utils_import.R")
+source("b_scripts/3_standardize/00_utils_import.R")
 
 # IMPORTANT: Re-source utilities AFTER import to ensure functions are available
-source("c_scripts/3_standardize/00_utils_core.R")
-source("c_scripts/3_standardize/00_utils_validate.R")
+source("b_scripts/3_standardize/00_utils_core.R")
+source("b_scripts/3_standardize/00_utils_validate.R")
 
-surface_solar_radiation_dir <- "b_data/osf_data_current/2_aggregated/surface_solar_radiation"
+surface_solar_radiation_dir <- "a_data/osf_data_current/2_aggregated/surface_solar_radiation"
 ssr_import <- DetectAndImportData(surface_solar_radiation_dir)
 
 if (ssr_import$file_type == "mixed") {

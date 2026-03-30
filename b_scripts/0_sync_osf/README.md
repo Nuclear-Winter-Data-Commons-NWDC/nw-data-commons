@@ -20,45 +20,45 @@ The sync pipeline handles the full lifecycle of data management:
 
 ```bash
 # Interactive mode (recommended for first use)
-bash c_scripts/0_sync_osf/sync_pipeline.sh
+bash b_scripts/0_sync_osf/sync_pipeline.sh
 
 # Non-interactive mode (uses defaults)
-bash c_scripts/0_sync_osf/sync_pipeline.sh --non-interactive
+bash b_scripts/0_sync_osf/sync_pipeline.sh --non-interactive
 
 # Dry run (preview without making changes)
-bash c_scripts/0_sync_osf/sync_pipeline.sh --dry-run
+bash b_scripts/0_sync_osf/sync_pipeline.sh --dry-run
 ```
 
 ### Run Individual Steps
 
 ```bash
 # Step 1: Compare OSF vs Local
-python3 c_scripts/0_sync_osf/compare_osf_local.py \
-    --local b_data/osf_data_current \
+python3 b_scripts/0_sync_osf/compare_osf_local.py \
+    --local a_data/osf_data_current \
     --remote / \
     --json diff_report.json
 
 # Step 2: Interactive file selection
-python3 c_scripts/0_sync_osf/interactive_selector.py \
+python3 b_scripts/0_sync_osf/interactive_selector.py \
     --input diff_report.json \
     --output selections.json
 
 # Step 3: Backup files before update
-bash c_scripts/0_sync_osf/backup_before_update.sh selections.json
+bash b_scripts/0_sync_osf/backup_before_update.sh selections.json
 
 # Step 4: Download from OSF (use osf_manager.py for individual files)
-python3 c_scripts/1_download_or_extract/osf_manager.py download \
+python3 b_scripts/1_download_or_extract/osf_manager.py download \
     --remote /path/to/file \
-    --local b_data/osf_data_current/path/to/file \
+    --local a_data/osf_data_current/path/to/file \
     --overwrite
 
 # Step 5: Process through pipeline (example)
-Rscript c_scripts/3_standardize/00_run_all.R
+Rscript b_scripts/3_standardize/00_run_all.R
 
 # Step 6: Push changes to OSF
-python3 c_scripts/0_sync_osf/push_to_osf.py \
+python3 b_scripts/0_sync_osf/push_to_osf.py \
     --selections selections.json \
-    --local b_data/osf_data_current \
+    --local a_data/osf_data_current \
     --remote /
 ```
 
@@ -77,10 +77,10 @@ Complete workflow orchestrator that runs all steps in sequence.
 **Example:**
 ```bash
 # Full sync with defaults
-bash c_scripts/0_sync_osf/sync_pipeline.sh --non-interactive
+bash b_scripts/0_sync_osf/sync_pipeline.sh --non-interactive
 
 # Test without pushing to OSF
-bash c_scripts/0_sync_osf/sync_pipeline.sh --skip-push
+bash b_scripts/0_sync_osf/sync_pipeline.sh --skip-push
 ```
 
 ### `compare_osf_local.py`
@@ -166,7 +166,7 @@ IF file exists in both AND local_timestamp >= osf_timestamp
 
 ```bash
 # 1. Start sync pipeline
-bash c_scripts/0_sync_osf/sync_pipeline.sh
+bash b_scripts/0_sync_osf/sync_pipeline.sh
 
 # Output shows comparison report:
 # ✨ NEW FILES (3 files)
@@ -188,7 +188,7 @@ bash c_scripts/0_sync_osf/sync_pipeline.sh
 
 # 5. Manual step prompt appears:
 # "Run standardization pipeline now..."
-# User runs: Rscript c_scripts/3_standardize/00_run_all.R
+# User runs: Rscript b_scripts/3_standardize/00_run_all.R
 
 # 6. User presses Enter when processing complete
 
@@ -220,7 +220,7 @@ OSF_TOKEN=your_token_here
 - Ensure OSF token has read access
 
 ### "Download failed"
-- Check file exists on OSF: `python3 c_scripts/1_download_or_extract/osf_manager.py list --path /`
+- Check file exists on OSF: `python3 b_scripts/1_download_or_extract/osf_manager.py list --path /`
 - Verify local directory exists and is writable
 - Check disk space
 
@@ -231,16 +231,16 @@ OSF_TOKEN=your_token_here
 
 ## Integration with Existing Scripts
 
-This sync pipeline replaces `c_scripts/1_download_or_extract/sync_from_osf.sh` with a more comprehensive bidirectional workflow.
+This sync pipeline replaces `b_scripts/1_download_or_extract/sync_from_osf.sh` with a more comprehensive bidirectional workflow.
 
 **Old approach (one-way download):**
 ```bash
-bash c_scripts/1_download_or_extract/sync_from_osf.sh
+bash b_scripts/1_download_or_extract/sync_from_osf.sh
 ```
 
 **New approach (bidirectional sync):**
 ```bash
-bash c_scripts/0_sync_osf/sync_pipeline.sh
+bash b_scripts/0_sync_osf/sync_pipeline.sh
 ```
 
 The new pipeline includes:

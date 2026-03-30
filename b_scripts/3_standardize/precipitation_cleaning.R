@@ -8,8 +8,8 @@ library(reshape2)
 library(magrittr)
 
 # Import utility functions (including FlagOutliers_IQR)
-source("c_scripts/3_standardize/00_utils_core.R")
-source("c_scripts/3_standardize/00_utils_validate.R")
+source("b_scripts/3_standardize/00_utils_core.R")
+source("b_scripts/3_standardize/00_utils_validate.R")
 
 # Reference config tables from all_data[["0.configs"]]
 # 3rd-party metadata (countries) loaded by 00_utils_import.R

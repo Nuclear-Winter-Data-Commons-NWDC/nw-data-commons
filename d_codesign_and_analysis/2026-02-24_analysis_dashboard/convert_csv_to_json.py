@@ -26,7 +26,7 @@ from pathlib import Path
 
 # Configuration
 BASE_DIR = Path(__file__).parent.parent.parent
-STANDARDIZED_DIR = BASE_DIR / "b_data/osf_data_current/3_standardized"
+STANDARDIZED_DIR = BASE_DIR / "a_data/osf_data_current/3_standardized"
 OUTPUT_DIR = Path(__file__).parent / "data"
 
 # Dataset mappings (use most recent version)

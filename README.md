@@ -46,13 +46,13 @@ The primary data source for this project is hosted on the Open Science Framework
 For users who want to begin with pre-aggregated data:
 
 1. Ensure your OSF token is set in your `.env` file or as an environment variable (`OSF_TOKEN`).
-2. Use the manifest at `b_data/3_aggregated/osf_manifest_aggregated.json`.
+2. Use the manifest at `a_data/3_aggregated/osf_manifest_aggregated.json`.
 3. Download the aggregated Excel files by running:
    ```sh
-   python c_scripts/1_download_or_extract/osf_fetch.py --manifest b_data/3_aggregated/osf_manifest_aggregated.json
+   python b_scripts/1_download_or_extract/osf_fetch.py --manifest a_data/3_aggregated/osf_manifest_aggregated.json
    ```
-4. The `.xlsx` files will be downloaded to `b_data/3_aggregated/`.
-5. Use the R script `c_scripts/3_standardize/01_import_aggregated_data.R` to import and process the Excel files.
+4. The `.xlsx` files will be downloaded to `a_data/3_aggregated/`.
+5. Use the R script `b_scripts/3_standardize/01_import_aggregated_data.R` to import and process the Excel files.
 
 ---
 
@@ -61,14 +61,14 @@ For users who want to begin with pre-aggregated data:
 For users who wish to reproduce the aggregation process from raw model outputs:
 
 1. Ensure your OSF token is set in your `.env` file or as an environment variable (`OSF_TOKEN`).
-2. Use the manifest at `b_data/1_scenario_definitions/osf_manifest_model_outputs.json`.
+2. Use the manifest at `a_data/1_scenario_definitions/osf_manifest_model_outputs.json`.
 3. Download the model output files by running:
    ```sh
-   python c_scripts/1_download_or_extract/osf_fetch.py --manifest b_data/1_scenario_definitions/osf_manifest_model_outputs.json
+   python b_scripts/1_download_or_extract/osf_fetch.py --manifest a_data/1_scenario_definitions/osf_manifest_model_outputs.json
    ```
-4. The model output files will be downloaded to `b_data/2_model_outputs/`.
-5. Use the Jupyter notebook at `c_scripts/2_aggregate/nuclear_ocean_calculate_mean_min_max_stdev.ipynb` to flatten and aggregate the data.
-6. Aggregated outputs will be saved to `b_data/3_aggregated/` for further analysis.
+4. The model output files will be downloaded to `a_data/2_model_outputs/`.
+5. Use the Jupyter notebook at `b_scripts/2_aggregate/nuclear_ocean_calculate_mean_min_max_stdev.ipynb` to flatten and aggregate the data.
+6. Aggregated outputs will be saved to `a_data/3_aggregated/` for further analysis.
 
 ---
 
@@ -83,9 +83,9 @@ For users who wish to reproduce the aggregation process from raw model outputs:
 
 3. **Install system dependencies (Linux/Ubuntu):**
    ```sh
-   bash c_scripts/install_system_deps.sh
+   bash b_scripts/install_system_deps.sh
    ```
-   *If you are on MacOS or Windows, see the comments in `c_scripts/install_system_deps.sh` for guidance or install equivalent libraries using your OS package manager.*
+   *If you are on MacOS or Windows, see the comments in `b_scripts/install_system_deps.sh` for guidance or install equivalent libraries using your OS package manager.*
 
 4. **Restore the R environment:**
    ```r
@@ -97,7 +97,7 @@ For users who wish to reproduce the aggregation process from raw model outputs:
 
 6. **Run the R pipeline:**
    ```r
-   source("c_scripts/3_standardize/run_all.R")
+   source("b_scripts/3_standardize/run_all.R")
    ```
    This will execute the full data cleaning and analysis pipeline.
 
@@ -114,11 +114,11 @@ For users who wish to reproduce the aggregation process from raw model outputs:
 
 ```
 nw-data-commons/
-├── b_data/                    # Data directory
+├── a_data/                    # Data directory
 │   ├── 1_scenario_definitions/    # Scenario definitions and model output manifests
 │   ├── 2_model_outputs/           # Raw model outputs (downloaded)
 │   └── 3_aggregated/              # Aggregated data files
-├── c_scripts/                 # Analysis scripts
+├── b_scripts/                 # Analysis scripts
 │   ├── 1_download_or_extract/     # Data download scripts
 │   ├── 2_aggregate/               # Aggregation notebooks
 │   ├── 3_standardize/             # R data processing pipeline
