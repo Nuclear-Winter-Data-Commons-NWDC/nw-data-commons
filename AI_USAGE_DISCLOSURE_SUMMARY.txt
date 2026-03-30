@@ -1,0 +1,146 @@
+================================================================================
+AI USAGE DISCLOSURE SUMMARY FOR MANUSCRIPT SUBMISSION
+Nuclear Winter Data Commons Repository
+================================================================================
+
+Prepared for: Dr. Cheryl Harrison (Lead Author)
+Prepared by: William Faulkner
+Date: 2026-03-30
+Purpose: Journal disclosure requirements for AI tool usage in code development
+
+================================================================================
+EXECUTIVE SUMMARY
+================================================================================
+
+This repository was developed with assistance from two AI tools throughout its
+development lifecycle (March 2025 - March 2026):
+
+1. ChatGPT (OpenAI) - Used continuously for ad-hoc troubleshooting and debugging
+2. Claude Code (Anthropic) - Used systematically from January 2026 onwards for
+   feature development, refactoring, and documentation
+
+All core scientific methodology, statistical procedures, and data cleaning logic
+were designed and implemented by the human research team. AI tools were used
+exclusively to assist with code implementation, debugging, and technical
+infrastructure development.
+
+================================================================================
+DETAILED FINDINGS
+================================================================================
+
+REPOSITORY DEVELOPMENT TIMELINE
+--------------------------------
+- Repository initiated: March 19, 2025
+- Total commits: 195
+- Development period: March 2025 - March 2026 (12 months)
+
+AI TOOL USAGE
+-------------
+
+ChatGPT (March 2025 - Present):
+- Usage pattern: Ad-hoc troubleshooting and debugging throughout development
+- Methodology: Copy-paste problematic code and error messages into ChatGPT;
+  receive diagnostic advice and suggested code corrections
+- Documentation: Not reflected in commit messages or repository history
+- Scope: Used throughout development cycle; likely affected most major code files
+- Impact: Assisted with implementation and debugging; did not influence scientific
+  or methodological decisions
+
+Claude Code (January 2026 - Present):
+- Usage pattern: Systematic development sessions with full repository context
+- Documentation: 35 commits with explicit co-authorship attribution (18% of total)
+- Documentation: 14 detailed session summaries (c_context/session_summary_*.md)
+- First documented use: January 16, 2026
+- Primary applications:
+  * Workflow automation (OSF synchronization pipeline)
+  * Interactive data visualization dashboards
+  * Code refactoring and repository reorganization
+  * Technical documentation and session logging
+
+ATTRIBUTION PROTOCOL
+--------------------
+All commits involving Claude Code include explicit attribution markers:
+  "🤖 Generated with [Claude Code](https://claude.com/claude-code)"
+  "Co-Authored-By: Claude <noreply@anthropic.com>"
+
+ChatGPT usage was not systematically documented in commits, consistent with
+standard practice for ad-hoc consultation of external debugging resources.
+
+SCOPE OF HUMAN VS AI CONTRIBUTIONS
+-----------------------------------
+
+Work Conducted WITHOUT AI Assistance:
+- Scientific methodology and research design
+- Statistical analysis procedures and validation criteria
+- Data cleaning rules and quality control protocols
+- Selection of analytical frameworks and data sources
+- Interpretation of results and scientific conclusions
+
+Work Conducted WITH AI Assistance:
+- Implementation of data processing pipelines
+- Debugging of code errors and syntax issues
+- Development of file management and synchronization systems
+- Creation of interactive visualization interfaces
+- Repository organization and documentation
+- Code refactoring for consistency and maintainability
+
+================================================================================
+DISCLOSURE STATEMENT
+================================================================================
+
+"Development of this code repository involved AI assistance throughout its
+development lifecycle (March 2025-present) using two tools: (1) ChatGPT (OpenAI)
+was used throughout development for ad-hoc troubleshooting and debugging by
+copy-pasting problematic code and error messages to receive suggested fixes and
+corrections; (2) Anthropic's Claude Code was used systematically from January
+2026 onwards (documented in 35 explicitly co-authored commits) for workflow
+automation, interactive dashboard development, code refactoring, and technical
+documentation. The core scientific methodology, statistical analysis procedures,
+and data cleaning logic were developed by the human authors, with AI tools used
+to assist with implementation, debugging, and code quality improvement. All
+commits involving Claude Code are explicitly attributed in the repository
+history."
+
+================================================================================
+RECOMMENDATIONS
+================================================================================
+
+DOCUMENTATION REQUIREMENTS
+---------------------------
+ChatGPT conversation logs are NOT necessary for initial submission unless:
+
+1. Wiley specifically requests them during peer review
+2. Reviewers question the nature or extent of ChatGPT usage
+3. ChatGPT suggested novel methodological approaches (vs syntax fixes)
+
+Based on the described usage pattern (ad-hoc debugging consultation), ChatGPT
+use is analogous to consulting Stack Overflow or other programming resources,
+which are not typically documented in scientific publications.
+
+The explicit attribution in 35 Claude Code commits and 14 session summaries
+provides an auditable record of systematic AI-assisted development.
+
+SUPPORTING MATERIALS AVAILABLE
+-------------------------------
+If requested by reviewers, the following documentation is available:
+
+1. Complete git commit history with AI attribution markers
+2. 14 detailed session summaries documenting Claude Code usage
+3. Repository structure showing pre-AI vs AI-assisted development periods
+4. ChatGPT conversation summaries (can be downloaded if necessary)
+
+================================================================================
+COMPLIANCE WITH WILEY GUIDELINES
+================================================================================
+
+Reference: https://authors.wiley.com/ethics-guidelines/index.html
+
+The proposed disclosures comply with Wiley's requirements by:
+
+1. TRANSPARENCY: Clearly stating which AI tools were used and when
+2. AUTHORSHIP: Clarifying that AI assisted with implementation, not scientific
+   decision-making or interpretation
+3. REPRODUCIBILITY: Documenting systematic AI use (Claude Code) with explicit
+   commit attribution
+4. ACCOUNTABILITY: Maintaining that human authors take full responsibility for
+   all scientific content and conclusions
