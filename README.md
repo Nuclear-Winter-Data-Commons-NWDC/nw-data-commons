@@ -162,6 +162,9 @@ The MIT License allows you to freely use, modify, and distribute this code, prov
 - **E. Kesse Asante**
   Louisiana State University
 
+- **Cheryl Harrison**
+  Louisiana State University
+
 For questions, issues, or collaboration inquiries, please:
 - Open an issue on the [GitHub repository](https://github.com/wnfaulkner/nw-data-commons)
 - Contact the corresponding author via email
