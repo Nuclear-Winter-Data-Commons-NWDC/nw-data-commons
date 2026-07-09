@@ -48,6 +48,9 @@ DATASETS = {
 
 # Scandinavia proper = Denmark, Sweden, Norway (Finland & Iceland are Nordic, not Scandinavian)
 SCANDINAVIAN_COUNTRIES = {"Norway", "Sweden", "Denmark"}
+# Scandinavia + Finland = Denmark, Sweden, Norway, Finland (excludes Iceland; Greenland
+# is not present in any country-level dataset, so nothing to exclude there).
+SCANDINAVIA_PLUS_FINLAND = {"Norway", "Sweden", "Denmark", "Finland"}
 PORTS_OF_INTEREST = {"St Petersburg", "Hamburg"}
 # Scandinavia proper = Denmark, Sweden, Norway; joint regime area excluded.
 SCANDINAVIAN_EEZ = {"Danish EEZ", "Norwegian EEZ", "Swedish EEZ"}
@@ -85,6 +88,10 @@ def add_derived(name, row):
     if "country.name" in row:
         row["scandinavian_countries"] = (
             "Scandinavian Countries" if row["country.name"] in SCANDINAVIAN_COUNTRIES
+            else "Other Countries"
+        )
+        row["scandinavia_plus_finland"] = (
+            "Scandinavia + Finland" if row["country.name"] in SCANDINAVIA_PLUS_FINLAND
             else "Other Countries"
         )
     if name == "sea_ice":

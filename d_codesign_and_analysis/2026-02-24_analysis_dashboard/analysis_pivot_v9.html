@@ -313,14 +313,40 @@ const pivotConfig={rows:[],columns:[],values:[],filters:{}};
 
 loadDataset('starvation');
 
-document.getElementById('dataset-select').addEventListener('change',function(){
-  const newDataset=this.value;
+// In-page confirmation modal. Native confirm()/alert() are unreliable — and often
+// silently return false — inside VS Code preview webviews (e.g. HTML Preview Pro),
+// which was blocking dataset switching after any pivot change. Built from plain DOM +
+// click events, which work in every webview.
+function customConfirm(message){
+  return new Promise(resolve=>{
+    const ov=document.createElement('div');
+    ov.style.cssText='position:fixed;inset:0;background:rgba(1,4,9,0.7);z-index:3000;display:flex;align-items:center;justify-content:center;';
+    const box=document.createElement('div');
+    box.style.cssText='background:#161b22;border:1px solid #30363d;border-radius:8px;padding:24px;max-width:420px;color:#e6edf3;font-family:inherit;box-shadow:0 8px 32px rgba(0,0,0,0.5);';
+    const msg=document.createElement('div');msg.textContent=message;msg.style.cssText='margin-bottom:20px;font-size:14px;line-height:1.5;';
+    const btns=document.createElement('div');btns.style.cssText='display:flex;gap:10px;justify-content:flex-end;';
+    const cancel=document.createElement('button');cancel.textContent='Cancel';
+    cancel.style.cssText='padding:8px 16px;border-radius:6px;border:1px solid #30363d;background:#21262d;color:#e6edf3;cursor:pointer;font-size:13px;';
+    const ok=document.createElement('button');ok.textContent='Continue';
+    ok.style.cssText='padding:8px 16px;border-radius:6px;border:1px solid #f0883e;background:#f0883e;color:#0d1117;cursor:pointer;font-weight:600;font-size:13px;';
+    const done=v=>{ov.remove();document.removeEventListener('keydown',onKey);resolve(v);};
+    const onKey=e=>{if(e.key==='Escape')done(false);else if(e.key==='Enter')done(true);};
+    cancel.addEventListener('click',()=>done(false));
+    ok.addEventListener('click',()=>done(true));
+    ov.addEventListener('click',e=>{if(e.target===ov)done(false);});
+    document.addEventListener('keydown',onKey);
+    btns.appendChild(cancel);btns.appendChild(ok);box.appendChild(msg);box.appendChild(btns);ov.appendChild(box);
+    document.body.appendChild(ov);ok.focus();
+  });
+}
+
+document.getElementById('dataset-select').addEventListener('change',async function(){
+  const sel=this;const newDataset=sel.value;
   if(newDataset===CURRENT_DATASET)return;
   const hasChanges=pivotConfig.rows.length>0||pivotConfig.columns.length>0||pivotConfig.values.length>0||Object.keys(pivotConfig.filters).length>0;
   if(hasChanges){
-    if(!confirm('Switching datasets will reset your current pivot table configuration. Continue?')){
-      this.value=CURRENT_DATASET;return;
-    }
+    const ok=await customConfirm('Switching datasets will reset your current pivot table configuration. Continue?');
+    if(!ok){sel.value=CURRENT_DATASET;return;}
   }
   loadDataset(newDataset);
 });
@@ -601,14 +627,22 @@ function generatePivot(){
   if(values.length===0){document.getElementById('result-info').textContent='Add at least one field to Values.';return;}
   showLoading(true,'Generating pivot table...',50);
   setTimeout(()=>{
-    const wf=document.getElementById('weight-select').value;
-    let fd=CURRENT_DATA;
-    Object.keys(pivotConfig.filters).forEach(f=>{const sv=pivotConfig.filters[f];if(sv.size>0)fd=fd.filter(r=>sv.has(String(r[f]||'')));});
-    const pv=buildPivot(fd,rf,cf,values,wf);
-    renderPivot(pv,rf,cf,values);
-    PIVOT_RESULTS=pv;
-    updateChart();
-    showLoading(false);
+    try{
+      const wf=document.getElementById('weight-select').value;
+      let fd=CURRENT_DATA;
+      Object.keys(pivotConfig.filters).forEach(f=>{const sv=pivotConfig.filters[f];if(sv.size>0)fd=fd.filter(r=>sv.has(String(r[f]||'')));});
+      const pv=buildPivot(fd,rf,cf,values,wf);
+      renderPivot(pv,rf,cf,values);
+      PIVOT_RESULTS=pv;
+      // Chart failure must not strand the table or the loading overlay.
+      try{updateChart();}catch(chartErr){console.error('Chart render failed (table still shown):',chartErr);}
+    }catch(err){
+      console.error('Pivot generation failed:',err);
+      const ri=document.getElementById('result-info');if(ri)ri.textContent='Error generating pivot: '+(err&&err.message?err.message:err);
+    }finally{
+      // Always clear the full-screen overlay, otherwise it blocks all interaction (incl. the dataset selector).
+      showLoading(false);
+    }
   },10);
 }
 
@@ -859,10 +893,18 @@ async function saveBlob(blob,filename,mime,accept){
 function exportTableAsCSV(){
   if(!PIVOT_RESULTS)return;
   const {data,colKeys}=PIVOT_RESULTS;const rk=sortRowKeys(Object.keys(data));
-  let csv='';
-  const rf=pivotConfig.rows;csv+='"'+(rf.length>0?rf.join(' | '):'')+'"';
-  colKeys.forEach(c=>csv+=',"'+c.replace(/"/g,'""')+'"');csv+='\n';
-  rk.forEach(r=>{csv+='"'+r.replace(/"/g,'""')+'"';colKeys.forEach(c=>{const cl=data[r][c];csv+=','+(cl&&cl.result!==null?cl.result:'');});csv+='\n';});
+  // Quote ONLY non-numeric cells so Excel imports numeric labels/values as numbers, not text.
+  const isNum=s=>s!==''&&!isNaN(parseFloat(s))&&isFinite(s);
+  const cell=v=>{const s=String(v);if(s==='')return '';if(isNum(s))return s;return '"'+s.replace(/"/g,'""')+'"';};
+  const lines=[];
+  const rf=pivotConfig.rows;
+  lines.push([rf.length>0?rf.join(' | '):''].concat(colKeys).map(cell).join(','));
+  rk.forEach(r=>{
+    const row=[r].concat(colKeys.map(c=>{const cl=data[r][c];return cl&&cl.result!==null?cl.result:'';}));
+    lines.push(row.map(cell).join(','));
+  });
+  // Prepend a UTF-8 BOM and use CRLF endings so Excel opens it cleanly (no legacy-import guessing / convert prompt).
+  const csv='\uFEFF'+lines.join('\r\n')+'\r\n';
   saveBlob(new Blob([csv],{type:'text/csv;charset=utf-8;'}),tsName('csv'),'CSV file',{'text/csv':['.csv']});
 }
 
