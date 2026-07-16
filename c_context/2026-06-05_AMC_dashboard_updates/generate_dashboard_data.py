@@ -22,6 +22,11 @@ adding the derived variables requested for the 2026-06-05 AMC conference demo:
 (c) fish_catch only:
     scandinavian_eez   -- "Scandinavian EEZ" if eez.name in the listed Nordic EEZs, else "Other EEZ"
 
+Column drops (relative-only fish_catch, 2026-07-15):
+    fish_catch drops its absolute-magnitude measures so only relative/percent-change
+    variables remain in the dashboard field list (see DROP_COLUMNS). Dimension/key
+    columns and the *.pct.* measures + their outlier flags are kept.
+
 Re-runnable: refresh the CSVs (b_scripts/0_sync_osf or the OSF API) and re-run.
 """
 
@@ -37,7 +42,7 @@ OUT_DIR = BASE_DIR / "d_codesign_and_analysis/2026-02-24_analysis_dashboard/data
 DATASETS = {
     "agriculture_agmip": "agriculture_agmip_v2026-02-13.csv",
     "agriculture_clm": "agriculture_clm_v2026-02-13.csv",
-    "fish_catch": "fish_catch_v2026-02-13.csv",
+    "fish_catch": "fish_catch_v2026-07-15.csv",
     "precipitation": "precipitation_v2026-02-13.csv",
     "sea_ice": "sea_ice_v2026-02-13.csv",
     "starvation": "starvation_v2026-02-13.csv",
@@ -54,6 +59,21 @@ SCANDINAVIA_PLUS_FINLAND = {"Norway", "Sweden", "Denmark", "Finland"}
 PORTS_OF_INTEREST = {"St Petersburg", "Hamburg"}
 # Scandinavia proper = Denmark, Sweden, Norway; joint regime area excluded.
 SCANDINAVIAN_EEZ = {"Danish EEZ", "Norwegian EEZ", "Swedish EEZ"}
+
+# Per-dataset columns to drop before writing JSON.
+# fish_catch: keep only relative/percent-change measures (+ dimensions & outlier
+# flags); drop the absolute-magnitude measures. `mean.catch.per.1000.sq.km` is a
+# catch density (absolute per unit area), not a percent change, so it is dropped too.
+# `eez.area` is a dimension (unit descriptor) and is kept.
+DROP_COLUMNS = {
+    "fish_catch": {
+        "mean.catch",
+        "mean.catch.per.1000.sq.km",
+        "mean.catch.change",
+        "std.dev.catch",
+        "std.dev.catch.change",
+    },
+}
 
 
 def convert_value(value):
@@ -117,10 +137,11 @@ def main():
         if not src.exists():
             print(f"  SKIP {name}: missing {fname}")
             continue
+        drop = DROP_COLUMNS.get(name, set())
         rows = []
         with open(src, newline='', encoding='utf-8') as f:
             for r in csv.DictReader(f):
-                row = {k: convert_value(v) for k, v in r.items()}
+                row = {k: convert_value(v) for k, v in r.items() if k not in drop}
                 rows.append(add_derived(name, row))
         out = OUT_DIR / f"{name}.json"
         with open(out, 'w', encoding='utf-8') as f:

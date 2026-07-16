@@ -148,24 +148,19 @@ fish.catch.clean.tb <-
     mean.catch.per.1000.sq.km = mean.catch / (eez.area / 1000)
   ) %>%
   FlagOutliers_IQR(source.table.list.name = fish.catch.ls) %>%
+  # Relative-only output (2026-07-15): absolute-magnitude measures
+  # (mean.catch, mean.catch.per.1000.sq.km, mean.catch.change, std.dev.catch,
+  # std.dev.catch.change) are intentionally dropped so the standardized dataset
+  # carries only relative/percent-change measures plus dimensions & outlier flags.
+  # Outlier flagging above still runs on all measures; only the selection changes.
   select(
     eez.name, eez.num, eez.area,
     years.elapsed,
     soot.injection.scenario,
-    mean.catch,
-    mean.catch.per.1000.sq.km,
-    mean.catch.change,
     mean.pct.catch.change,
-    std.dev.catch,
-    std.dev.catch.change,
     std.dev.pct.catch.change,
     any_of(c(
-      "mean.catch.outlier.flag",
-      "mean.catch.per.1000.sq.km.outlier.flag",
-      "mean.catch.change.outlier.flag",
       "mean.pct.catch.change.outlier.flag",
-      "std.dev.catch.outlier.flag",
-      "std.dev.catch.change.outlier.flag",
       "std.dev.pct.catch.change.outlier.flag"
     ))
   ) %>%
