@@ -4,7 +4,7 @@ Short-horizon worklist plus a memory-jogging backlog. Each backlog item records
 **what** to do, **why** it matters, and **where/when it first came up** (traced to
 the session summaries) so it's easy to recall the original motivation.
 
-**Last Updated:** 2026-07-15
+**Last Updated:** 2026-08-27
 **Maintainer:** William Faulkner
 
 ---
@@ -150,6 +150,34 @@ the session summaries) so it's easy to recall the original motivation.
   whole file by hand). **Tension:** the single-file design is deliberate for offline
   portability, so any refactor must still produce a buildable self-contained artifact.
 - **Origin:** logged 2026-02-24 as "Code Refactoring and Modularization."
+
+---
+
+## Privacy / publication hygiene (added 2026-08-27)
+
+### Audit and expunge individually identifiable data from all public repo files
+- **Status:** Not started. Raised 2026-08-27 while preparing the reply to the
+  external data-query email thread.
+- **What:** Sweep every file that reaches the public GitHub repo for personally
+  identifiable information and remove it — third-party names, email addresses, phone
+  numbers, institutional affiliations, and verbatim/paraphrased private correspondence.
+  Cover at minimum:
+  - `c_context/` session summaries (several name collaborators and summarise private
+    email threads).
+  - `c_context/paper_drafts/`, `c_context/paper_sources/`, `d_codesign_and_analysis/`
+    (co-design materials may contain participant names or contact details).
+  - `README.md` / `CITATION.cff` — maintainer contact details are intentional and
+    published; confirm which of these are deliberate and leave those.
+  - Committed history, not just the working tree — `git log -p` for anything already
+    pushed. Removing a file now does not remove it from history.
+- **Why:** the repo is public. Session summaries in particular were written as internal
+  working notes and were never reviewed for third-party PII before being committed.
+- **Decision made 2026-08-27:** the current session's source folder
+  (`c_context/2026-08-27_external_data_queries/`, private email
+  correspondence + attachments) is gitignored and was never tracked. The session summary
+  for 2026-08-27 is to be sanitised (names → roles/initials) before its commit.
+- **Next step:** `grep -rniE "@[a-z0-9.-]+\.(com|edu|org|gov)"` across tracked files as a
+  first pass, then a manual read of `c_context/*.md`.
 
 ---
 

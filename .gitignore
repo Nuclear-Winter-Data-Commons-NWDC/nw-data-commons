@@ -55,3 +55,6 @@ a_data/osf_data_most_recent_previous/
 # Python bytecode cache
 __pycache__/
 *.pyc
+
+# Session context folder containing private email correspondence (do not publish)
+c_context/2026-08-27_external_data_queries/
