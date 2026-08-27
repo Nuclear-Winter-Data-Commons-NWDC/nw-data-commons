@@ -102,6 +102,8 @@ Sea ice extent by port location. Useful for analyzing impacts on shipping routes
 
 Country-level population starvation estimates. Includes multiple sub-scenarios for trade status (with trade / no trade), livestock availability (livestock / partial livestock / no livestock), and food waste reduction (0% / 50% / 100%).
 
+All estimates represent conditions in the second year (Year 2) following the conflict — the period of peak food shortfall in Xia et al. (2022). The dataset is a single-year snapshot and therefore has no time column.
+
 **Notes:**
 - The 150 Tg scenario includes all 18 sub-scenario combinations (2 trade × 3 livestock × 3 food waste reduction levels).
 - Other scenarios (5, 16, 27, 37, 47 Tg) include only 6 sub-scenario combinations (2 trade × 3 livestock × 1 food waste reduction level = 0% only).

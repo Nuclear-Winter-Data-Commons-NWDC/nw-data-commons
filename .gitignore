@@ -51,3 +51,7 @@ a_data/osf_data_most_recent_previous/
 
 # Claude Code session files
 .claude/
+
+# Python bytecode cache
+__pycache__/
+*.pyc
